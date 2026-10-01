@@ -1,4 +1,4 @@
-import { decodeProtobuf, extractAllStrings, type ProtoField } from './protobuf-decoder';
+import { decodeProtobuf, decodeProtobufRaw, extractAllStrings, type ProtoField, type RawField } from './protobuf-decoder';
 
 const LOG_PREFIX = '[MeetTranscript]';
 
@@ -99,6 +99,91 @@ export function parseCaptionMessage(data: Uint8Array): RtcCaption | null {
     };
   } catch (e) {
     console.debug(LOG_PREFIX, 'RTC caption parse error:', e);
+    return null;
+  }
+}
+
+function getRawField(fields: RawField[], fieldNumber: number): RawField | undefined {
+  return fields.find(f => f.fieldNumber === fieldNumber);
+}
+
+function getRawNumber(fields: RawField[], fieldNumber: number): number | null {
+  const field = getRawField(fields, fieldNumber);
+  if (field && typeof field.value === 'number') return field.value;
+  if (field && typeof field.value === 'bigint') return Number(field.value);
+  return null;
+}
+
+function getRawBytes(fields: RawField[], fieldNumber: number): Uint8Array | null {
+  const field = getRawField(fields, fieldNumber);
+  return field && field.value instanceof Uint8Array ? field.value : null;
+}
+
+const rawTextDecoder = new TextDecoder('utf-8', { fatal: false });
+
+function getRawString(fields: RawField[], fieldNumber: number): string | null {
+  const bytes = getRawBytes(fields, fieldNumber);
+  return bytes ? rawTextDecoder.decode(bytes) : null;
+}
+
+/** Recovers the original bytes behind a field that decodeProtobuf already coerced to string or bytes. */
+function fieldValueAsBytes(field: ProtoField | undefined): Uint8Array | null {
+  if (!field) return null;
+  if (field.value instanceof Uint8Array) return field.value;
+  if (typeof field.value === 'string') return new TextEncoder().encode(field.value);
+  return null;
+}
+
+/**
+ * Parse a caption message from the "captions_v2" DataChannel (used instead of
+ * "captions" by some Meet client cohorts). The real caption content is
+ * nested one level deeper than in "captions", and because that nested
+ * content is almost entirely printable text, decodeProtobuf's string-vs-
+ * nested heuristic flattens it into one garbled string instead of recursing.
+ * decodeProtobufRaw walks the same bytes without guessing, letting each
+ * field be read explicitly instead.
+ *
+ * Observed structure (byte-decoded from real traffic):
+ *   field 1 (nested) = wrapper
+ *     field 1 (bytes, misparsed as string by decodeProtobuf) = update
+ *       field 1 (varint) = messageId (increments per new utterance)
+ *       field 2 (varint) = messageVersion (increments per revision)
+ *       field 3 (bytes) = captionData
+ *         field 3 (utf8) = text
+ *         field 4 (utf8) = source language
+ *         field 5 (utf8) = language
+ *         field 6 (utf8) = device path ("spaces/<id>/devices/<n>")
+ *         field 9 (varint) = is_final
+ */
+export function parseCaptionMessageV2(data: Uint8Array): RtcCaption | null {
+  try {
+    const fields = decodeProtobuf(data);
+    const wrapper = getNestedFields(fields, 1);
+    if (!wrapper) return null;
+
+    const updateBytes = fieldValueAsBytes(findField(wrapper, 1));
+    if (!updateBytes) return null;
+
+    const update = decodeProtobufRaw(updateBytes);
+    const messageId = getRawNumber(update, 1);
+    const messageVersion = getRawNumber(update, 2);
+    const captionDataBytes = getRawBytes(update, 3);
+    if (messageId === null || messageVersion === null || !captionDataBytes) return null;
+
+    const captionData = decodeProtobufRaw(captionDataBytes);
+    const text = getRawString(captionData, 3) ?? '';
+    const devicePath = getRawString(captionData, 6);
+    if (!devicePath) return null;
+
+    return {
+      deviceId: `@${devicePath}`,
+      messageId: `${messageId}/@${devicePath}`,
+      messageVersion,
+      langId: 0,
+      text,
+    };
+  } catch (e) {
+    console.debug(LOG_PREFIX, 'RTC caption v2 parse error:', e);
     return null;
   }
 }

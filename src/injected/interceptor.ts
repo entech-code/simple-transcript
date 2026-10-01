@@ -1,5 +1,5 @@
 import { MESSAGE_SOURCE, RTC_CHANNEL_NAMES, RTC_CAPTION_BATCH_MS, LOCALE_TO_LANG_ID } from '../utils/constants';
-import { parseCaptionMessage, parseDeviceInfo, parseDeviceCollection, parseChatMessage, dumpAllStrings } from '../utils/rtc-message-parser';
+import { parseCaptionMessage, parseCaptionMessageV2, parseDeviceInfo, parseDeviceCollection, parseChatMessage, dumpAllStrings } from '../utils/rtc-message-parser';
 import { decodeProtobuf, extractAllStrings } from '../utils/protobuf-decoder';
 import { encodeUpdateMediaSession, encodeRtcLanguageChange } from '../utils/protobuf-encoder';
 import { textFitsLanguage } from '../utils/language-script';
@@ -612,6 +612,18 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
     }
   }
 
+  function handleCaptionsV2Message(data: Uint8Array): void {
+    const caption = parseCaptionMessageV2(data);
+    if (!caption || !caption.text) return;
+
+    checkCaptionLanguage(caption);
+
+    const existing = captionQueue.get(caption.messageId);
+    if (!existing || existing.messageVersion <= caption.messageVersion) {
+      captionQueue.set(caption.messageId, caption);
+    }
+  }
+
   function handleCollectionsMessage(data: Uint8Array): void {
     const device = parseDeviceInfo(data);
     if (device) {
@@ -691,6 +703,14 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
     channel.addEventListener('error', cleanup);
   }
 
+  function watchUnknownChannel(channel: RTCDataChannel): void {
+    const label = channel.label;
+    channel.addEventListener('message', (event: MessageEvent) => {
+      const size = event.data?.byteLength ?? event.data?.size ?? event.data?.length ?? '?';
+      debug(`RTC: message on unrecognized channel "${label}" (id=${channel.id}), type=${typeof event.data}, size=${size}`);
+    });
+  }
+
   function listenToChannel(channel: RTCDataChannel): void {
     const label = channel.label;
     debug(`RTC: listenToChannel("${label}") readyState=${channel.readyState} id=${channel.id}`);
@@ -713,7 +733,7 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
 
       const count = (channelMessageCounts.get(label) ?? 0) + 1;
       channelMessageCounts.set(label, count);
-      if (label !== 'captions' || count <= 3) {
+      if ((label !== 'captions' && label !== 'captions_v2') || count <= 3) {
         debug(`RTC: message on "${label}" #${count}, type=${typeof event.data}, ` +
           `isArrayBuffer=${event.data instanceof ArrayBuffer}, isBlob=${event.data instanceof Blob}, ` +
           `size=${event.data?.byteLength ?? event.data?.size ?? event.data?.length ?? '?'}`);
@@ -735,6 +755,9 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
         switch (label) {
           case 'captions':
             handleCaptionsMessage(decompressed);
+            break;
+          case 'captions_v2':
+            handleCaptionsV2Message(decompressed);
             break;
           case 'collections':
             handleCollectionsMessage(decompressed);
@@ -789,7 +812,11 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
   function handleIncomingChannel(pc: RTCPeerConnection, channel: RTCDataChannel): void {
     const label = channel.label;
     if (label === 'media-session') watchMediaSession(channel);
-    if (!(RTC_CHANNEL_NAMES as readonly string[]).includes(label)) return;
+    if (!(RTC_CHANNEL_NAMES as readonly string[]).includes(label)) {
+      debug(`RTC: incoming datachannel "${label}" (unrecognized, not listened to)`);
+      watchUnknownChannel(channel);
+      return;
+    }
     debug(`RTC: incoming datachannel "${label}"`);
     listenToChannel(channel);
     ensureChannels(pc);
@@ -831,6 +858,9 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
       if ((RTC_CHANNEL_NAMES as readonly string[]).includes(label)) {
         debug(`RTC: createDataChannel("${label}")`);
         listenToChannel(channel);
+      } else {
+        debug(`RTC: createDataChannel("${label}") (unrecognized, not listened to)`);
+        watchUnknownChannel(channel);
       }
       return channel;
     };
