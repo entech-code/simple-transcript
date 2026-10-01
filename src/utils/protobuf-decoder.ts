@@ -144,6 +144,66 @@ export function decodeProtobuf(data: Uint8Array): ProtoField[] {
   return fields;
 }
 
+export interface RawField {
+  fieldNumber: number;
+  wireType: number;
+  value: number | bigint | Uint8Array;
+}
+
+/**
+ * Decodes without guessing string vs. nested for length-delimited fields —
+ * they always come back as raw bytes, and the caller decides how to read
+ * them. decodeProtobuf's printable-text heuristic misfires on payloads that
+ * are mostly text but still contain nested submessages (e.g. captions_v2),
+ * flattening structure that should have been parsed further.
+ */
+export function decodeProtobufRaw(data: Uint8Array): RawField[] {
+  const reader = new BufferReader(data);
+  const fields: RawField[] = [];
+
+  while (reader.remaining > 0) {
+    let tag: bigint;
+    try {
+      tag = reader.readVarint();
+    } catch {
+      break;
+    }
+
+    const fieldNumber = Number(tag >> 3n);
+    const wireType = Number(tag & 0x7n);
+
+    if (fieldNumber === 0) break;
+
+    try {
+      switch (wireType) {
+        case 0: {
+          const val = reader.readVarint();
+          fields.push({ fieldNumber, wireType, value: val <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(val) : val });
+          break;
+        }
+        case 1:
+          fields.push({ fieldNumber, wireType, value: reader.readFixed64() });
+          break;
+        case 2: {
+          const len = Number(reader.readVarint());
+          if (len < 0 || len > reader.remaining) return fields;
+          fields.push({ fieldNumber, wireType, value: reader.readBytes(len) });
+          break;
+        }
+        case 5:
+          fields.push({ fieldNumber, wireType, value: reader.readFixed32() });
+          break;
+        default:
+          return fields;
+      }
+    } catch {
+      break;
+    }
+  }
+
+  return fields;
+}
+
 export function extractAllStrings(fields: ProtoField[]): Array<{ fieldNumber: number; value: string }> {
   const results: Array<{ fieldNumber: number; value: string }> = [];
 

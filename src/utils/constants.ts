@@ -5,7 +5,7 @@ export const MEETING_CODE_DEDUP_MS = 15_000; // ignore duplicate meeting-code wi
 
 export const MESSAGE_SOURCE = 'meetscribe';
 
-export const RTC_CHANNEL_NAMES = ['captions', 'meet_messages', 'collections'] as const;
+export const RTC_CHANNEL_NAMES = ['captions', 'captions_v2', 'meet_messages', 'collections'] as const;
 export const RTC_CAPTION_BATCH_MS = 500;
 
 /** Map of Google Meet language IDs to locale codes (matches Tactiq reference) */
