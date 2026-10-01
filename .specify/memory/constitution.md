@@ -1,12 +1,3 @@
-<!--
-Sync Impact Report (remove before committing)
-- Version change: none (blank template) → 1.0.0
-- Modified principles: none (initial ratification)
-- Added sections: Core Principles I–V, Technical Constraints, Development Workflow, Governance
-- Removed sections: none
-- Follow-up TODOs: none
--->
-
 # Notula for Google Meet Constitution
 
 ## Core Principles
