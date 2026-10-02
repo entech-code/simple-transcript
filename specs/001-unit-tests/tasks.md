@@ -18,9 +18,9 @@ on its own.
 
 **Purpose**: Install the test runner and make `npm test` and type checking of tests work.
 
-- [ ] T001 Add `vitest` (version 5) to `devDependencies` and a `"test": "vitest run"` script in `package.json`, then run `npm install`
-- [ ] T002 [P] Create `vitest.config.ts` at the repository root: Node environment, include `tests/**/*.test.ts`, and set the time zone to UTC for the test run
-- [ ] T003 Create `tsconfig.test.json` extending `tsconfig.json` with `noEmit`, `rootDir` set to `.` and `include` covering `src/**/*.ts`, `tests/**/*.ts` and `vitest.config.ts`; change the `typecheck` script in `package.json` to run both `tsc --noEmit` and `tsc --noEmit -p tsconfig.test.json`
+- [X] T001 Add `vitest` (version 5) to `devDependencies` and a `"test": "vitest run"` script in `package.json`, then run `npm install`
+- [X] T002 [P] Create `vitest.config.mts` at the repository root: Node environment, include `tests/**/*.test.ts`, and set the time zone to UTC for the test run
+- [X] T003 Create `tsconfig.test.json` extending `tsconfig.json` with `noEmit`, `rootDir` set to `.` and `include` covering `src/**/*.ts`, `tests/**/*.ts` and `vitest.config.mts`; change the `typecheck` script in `package.json` to run both `tsc --noEmit` and `tsc --noEmit -p tsconfig.test.json`
 
 ---
 
@@ -28,7 +28,7 @@ on its own.
 
 **Purpose**: The message builder every parsing test depends on.
 
-- [ ] T004 Create `tests/helpers/proto-builder.ts`: a test-only builder that writes varint fields, text fields, raw byte fields and nested messages and returns a `Uint8Array`. It must not import from `src/utils/protobuf-encoder.ts`
+- [X] T004 Create `tests/helpers/proto-builder.ts`: a test-only builder that writes varint fields, text fields, raw byte fields and nested messages and returns a `Uint8Array`. It must not import from `src/utils/protobuf-encoder.ts`
 
 **Checkpoint**: `npm test` runs (with no tests yet) and `npm run typecheck` passes.
 
@@ -43,11 +43,18 @@ messages, are read correctly and that bad input never raises an error.
 `parseCaptionMessage` or the raw decoding in `parseCaptionMessageV2` makes at least one test fail.
 
 - [ ] T005 [US1] Create `tests/helpers/samples.ts` with the sample messages listed in `specs/001-unit-tests/data-model.md` (standard caption, caption with text in the alternate field, keepalive, caption v2 standard, caption v2 mostly text, caption v2 later revision, non-Latin captions, device update, chat message, malformed set), built with `tests/helpers/proto-builder.ts` to the structures documented in `src/utils/rtc-message-parser.ts`. Every name, sentence and identifier is invented; device paths use `spaces/<id>/devices/<n>` with a made-up id
-- [ ] T006 [P] [US1] Create `tests/protobuf-decoder.test.ts` covering `decodeProtobuf` and `decodeProtobufRaw` from `src/utils/protobuf-decoder.ts`: varint, text, nested and fixed-width fields, and empty, truncated and over-long-length input returning without an error
+- [X] T006 [P] [US1] Create `tests/protobuf-decoder.test.ts` covering `decodeProtobuf` and `decodeProtobufRaw` from `src/utils/protobuf-decoder.ts`: varint, text, nested and fixed-width fields, and empty, truncated and over-long-length input returning without an error
 - [ ] T007 [US1] Create `tests/caption-parser.test.ts` covering `parseCaptionMessage` and `parseCaptionMessageV2` from `src/utils/rtc-message-parser.ts`: device, message identity, revision and text for each channel; text in the alternate field; keepalive and unrelated messages returning `null`; Cyrillic and Japanese text unchanged; every malformed sample returning `null` without throwing. Silence `console.debug` in this file
 - [ ] T008 [US1] Add the `captions_v2` regression test to `tests/caption-parser.test.ts`: for the "mostly text" v2 sample, assert that `decodeProtobuf` flattens the nested content and that `parseCaptionMessageV2` still returns the correct text, message identity and revision (SC-002)
 - [ ] T009 [P] [US1] Create `tests/rtc-messages.test.ts` covering `parseDeviceInfo`, `parseDeviceCollection` and `parseChatMessage` from `src/utils/rtc-message-parser.ts` with the device and chat samples, plus malformed input returning no result without throwing
 - [ ] T010 [US1] Run `npm test` and `npm run typecheck`; fix failures in the test code. If a test exposes a defect in `src/`, stop and report it instead of changing production behaviour
+
+**Status (2026-10-02)**: partly done. Written and passing: `tests/protobuf-decoder.test.ts` (T006), the
+`captions` channel tests in `tests/caption-parser.test.ts` and the malformed-input tests for all five
+parsers in `tests/malformed-input.test.ts` (parts of T005, T007 and T009). Still open: the `captions_v2`
+content tests (T007, T008) and the participant and chat content tests (T009). They wait on the
+`captions_v2` parsing fix in `todo.md` and on real message shapes, because messages built from the
+documented structures alone are not read by the parsers.
 
 **Checkpoint**: User Story 1 is complete and independently verifiable.
 
