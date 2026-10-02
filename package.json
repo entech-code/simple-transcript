@@ -2,7 +2,7 @@
   "name": "meetscribe",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "npm@10.9.4",
+  "packageManager": "npm@11.19.0",
   "scripts": {
     "build": "rollup -c rollup.config.mjs",
     "dev": "rollup -c rollup.config.mjs --watch",
