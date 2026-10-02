@@ -7,10 +7,6 @@
   - Read the message with the raw decoder from the top instead of relying on the decoder's text-or-nested guess; add tests for each case and verify in a live call
   - Add the deferred content tests for `captions_v2`, participant and chat messages, which need the shape of a real message
 
-- [ ] Update Node from 22 to 24
-  - Node 24 is the active LTS; Node 22 leaves support around April 2027
-  - Change `node-version` in the release workflow, install Node 24 locally and update the version named in `tests/README.md`
-
 - [ ] Remove Notula from the branding and replace it with "Simple Transcript" as needed
   - Remove any ads or links to external products
   - All Notula-related features go too, including "Save to your Git repo via Notula"
@@ -40,6 +36,10 @@
   - A match in the transcript shows the matching line under the meeting
 
 ## Completed
+
+- [x] Update Node from 22 to 24 (2026-10-02)
+  - `release.yml`: `node-version: 24`; READMEs name Node 24
+  - `package.json`: `packageManager` is `npm@11.19.0`, the npm that ships with Node 24
 
 - [x] Make npm the unambiguous package manager (2026-10-02)
   - `package-lock.json` committed, `packageManager` field in `package.json`, stale `pnpm-lock.yaml` deleted

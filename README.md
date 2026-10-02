@@ -95,4 +95,4 @@ The only network request this extension makes is to `127.0.0.1` when you have tu
 npm test
 ```
 
-Runs the unit tests for message decoding, caption parsing and transcript export. They need Node 22 and no browser. See [tests/README.md](tests/README.md) for what is covered and how to add a sample message.
+Runs the unit tests for message decoding, caption parsing and transcript export. They need Node 24 and no browser. See [tests/README.md](tests/README.md) for what is covered and how to add a sample message.

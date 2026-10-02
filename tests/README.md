@@ -5,31 +5,31 @@ binary messages, reading captions from them, exporting transcripts and naming ex
 
 ## Running
 
-Needs Node 22.12 or later.
+Needs Node 24.21 or later.
 
 ```bash
 npm install
 npm test
 ```
 
-| Command | What it does |
-| --- | --- |
-| `npm test` | Runs every test once |
-| `npx vitest` | Watch mode: re-runs the affected tests when a file is saved |
-| `npx vitest run tests/caption-parser.test.ts` | Runs one file |
-| `npx vitest run -t "Cyrillic"` | Runs the tests whose name matches |
+| Command                                       | What it does                                                |
+| --------------------------------------------- | ----------------------------------------------------------- |
+| `npm test`                                    | Runs every test once                                        |
+| `npx vitest`                                  | Watch mode: re-runs the affected tests when a file is saved |
+| `npx vitest run tests/caption-parser.test.ts` | Runs one file                                               |
+| `npx vitest run -t "Cyrillic"`                | Runs the tests whose name matches                           |
 
 `npm run typecheck` also type-checks this folder.
 
 ## What is covered
 
-| File | Covers |
-| --- | --- |
-| `protobuf-decoder.test.ts` | `decodeProtobuf`, `decodeProtobufRaw`, `extractAllStrings` |
-| `caption-parser.test.ts` | Captions from the `captions` channel |
-| `malformed-input.test.ts` | Every parser returns nothing, and never throws, on bad input |
-| `transcript-export.test.ts` | Markdown, text, JSON, SRT and VTT exports |
-| `export-filename.test.ts` | The name of a downloaded transcript |
+| File                        | Covers                                                       |
+| --------------------------- | ------------------------------------------------------------ |
+| `protobuf-decoder.test.ts`  | `decodeProtobuf`, `decodeProtobufRaw`, `extractAllStrings`   |
+| `caption-parser.test.ts`    | Captions from the `captions` channel                         |
+| `malformed-input.test.ts`   | Every parser returns nothing, and never throws, on bad input |
+| `transcript-export.test.ts` | Markdown, text, JSON, SRT and VTT exports                    |
+| `export-filename.test.ts`   | The name of a downloaded transcript                          |
 
 Not covered yet: the content of `captions_v2`, participant and chat messages. Messages built from
 the structures documented in the code are not read by those parsers, because the decoder's
