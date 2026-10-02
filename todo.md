@@ -6,6 +6,18 @@
   - Cover protobuf decoding, caption parsing (`captions` and `captions_v2`), export formats and file naming, using captured Meet payloads as fixtures
   - Run with Vitest locally and in the release workflow before a build is published
 
+- [ ] Fix `captions_v2` parsing dropping captions
+  - `parseCaptionMessageV2` returns nothing when the message number or revision reaches 128, or the caption data reaches 128 bytes (about 75 characters of text), so long sentences and captions later in a call are lost
+  - Read the message with the raw decoder from the top instead of relying on the decoder's text-or-nested guess; add tests for each case and verify in a live call
+
+- [ ] Make npm the unambiguous package manager
+  - Commit `package-lock.json`, add a `packageManager` field to `package.json` and delete the stale `pnpm-lock.yaml`
+  - Switch the release workflow from `npm install` to `npm ci`
+
+- [ ] Update Node from 22 to 24
+  - Node 24 is the active LTS; Node 22 leaves support around April 2027
+  - Change `node-version` in the release workflow, install Node 24 locally and update the version named in `tests/README.md`
+
 - [ ] Remove Notula from the branding and replace it with "Simple Transcript" as needed
   - Remove any ads or links to external products
   - All Notula-related features go too, including "Save to your Git repo via Notula"

@@ -88,3 +88,11 @@ The server only answers a request whose `Origin` is a `chrome-extension://` one,
 All data stays in your browser. Nothing is sent to an external server: transcription is Google Meet's own caption system, no audio is recorded and no bot joins the call.
 
 The only network request this extension makes is to `127.0.0.1` when you have turned on saving to a Git repo, and that reaches Notula on your own machine and nothing else.
+
+## Testing
+
+```bash
+npm test
+```
+
+Runs the unit tests for message decoding, caption parsing and transcript export. They need Node 22 and no browser. See [tests/README.md](tests/README.md) for what is covered and how to add a sample message.
