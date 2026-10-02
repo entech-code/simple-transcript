@@ -68,13 +68,13 @@ exactly the expected output.
 **Independent Test**: `npm test` passes; changing the output of one export format makes only that
 format's test fail.
 
-- [ ] T011 [US2] Create `src/utils/export-filename.ts` exporting `exportFileName(title: string, startTime: number): string`, reproducing the current rule exactly: remove characters other than letters, digits, space, underscore and hyphen from the title and trim it, then a space, the start time as `YYYYMMDDHHmm` in local time, and `.md`
-- [ ] T012 [US2] In `src/content/floating-popup.ts`, change `download()` to set `a.download` from `exportFileName(title, startTime)` and remove the inline name-building lines; change nothing else in the file
-- [ ] T013 [P] [US2] In `src/popup/popup.ts`, change `download()` to set `a.download` from `exportFileName(title, startTime)` and remove the inline name-building lines; change nothing else in the file
-- [ ] T014 [US2] Add the sample transcript and its variants (standard with at least two invented speakers and one non-Latin entry, empty transcript, titles with invalid characters and an empty title) to `tests/helpers/samples.ts`, with fixed UTC times
-- [ ] T015 [US2] Create `tests/transcript-export.test.ts` covering `exportAsMarkdown`, `exportAsText`, `exportAsJson`, `exportAsSrt` and `exportAsVtt` from `src/utils/transcript-store.ts` against exact expected output, for the standard and the empty transcript, without notes. Force the `en-US` locale for `toLocaleTimeString` and `toLocaleDateString` inside the tests
-- [ ] T016 [P] [US2] Create `tests/export-filename.test.ts` covering `exportFileName` from `src/utils/export-filename.ts`: a normal title, a title with invalid characters, an empty title, and zero-padding of month, day, hour and minute
-- [ ] T017 [US2] Run `npm test`, `npm run typecheck` and `npm run build`; confirm `dist/` contains the same six bundles and nothing from `tests/`
+- [X] T011 [US2] Create `src/utils/export-filename.ts` exporting `exportFileName(title: string, startTime: number): string`, reproducing the current rule exactly: remove characters other than letters, digits, space, underscore and hyphen from the title and trim it, then a space, the start time as `YYYYMMDDHHmm` in local time, and `.md`
+- [X] T012 [US2] In `src/content/floating-popup.ts`, change `download()` to set `a.download` from `exportFileName(title, startTime)` and remove the inline name-building lines; change nothing else in the file
+- [X] T013 [P] [US2] In `src/popup/popup.ts`, change `download()` to set `a.download` from `exportFileName(title, startTime)` and remove the inline name-building lines; change nothing else in the file
+- [X] T014 [US2] Add the sample transcript and its variants (standard with at least two invented speakers and one non-Latin entry, empty transcript, titles with invalid characters and an empty title) to `tests/helpers/samples.ts`, with fixed UTC times
+- [X] T015 [US2] Create `tests/transcript-export.test.ts` covering `exportAsMarkdown`, `exportAsText`, `exportAsJson`, `exportAsSrt` and `exportAsVtt` from `src/utils/transcript-store.ts` against exact expected output, for the standard and the empty transcript, without notes. Force the `en-US` locale for `toLocaleTimeString` and `toLocaleDateString` inside the tests
+- [X] T016 [P] [US2] Create `tests/export-filename.test.ts` covering `exportFileName` from `src/utils/export-filename.ts`: a normal title, a title with invalid characters, an empty title, and zero-padding of month, day, hour and minute
+- [X] T017 [US2] Run `npm test`, `npm run typecheck` and `npm run build`; confirm `dist/` contains the same six bundles and nothing from `tests/`
 
 **Checkpoint**: User Stories 1 and 2 both pass.
 

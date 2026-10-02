@@ -1,4 +1,5 @@
 import { MSG, POPUP_PORT_NAME, type Meeting, type TranscriptEntry, type NoteEntry } from '../utils/types';
+import { exportFileName } from '../utils/export-filename';
 import type { PairStage, Snapshot as NotulaSnapshot } from '../background/notula-sync';
 import {
   AWAITING_POLL_MS,
@@ -217,10 +218,7 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const safeName = title.replace(/[^a-zA-Z0-9 _-]/g, '').trim();
-    const d = new Date(startTime);
-    const dateStr = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
-    a.download = `${safeName} ${dateStr}.md`;
+    a.download = exportFileName(title, startTime);
     a.click();
     URL.revokeObjectURL(url);
   }

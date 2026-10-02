@@ -1,8 +1,10 @@
 /**
- * Sample Meet messages for the parser tests, built to the structures
- * documented in src/utils/rtc-message-parser.ts. Every name, sentence and
- * identifier here is invented — nothing was recorded from a real call.
+ * Sample Meet messages and a sample transcript for the tests. Messages are
+ * built to the structures documented in src/utils/rtc-message-parser.ts.
+ * Every name, sentence and identifier here is invented — nothing was
+ * recorded from a real call.
  */
+import type { TranscriptEntry } from '../../src/utils/types';
 import { message, nested, text, varint } from './proto-builder';
 
 export const DEVICE_PATH = 'spaces/AbCdEfGhIj/devices/42';
@@ -57,4 +59,34 @@ export const malformedMessages: Array<{ name: string; data: Uint8Array }> = [
   { name: 'a number that never ends', data: Uint8Array.from([0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]) },
   { name: 'arbitrary bytes', data: Uint8Array.from([0xde, 0xad, 0xbe, 0xef, 0x00, 0x13, 0x37, 0xff, 0x80, 0x01]) },
   { name: 'all zero bytes', data: new Uint8Array(16) },
+];
+
+// --- Sample transcript for the export tests (all times are UTC) ---
+
+export const MEETING_TITLE = 'Entech Daily Meeting 1';
+export const MEETING_START = Date.UTC(2026, 2, 9, 14, 5, 0);
+
+export const sampleTranscript: TranscriptEntry[] = [
+  {
+    id: 'entry-1',
+    text: 'Thanks for joining, let us get started.',
+    speaker: 'Dana Whitfield',
+    timestamp: Date.UTC(2026, 2, 9, 14, 5, 7, 0),
+    messageId: `482913/@${DEVICE_PATH}`,
+    deviceId: `@${DEVICE_PATH}`,
+  },
+  {
+    id: 'entry-2',
+    text: 'Can we move the review to Thursday?',
+    speaker: 'Marcus Oyelaran',
+    timestamp: Date.UTC(2026, 2, 9, 14, 5, 19, 500),
+    deviceId: '@spaces/AbCdEfGhIj/devices/57',
+  },
+  {
+    id: 'entry-3',
+    text: CYRILLIC_TEXT,
+    speaker: 'Dana Whitfield',
+    timestamp: Date.UTC(2026, 2, 9, 14, 6, 2, 250),
+    deviceId: `@${DEVICE_PATH}`,
+  },
 ];
