@@ -23,13 +23,13 @@ jobs:
       tag: ${{ steps.version.outputs.tag }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Auto version and tag
         id: version
-        uses: entech-code/auto-version-tagging-action@fd3ec6c9309a0168e8f23782a1792564f3a6680e
+        uses: entech-code/auto-version-tagging-action@7615bc1048b4e526aa6403e39e38bc0dba86f981
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           majorVersion: 2
@@ -43,10 +43,10 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
 
@@ -77,7 +77,7 @@ jobs:
             -x "*.map"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.version.outputs.tag }}
           name: Notula for Google Meet ${{ needs.version.outputs.version }}
