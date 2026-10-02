@@ -2,17 +2,10 @@
 
 ## Planned
 
-- [ ] Automated unit tests for the logic that does not need a browser
-  - Cover protobuf decoding, caption parsing (`captions` and `captions_v2`), export formats and file naming, using captured Meet payloads as fixtures
-  - Run with Vitest locally and in the release workflow before a build is published
-
 - [ ] Fix `captions_v2` parsing dropping captions
   - `parseCaptionMessageV2` returns nothing when the message number or revision reaches 128, or the caption data reaches 128 bytes (about 75 characters of text), so long sentences and captions later in a call are lost
   - Read the message with the raw decoder from the top instead of relying on the decoder's text-or-nested guess; add tests for each case and verify in a live call
-
-- [ ] Make npm the unambiguous package manager
-  - Commit `package-lock.json`, add a `packageManager` field to `package.json` and delete the stale `pnpm-lock.yaml`
-  - Switch the release workflow from `npm install` to `npm ci`
+  - Add the deferred content tests for `captions_v2`, participant and chat messages, which need the shape of a real message
 
 - [ ] Update Node from 22 to 24
   - Node 24 is the active LTS; Node 22 leaves support around April 2027
@@ -47,6 +40,16 @@
   - A match in the transcript shows the matching line under the meeting
 
 ## Completed
+
+- [x] Make npm the unambiguous package manager
+  - `package-lock.json` committed, `packageManager` field in `package.json`, stale `pnpm-lock.yaml` deleted
+  - `release.yml`: installs with `npm ci`
+
+- [x] Automated unit tests for the logic that does not need a browser
+  - `tests/`: protobuf decoding, the `captions` parser, malformed input for every parser, the five export formats and export file naming, run with `npm test` (Vitest)
+  - `src/utils/export-filename.ts`: file name shared by both popups
+  - `release.yml`: runs the tests before the build
+  - Content tests for `captions_v2`, participant and chat messages are deferred to the `captions_v2` fix; samples are built in code, not captured
 
 - [x] If user opens up the same meeting at the same day, then proceed transcription in that meeting
   - `meeting-store.ts`: `findSameDayMeeting()` + `resumeMeeting()`
