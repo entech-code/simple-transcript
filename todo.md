@@ -1,4 +1,38 @@
-# MeetScribe Todo Items
+# Todo Items
+
+## Planned
+
+- [ ] Automated unit tests for the logic that does not need a browser
+  - Cover protobuf decoding, caption parsing (`captions` and `captions_v2`), export formats and file naming, using captured Meet payloads as fixtures
+  - Run with Vitest locally and in the release workflow before a build is published
+
+- [ ] Remove Notula from the branding and replace it with "Simple Transcript" as needed
+  - Remove any ads or links to external products
+  - All Notula-related features go too, including "Save to your Git repo via Notula"
+
+- [ ] Remove the Notes functionality
+  - It is not really useful and not part of the core functionality, which is the transcript
+  - Existing notes are dropped, not migrated or exported: the extension is new, so there is nothing worth preserving
+
+- [ ] Remove the language dropdown and take the caption language from Meet's own CC options
+  - The transcript follows whatever language is set in Meet's caption settings, so there is one place to change it
+
+- [ ] Show the name of the meeting instead of the unique id like `gim-mxzg-xdx`
+  - In the meetings list a call is titled with its Meet code unless it was renamed by hand, which makes meetings hard to tell apart
+
+  ![Meetings list showing Meet codes as titles](assets/todo-meeting-code-titles.png)
+
+- [ ] Name saved transcript files like `Transcript - Entech Daily Meeting 1 - 2026-04-23 14-23.md`
+  - Format is `Transcript - <meeting title> - <YYYY>-<MM>-<DD> <HH>-<mm>.md`, so files group by meeting and sort by date within it
+
+- [ ] Error logging and reporting for when captions are not coming through
+  - A "Something's wrong?" action in the popup builds a diagnostic report (versions, channel names, message counts, errors) and opens a pre-filled GitHub issue, with a copy button as fallback
+  - Enable Issues on the repo and add an issue template that tells users what to include
+  - The report must not contain transcript text, participant names or meeting codes, and nothing is sent automatically
+
+- [ ] Search across saved meetings
+  - A search box above the meetings list filters by title, attendee name and transcript text
+  - A match in the transcript shows the matching line under the meeting
 
 ## Completed
 
