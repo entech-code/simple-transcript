@@ -14,6 +14,10 @@
   - Commit `package-lock.json`, add a `packageManager` field to `package.json` and delete the stale `pnpm-lock.yaml`
   - Switch the release workflow from `npm install` to `npm ci`
 
+- [ ] Update Node from 22 to 24
+  - Node 24 is the active LTS; Node 22 leaves support around April 2027
+  - Change `node-version` in the release workflow, install Node 24 locally and update the version named in `tests/README.md`
+
 - [ ] Remove Notula from the branding and replace it with "Simple Transcript" as needed
   - Remove any ads or links to external products
   - All Notula-related features go too, including "Save to your Git repo via Notula"
