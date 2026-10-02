@@ -4,7 +4,7 @@
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, quickstart.md
 
-**Tests**: This feature *is* the test suite, so the test files are the implementation tasks.
+**Tests**: This feature _is_ the test suite, so the test files are the implementation tasks.
 
 **Organization**: Tasks are grouped by user story so each story can be implemented and verified
 on its own.
@@ -18,9 +18,9 @@ on its own.
 
 **Purpose**: Install the test runner and make `npm test` and type checking of tests work.
 
-- [X] T001 Add `vitest` (version 5) to `devDependencies` and a `"test": "vitest run"` script in `package.json`, then run `npm install`
-- [X] T002 [P] Create `vitest.config.mts` at the repository root: Node environment, include `tests/**/*.test.ts`, and set the time zone to UTC for the test run
-- [X] T003 Create `tsconfig.test.json` extending `tsconfig.json` with `noEmit`, `rootDir` set to `.` and `include` covering `src/**/*.ts`, `tests/**/*.ts` and `vitest.config.mts`; change the `typecheck` script in `package.json` to run both `tsc --noEmit` and `tsc --noEmit -p tsconfig.test.json`
+- [x] T001 Add `vitest` (version 5) to `devDependencies` and a `"test": "vitest run"` script in `package.json`, then run `npm install`
+- [x] T002 [P] Create `vitest.config.mts` at the repository root: Node environment, include `tests/**/*.test.ts`, and set the time zone to UTC for the test run
+- [x] T003 Create `tsconfig.test.json` extending `tsconfig.json` with `noEmit`, `rootDir` set to `.` and `include` covering `src/**/*.ts`, `tests/**/*.ts` and `vitest.config.mts`; change the `typecheck` script in `package.json` to run both `tsc --noEmit` and `tsc --noEmit -p tsconfig.test.json`
 
 ---
 
@@ -28,7 +28,7 @@ on its own.
 
 **Purpose**: The message builder every parsing test depends on.
 
-- [X] T004 Create `tests/helpers/proto-builder.ts`: a test-only builder that writes varint fields, text fields, raw byte fields and nested messages and returns a `Uint8Array`. It must not import from `src/utils/protobuf-encoder.ts`
+- [x] T004 Create `tests/helpers/proto-builder.ts`: a test-only builder that writes varint fields, text fields, raw byte fields and nested messages and returns a `Uint8Array`. It must not import from `src/utils/protobuf-encoder.ts`
 
 **Checkpoint**: `npm test` runs (with no tests yet) and `npm run typecheck` passes.
 
@@ -43,7 +43,7 @@ messages, are read correctly and that bad input never raises an error.
 `parseCaptionMessage` or the raw decoding in `parseCaptionMessageV2` makes at least one test fail.
 
 - [ ] T005 [US1] Create `tests/helpers/samples.ts` with the sample messages listed in `specs/001-unit-tests/data-model.md` (standard caption, caption with text in the alternate field, keepalive, caption v2 standard, caption v2 mostly text, caption v2 later revision, non-Latin captions, device update, chat message, malformed set), built with `tests/helpers/proto-builder.ts` to the structures documented in `src/utils/rtc-message-parser.ts`. Every name, sentence and identifier is invented; device paths use `spaces/<id>/devices/<n>` with a made-up id
-- [X] T006 [P] [US1] Create `tests/protobuf-decoder.test.ts` covering `decodeProtobuf` and `decodeProtobufRaw` from `src/utils/protobuf-decoder.ts`: varint, text, nested and fixed-width fields, and empty, truncated and over-long-length input returning without an error
+- [x] T006 [P] [US1] Create `tests/protobuf-decoder.test.ts` covering `decodeProtobuf` and `decodeProtobufRaw` from `src/utils/protobuf-decoder.ts`: varint, text, nested and fixed-width fields, and empty, truncated and over-long-length input returning without an error
 - [ ] T007 [US1] Create `tests/caption-parser.test.ts` covering `parseCaptionMessage` and `parseCaptionMessageV2` from `src/utils/rtc-message-parser.ts`: device, message identity, revision and text for each channel; text in the alternate field; keepalive and unrelated messages returning `null`; Cyrillic and Japanese text unchanged; every malformed sample returning `null` without throwing. Silence `console.debug` in this file
 - [ ] T008 [US1] Add the `captions_v2` regression test to `tests/caption-parser.test.ts`: for the "mostly text" v2 sample, assert that `decodeProtobuf` flattens the nested content and that `parseCaptionMessageV2` still returns the correct text, message identity and revision (SC-002)
 - [ ] T009 [P] [US1] Create `tests/rtc-messages.test.ts` covering `parseDeviceInfo`, `parseDeviceCollection` and `parseChatMessage` from `src/utils/rtc-message-parser.ts` with the device and chat samples, plus malformed input returning no result without throwing
@@ -68,13 +68,13 @@ exactly the expected output.
 **Independent Test**: `npm test` passes; changing the output of one export format makes only that
 format's test fail.
 
-- [X] T011 [US2] Create `src/utils/export-filename.ts` exporting `exportFileName(title: string, startTime: number): string`, reproducing the current rule exactly: remove characters other than letters, digits, space, underscore and hyphen from the title and trim it, then a space, the start time as `YYYYMMDDHHmm` in local time, and `.md`
-- [X] T012 [US2] In `src/content/floating-popup.ts`, change `download()` to set `a.download` from `exportFileName(title, startTime)` and remove the inline name-building lines; change nothing else in the file
-- [X] T013 [P] [US2] In `src/popup/popup.ts`, change `download()` to set `a.download` from `exportFileName(title, startTime)` and remove the inline name-building lines; change nothing else in the file
-- [X] T014 [US2] Add the sample transcript and its variants (standard with at least two invented speakers and one non-Latin entry, empty transcript, titles with invalid characters and an empty title) to `tests/helpers/samples.ts`, with fixed UTC times
-- [X] T015 [US2] Create `tests/transcript-export.test.ts` covering `exportAsMarkdown`, `exportAsText`, `exportAsJson`, `exportAsSrt` and `exportAsVtt` from `src/utils/transcript-store.ts` against exact expected output, for the standard and the empty transcript, without notes. Force the `en-US` locale for `toLocaleTimeString` and `toLocaleDateString` inside the tests
-- [X] T016 [P] [US2] Create `tests/export-filename.test.ts` covering `exportFileName` from `src/utils/export-filename.ts`: a normal title, a title with invalid characters, an empty title, and zero-padding of month, day, hour and minute
-- [X] T017 [US2] Run `npm test`, `npm run typecheck` and `npm run build`; confirm `dist/` contains the same six bundles and nothing from `tests/`
+- [x] T011 [US2] Create `src/utils/export-filename.ts` exporting `exportFileName(title: string, startTime: number): string`, reproducing the current rule exactly: remove characters other than letters, digits, space, underscore and hyphen from the title and trim it, then a space, the start time as `YYYYMMDDHHmm` in local time, and `.md`
+- [x] T012 [US2] In `src/content/floating-popup.ts`, change `download()` to set `a.download` from `exportFileName(title, startTime)` and remove the inline name-building lines; change nothing else in the file
+- [x] T013 [P] [US2] In `src/popup/popup.ts`, change `download()` to set `a.download` from `exportFileName(title, startTime)` and remove the inline name-building lines; change nothing else in the file
+- [x] T014 [US2] Add the sample transcript and its variants (standard with at least two invented speakers and one non-Latin entry, empty transcript, titles with invalid characters and an empty title) to `tests/helpers/samples.ts`, with fixed UTC times
+- [x] T015 [US2] Create `tests/transcript-export.test.ts` covering `exportAsMarkdown`, `exportAsText`, `exportAsJson`, `exportAsSrt` and `exportAsVtt` from `src/utils/transcript-store.ts` against exact expected output, for the standard and the empty transcript, without notes. Force the `en-US` locale for `toLocaleTimeString` and `toLocaleDateString` inside the tests
+- [x] T016 [P] [US2] Create `tests/export-filename.test.ts` covering `exportFileName` from `src/utils/export-filename.ts`: a normal title, a title with invalid characters, an empty title, and zero-padding of month, day, hour and minute
+- [x] T017 [US2] Run `npm test`, `npm run typecheck` and `npm run build`; confirm `dist/` contains the same six bundles and nothing from `tests/`
 
 **Checkpoint**: User Stories 1 and 2 both pass.
 
@@ -82,11 +82,11 @@ format's test fail.
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T018 In `.github/workflows/release.yml`, change `node-version` from 20 to 22 and add a `Test` step running `npm test` after the `Typecheck` step and before `Build` (FR-008)
-- [ ] T019 [P] Create `tests/README.md` explaining how to run the tests and how to add a new sample message with its expected result, including how to replace real names, speech and identifiers with invented values (FR-007)
-- [ ] T020 [P] Add a short "Testing" section to `README.md` with the `npm test` command and a link to `tests/README.md`
-- [ ] T021 Run steps 1 to 6 of `specs/001-unit-tests/quickstart.md`, including the deliberate-break checks for both caption channels and each export format, and revert every deliberate break
-- [ ] T022 Manual check by the maintainer (step 7 of `specs/001-unit-tests/quickstart.md`): in a live Google Meet call, export a meeting from the floating popup and from the toolbar popup and confirm the file name is `<title> <YYYYMMDDHHmm>.md` as before
+- [x] T018 In `.github/workflows/release.yml`, change `node-version` from 20 to 22 and add a `Test` step running `npm test` after the `Typecheck` step and before `Build` (FR-008)
+- [x] T019 [P] Create `tests/README.md` explaining how to run the tests and how to add a new sample message with its expected result, including how to replace real names, speech and identifiers with invented values (FR-007)
+- [x] T020 [P] Add a short "Testing" section to `README.md` with the `npm test` command and a link to `tests/README.md`
+- [x] T021 Run steps 1 to 6 of `specs/001-unit-tests/quickstart.md`, including the deliberate-break checks for both caption channels and each export format, and revert every deliberate break
+- [x] T022 Manual check by the maintainer (step 7 of `specs/001-unit-tests/quickstart.md`): in a live Google Meet call, export a meeting from the floating popup and from the toolbar popup and confirm the file name is `<title> <YYYYMMDDHHmm>.md` as before
 
 ---
 
