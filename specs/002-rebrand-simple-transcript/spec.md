@@ -121,6 +121,10 @@ confirm every meeting is listed and opens, then hold a call and export it.
   policy, the store listing text, the promotion notes and the screenshot tooling), the name
   "Notula" MUST be replaced with "Simple Transcript". Passages that describe the removed Notula
   feature, and links to Notula, MUST be deleted. No other rewriting is done in this feature.
+  The two website pages that only redirect to notula.org are deleted, since they have no content
+  of their own and are not published from this repository. The screenshot tooling and its
+  generated images are deleted too: they are built around the Notula feature and show the old
+  interface.
 - **FR-010a**: Releases published from the repository MUST carry the new name, in both the
   release title and the name of the packaged file.
 - **FR-010b**: The README MUST NOT link to the "Notula for Google Meet" store listing. A link to
