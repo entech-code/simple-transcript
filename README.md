@@ -1,4 +1,4 @@
-# Simple Transcript: Copy & Save for Google Meet
+# Simple Transcript – Copy & Save for Google Meet
 
 Chrome extension for live Google Meet transcription with meeting history.
 

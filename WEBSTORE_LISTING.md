@@ -1,7 +1,7 @@
 # Chrome Web Store Listing - Simple Transcript
 
 ## Title
-Simple Transcript: Copy & Save for Google Meet
+Simple Transcript – Copy & Save for Google Meet
 
 ## Summary (132 chars max)
 Live Google Meet transcription with speaker names. Copy or save any call as Markdown, text, JSON or subtitles.

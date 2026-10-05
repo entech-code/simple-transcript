@@ -53,7 +53,7 @@
   - A meeting is empty when it has no transcript lines; notes already in storage are left there, unread
 
 - [x] Remove Notula from the branding and replace it with "Simple Transcript" (2026-10-05)
-  - Named "Simple Transcript: Copy & Save for Google Meet"; "Simple Transcript" in the toolbar tooltip, panel title and popup header
+  - Named "Simple Transcript – Copy & Save for Google Meet"; "Simple Transcript" in the toolbar tooltip, panel title and popup header
   - Notula save feature, pairing screens, promo link and the only network code removed; five modules deleted
   - README, store listing text, release names and constitution updated; the notula.org redirect pages and the screenshot tooling deleted
 
