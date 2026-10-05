@@ -42,7 +42,6 @@ import {
   updateNote,
   deleteNote,
 } from '../utils/meeting-store';
-import * as notula from './notula-sync';
 
 // --- Per-session state ---
 
@@ -207,29 +206,19 @@ sessionStateReady.then(async () => {
 
 function updateExtensionIcon(isRecording: boolean): void {
   chrome.action.setTitle({
-    title: isRecording ? 'Notula - Recording' : 'Notula',
+    title: isRecording ? 'Simple Transcript - Recording' : 'Simple Transcript',
   });
 }
 
-// --- Notula ---
+// --- Startup ---
 
-notula.configure((message) => broadcastToPopup(message));
-
-// An update over MeetScribe is told once that the name changed; a fresh
-// install is never told about a name it never used.
-chrome.runtime.onInstalled.addListener((details) => {
-  if (details.reason === 'update') void notula.noteUpdate(details.previousVersion);
+chrome.runtime.onInstalled.addListener(() => {
   // An update or a reload empties session storage the same way a browser start does.
   void sessionStateReady.then(sweepOrphans);
 });
 
-// The browser started: one of the three occasions the connection is checked,
-// and the moment a queue left over from yesterday goes out.
 chrome.runtime.onStartup.addListener(() => {
-  void sessionStateReady.then(() => {
-    sweepOrphans();
-    return notula.check();
-  });
+  void sessionStateReady.then(sweepOrphans);
 });
 
 // --- Dynamic popup routing ---
@@ -313,21 +302,6 @@ chrome.runtime.onConnect.addListener((port) => {
       meeting,
       entries: snapshotEntries,
       notes: meeting?.notes ?? [],
-    });
-
-    // The panel opened: what Notula is to it right now, and the check that
-    // may change the answer a moment later.
-    void sessionStateReady.then(async () => {
-      try {
-        port.postMessage({ type: 'notula_snapshot', snapshot: await notula.snapshot() });
-      } catch { /* port gone */ }
-      void notula.check();
-    });
-
-    port.onMessage.addListener((message: { type?: unknown }) => {
-      if (typeof message?.type === 'string' && message.type.startsWith('notula_')) {
-        void notula.handle(message as { type: string } & Record<string, unknown>);
-      }
     });
 
     port.onDisconnect.addListener(() => {
@@ -426,7 +400,7 @@ function ensureMeeting(sessionId: string, meetingCode?: string): string {
 /**
  * The end of a meeting. One that ends with nothing in it - a call joined by
  * mistake, or one whose captions never came - is dropped rather than kept as
- * an empty card; the rest are closed and offered to Notula.
+ * an empty card; the rest are closed.
  */
 function finishMeeting(meetingId: string, sessionId?: string): void {
   const meeting = getMeeting(meetingId);
@@ -437,7 +411,6 @@ function finishMeeting(meetingId: string, sessionId?: string): void {
   }
   endMeeting(meetingId);
   broadcastToPopup({ type: 'meeting_ended', meetingId }, sessionId);
-  void notula.onMeetingEnded(meetingId);
 }
 
 /** The grace ran out with the tab still gone: the meeting ends and the session is forgotten. */
@@ -971,9 +944,6 @@ async function handleMessage(
     }
 
     default:
-      if (typeof message.type === 'string' && message.type.startsWith('notula_')) {
-        await notula.handle(message as unknown as { type: string } & Record<string, unknown>);
-      }
       break;
   }
 

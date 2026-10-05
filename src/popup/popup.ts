@@ -1,19 +1,5 @@
-import { MSG, POPUP_PORT_NAME, type Meeting, type TranscriptEntry, type NoteEntry } from '../utils/types';
+import { MSG, type Meeting, type TranscriptEntry, type NoteEntry } from '../utils/types';
 import { exportFileName } from '../utils/export-filename';
-import type { PairStage, Snapshot as NotulaSnapshot } from '../background/notula-sync';
-import {
-  AWAITING_POLL_MS,
-  notulaUrl,
-  brainLink,
-  defaultLine,
-  renderConnect,
-  renderOffers,
-  renderScreen,
-  liveLine,
-  saveLine,
-  stageAfter,
-} from '../utils/notula-ui';
-import type { NotulaContext, UiStage } from '../utils/notula-ui';
 
 (function () {
   const contentEl = document.getElementById('content')!;
@@ -24,125 +10,8 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
   const headerActions = document.getElementById('header-actions')!;
   const detailCopyBtn = document.getElementById('detail-copy') as HTMLButtonElement;
   const detailExportBtn = document.getElementById('detail-export') as HTMLButtonElement;
-  let currentView: 'list' | 'detail' = 'list';
   let viewingMeetingId: string | null = null;
   let viewingMeetingTitle: string = '';
-
-  // --- Notula ---
-
-  const connectOffer = document.getElementById('connect-offer') as HTMLButtonElement;
-  const connectWait = document.getElementById('connect-wait')!;
-  const offersEl = document.getElementById('offers')!;
-  const screenEl = document.getElementById('screen')!;
-  const defaultEl = document.getElementById('default-line')!;
-  let notulaSnapshot: NotulaSnapshot | null = null;
-  let pairStage: UiStage = 'idle';
-  let pairCode = '';
-  let awaitingTimer: ReturnType<typeof setInterval> | null = null;
-  let screenShown = false;
-
-  // The same port the panel uses, for the same messages. The meeting traffic
-  // on it is for the panel and is ignored here.
-  const port = chrome.runtime.connect(undefined, { name: POPUP_PORT_NAME });
-  const notulaCtx: NotulaContext = {
-    snapshot: () => notulaSnapshot,
-    send: (message) => {
-      try {
-        port.postMessage(message);
-      } catch { /* service worker restarting */ }
-    },
-    container: document.body,
-    surface: 'popup',
-  };
-
-  function startAwaiting(): void {
-    if (awaitingTimer) return;
-    awaitingTimer = setInterval(() => {
-      const state = notulaSnapshot?.status.state ?? 'notPaired';
-      notulaCtx.send({ type: state === 'notPaired' ? 'notula_pair_start' : 'notula_check' });
-    }, AWAITING_POLL_MS);
-  }
-
-  function stopAwaiting(): void {
-    if (awaitingTimer) clearInterval(awaitingTimer);
-    awaitingTimer = null;
-  }
-
-  function leaveScreen(): void {
-    if (pairStage === 'pairing') notulaCtx.send({ type: 'notula_pair_cancel' });
-    pairStage = 'idle';
-    stopAwaiting();
-    renderNotula();
-  }
-
-  function renderNotula(): void {
-    renderConnect(notulaCtx, connectOffer, connectWait, pairStage);
-    renderOffers(notulaCtx, offersEl);
-    defaultEl.innerHTML = '';
-    const line = defaultLine(notulaCtx);
-    if (line) defaultEl.appendChild(line);
-    defaultEl.hidden = line === null;
-    const show = renderScreen(notulaCtx, screenEl, pairStage, pairCode, {
-      later: leaveScreen,
-      get: () => {
-        void chrome.tabs.create({ url: notulaUrl('/', 'popup', 'get') });
-        pairStage = 'awaiting';
-        startAwaiting();
-        renderNotula();
-      },
-      awaiting: startAwaiting,
-    });
-    const listing = currentView === 'list';
-    if (show) {
-      for (const view of [contentEl, footerEl, offersEl, defaultEl]) view.style.display = 'none';
-      screenShown = true;
-    } else if (screenShown) {
-      screenShown = false;
-      if (pairStage === 'idle' && notulaSnapshot?.status.state !== 'noWorkspace') stopAwaiting();
-      contentEl.style.display = '';
-      offersEl.style.display = listing ? '' : 'none';
-      defaultEl.style.display = listing ? '' : 'none';
-      footerEl.style.display = 'flex';
-      if (listing) footerLeft.innerHTML = brainLink('popup');
-    }
-    if (listing && !show) void loadMeetings();
-  }
-
-  port.onMessage.addListener((message: { type?: string } & Record<string, unknown>) => {
-    switch (message.type) {
-      case 'notula_snapshot':
-        notulaSnapshot = message.snapshot as NotulaSnapshot;
-        if (notulaSnapshot.status.state === 'paired' && pairStage === 'awaiting') {
-          pairStage = 'idle';
-          stopAwaiting();
-        }
-        renderNotula();
-        break;
-      case 'notula_save':
-        if (notulaSnapshot) {
-          if (message.save) notulaSnapshot.saves[String(message.meetingId)] = message.save as NotulaSnapshot['saves'][string];
-          else delete notulaSnapshot.saves[String(message.meetingId)];
-        }
-        if (currentView === 'list') void loadMeetings();
-        break;
-      case 'notula_pair':
-        pairStage = stageAfter(pairStage, message.stage as PairStage);
-        if (pairStage === 'pairing') pairCode = String(message.code ?? '');
-        if (pairStage !== 'awaiting') stopAwaiting();
-        renderNotula();
-        break;
-      default:
-        break;
-    }
-  });
-
-  connectOffer.addEventListener('click', () => {
-    connectOffer.disabled = true;
-    notulaCtx.send({ type: 'notula_pair_start' });
-    setTimeout(() => {
-      connectOffer.disabled = false;
-    }, 4000);
-  });
 
   function escapeHtml(str: string): string {
     const div = document.createElement('div');
@@ -157,28 +26,21 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
   });
 
   function showList(): void {
-    currentView = 'list';
-    headerTitle.textContent = 'Notula for Google Meet';
+    headerTitle.textContent = 'Simple Transcript';
     btnBack.style.display = 'none';
     headerActions.style.display = 'none';
-    footerEl.style.display = 'flex';
-    footerLeft.innerHTML = brainLink('popup');
-    offersEl.style.display = '';
-    defaultEl.style.display = '';
+    footerEl.style.display = 'none';
     viewingMeetingId = null;
     viewingMeetingTitle = '';
     loadMeetings();
   }
 
   function showDetail(meetingId: string, title: string): void {
-    currentView = 'detail';
     viewingMeetingId = meetingId;
     viewingMeetingTitle = title;
     headerTitle.textContent = title;
     btnBack.style.display = 'block';
     headerActions.style.display = 'flex';
-    offersEl.style.display = 'none';
-    defaultEl.style.display = 'none';
     loadDetail(meetingId);
   }
 
@@ -301,10 +163,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
     const titleEl = item.querySelector('.meeting-item-title') as HTMLElement;
     const actionsEl = item.querySelector('.meeting-item-actions') as HTMLElement;
 
-    // Under the name: where the call went, or where it will go while it is still on.
-    const line = isLive ? liveLine(notulaCtx, m) : saveLine(notulaCtx, m);
-    if (line) item.appendChild(line);
-
     // --- Action button handlers ---
 
     actionsEl.addEventListener('click', (e) => {
@@ -408,7 +266,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
     item.addEventListener('click', (e) => {
       if ((e.target as HTMLElement).getAttribute('contenteditable') === 'true') return;
       if ((e.target as HTMLElement).closest('.meeting-item-actions')) return;
-      if ((e.target as HTMLElement).closest('.where')) return;
 
       if (isLive) {
         // Focus the Meet tab
