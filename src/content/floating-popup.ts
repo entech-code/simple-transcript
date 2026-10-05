@@ -1,5 +1,4 @@
 import { MSG, POPUP_PORT_NAME, type TranscriptEntry, type Meeting } from '../utils/types';
-import { LANGUAGE_CODES } from '../utils/constants';
 import { exportAsMarkdown } from '../utils/transcript-store';
 import { exportFileName } from '../utils/export-filename';
 
@@ -100,7 +99,6 @@ import { exportFileName } from '../utils/export-filename';
     </div>
     <div class="body" id="body">
       <div class="toolbar" id="toolbar">
-        <select class="lang-select" id="lang-select"></select>
         <button class="toolbar-action" id="btn-copy" title="Copy as Markdown"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         <button class="toolbar-action" id="btn-export" title="Export transcript"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
       </div>
@@ -144,7 +142,6 @@ import { exportFileName } from '../utils/export-filename';
   const detailEl = shadow.getElementById('detail-view')!;
   const footerLeft = shadow.getElementById('footer-left')!;
   const footerRight = shadow.getElementById('footer-right')!;
-  const langSelect = shadow.getElementById('lang-select') as HTMLSelectElement;
   const btnMinimize = shadow.getElementById('btn-minimize')!;
   const btnClose = shadow.getElementById('btn-close')!;
   const btnMeetings = shadow.getElementById('btn-meetings')!;
@@ -172,73 +169,6 @@ import { exportFileName } from '../utils/export-filename';
       e.stopPropagation();
     }, true);
   }
-
-  // --- Language selector: build with recent languages at top ---
-
-  let recentLanguages: string[] = [];
-
-  async function buildLanguageSelector(): Promise<void> {
-    // Load recent languages and last selected
-    try {
-      const stored = await chrome.storage.local.get(['recentLanguages', 'settings']);
-      recentLanguages = stored.recentLanguages ?? [];
-      // The language this call is remembered in, else the one picked last.
-      const code = location.pathname.match(/^\/([a-z]{3}-[a-z]{4}-[a-z]{3})$/)?.[1];
-      const lastLang = (code && stored.settings?.languageByCode?.[code]) || stored.settings?.language || '';
-
-      langSelect.innerHTML = '';
-
-      // Default placeholder
-      const defaultOpt = document.createElement('option');
-      defaultOpt.value = '';
-      defaultOpt.textContent = 'Language';
-      langSelect.appendChild(defaultOpt);
-
-      const allLangs = Object.values(LANGUAGE_CODES);
-
-      // Recent languages section
-      if (recentLanguages.length > 0) {
-        const recentGroup = document.createElement('optgroup');
-        recentGroup.label = 'Recent';
-        for (const code of recentLanguages) {
-          const lang = allLangs.find(l => l.code === code);
-          if (lang) {
-            const opt = document.createElement('option');
-            opt.value = lang.code;
-            opt.textContent = lang.name;
-            recentGroup.appendChild(opt);
-          }
-        }
-        langSelect.appendChild(recentGroup);
-
-        // All languages section
-        const allGroup = document.createElement('optgroup');
-        allGroup.label = 'All Languages';
-        for (const { code, name } of allLangs) {
-          const opt = document.createElement('option');
-          opt.value = code;
-          opt.textContent = name;
-          allGroup.appendChild(opt);
-        }
-        langSelect.appendChild(allGroup);
-      } else {
-        // No recent — flat list
-        for (const { code, name } of allLangs) {
-          const opt = document.createElement('option');
-          opt.value = code;
-          opt.textContent = name;
-          langSelect.appendChild(opt);
-        }
-      }
-
-      // Restore last selected
-      if (lastLang) {
-        langSelect.value = lastLang;
-      }
-    } catch { /* silent */ }
-  }
-
-  buildLanguageSelector();
 
   // --- Live title rename (double-click) ---
 
@@ -370,15 +300,6 @@ import { exportFileName } from '../utils/export-filename';
 
   // --- Event handlers ---
 
-  langSelect.addEventListener('change', () => {
-    const lang = langSelect.value;
-    if (lang) {
-      chrome.runtime.sendMessage({ type: MSG.LANGUAGE_CHANGE, language: lang }).catch(() => {});
-      // Rebuild selector after a short delay to update recent list
-      setTimeout(buildLanguageSelector, 500);
-    }
-  });
-
   btnMinimize.addEventListener('click', () => {
     isMinimized = !isMinimized;
     bodyEl.style.display = isMinimized ? 'none' : '';
@@ -484,7 +405,6 @@ import { exportFileName } from '../utils/export-filename';
     meetingsEl.style.display = view === 'meetings' ? '' : 'none';
     detailEl.style.display = view === 'meeting-detail' ? '' : 'none';
     toolbarEl.style.display = (view === 'live' || view === 'meeting-detail') ? '' : 'none';
-    langSelect.style.display = view === 'live' ? '' : 'none';
     backNav.style.display = (view === 'live' || view === 'meeting-detail') ? '' : 'none';
     // The list has nothing to say in a footer; the live and detail views count lines there.
     footerEl.style.display = view === 'meetings' ? 'none' : '';
@@ -516,11 +436,6 @@ import { exportFileName } from '../utils/export-filename';
   // --- Toggle popup visibility (from toolbar icon) ---
 
   chrome.runtime.onMessage.addListener((message): undefined => {
-    // The language the service worker pushed for this call, so the selector says what Meet was told.
-    if (message.type === MSG.LANGUAGE_CHANGE && typeof message.language === 'string') {
-      langSelect.value = message.language;
-      return undefined;
-    }
     if (message.type === MSG.TOGGLE_POPUP) {
       isHidden = !isHidden;
       host.style.display = isHidden ? 'none' : '';
@@ -996,10 +911,6 @@ import { exportFileName } from '../utils/export-filename';
             renderPlaceholder();
             break;
 
-          case 'language_set':
-            langSelect.value = message.language;
-            break;
-
           case 'meeting_snapshot':
             currentMeeting = message.meeting;
             entries = message.entries ?? [];
@@ -1412,34 +1323,11 @@ import { exportFileName } from '../utils/export-filename';
       .toolbar {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         gap: 6px;
         padding: 6px 10px;
         border-bottom: 1px solid var(--border);
         flex-shrink: 0;
-      }
-
-      .lang-select {
-        flex: 1;
-        min-width: 0;
-        height: 26px;
-        padding: 0 8px;
-        font: inherit;
-        font-size: 11px;
-        color: var(--text-dim);
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        outline: none;
-        cursor: pointer;
-      }
-
-      .lang-select:focus {
-        border-color: var(--accent);
-      }
-
-      .lang-select option {
-        color: var(--text);
-        background: var(--bg-raised);
       }
 
       .toolbar-action {

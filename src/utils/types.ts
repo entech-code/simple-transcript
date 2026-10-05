@@ -57,9 +57,6 @@ export const MSG = {
   GET_SETTINGS: 'get_settings',
   CLEAR_TRANSCRIPT: 'clear_transcript',
   INTERCEPTOR_READY: 'interceptor_ready',
-  LANGUAGE_CHANGE: 'language_change',
-  LANGUAGE_OBSERVED: 'language_observed',
-  CAPTIONS_ENABLING: 'captions_enabling',
   GET_MEETINGS: 'get_meetings',
   RENAME_MEETING: 'rename_meeting',
   GET_CURRENT_MEETING: 'get_current_meeting',
@@ -83,16 +80,11 @@ export interface ExtensionMessage {
 export interface Settings {
   enabled: boolean;
   dedupeWindowMs: number;
-  /** The caption language picked last, for a call with no memory of its own. */
-  language: string;
-  /** The caption language picked during a call, by its meeting code: a recurring meeting is in the same language every time. */
-  languageByCode?: Record<string, string>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   enabled: true,
   dedupeWindowMs: 5000,
-  language: 'en',
 };
 
 export const KEEPALIVE_PORT_NAME = 'meet-keepalive';

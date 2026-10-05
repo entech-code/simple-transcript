@@ -8,8 +8,7 @@
 - The extension MUST NOT send data to, or request data from, any server other than Google Meet's
   own.
 - Requests to Google Meet made by the extension itself, from inside the Meet page, MUST be limited
-  to what transcription needs. Today these are setting the caption language and refreshing the
-  participant list.
+  to what transcription needs. Today the only one is refreshing the participant list.
 - The extension MUST NOT record audio or video and MUST NOT join a call as a participant.
   Transcript text comes only from Google Meet's own caption system.
 - Analytics, telemetry and remote error reporting are prohibited.
@@ -114,4 +113,4 @@ only checks there are.
   confirm compliance. A deviation MUST be recorded in the plan with its justification and the
   simpler alternative that was rejected.
 
-**Version**: 1.1.1 | **Ratified**: 2026-10-01 | **Last Amended**: 2026-10-05
+**Version**: 1.1.2 | **Ratified**: 2026-10-01 | **Last Amended**: 2026-10-05

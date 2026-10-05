@@ -17,7 +17,7 @@ When you join a Google Meet call, the extension starts transcribing immediately.
 KEY FEATURES
 
 - Real-time transcription with automatic speaker identification
-- 31 languages: English, Spanish, French, German, Japanese, Korean, Chinese, Russian, Arabic, Portuguese and more. The language you pick is set in Meet for you, and a recurring call keeps the language it was in last time
+- Any language Google Meet can caption: the transcript follows the caption language you set in Meet
 - Floating in-page panel: draggable, resizable and minimizable
 - Complete meeting history: every past meeting stored locally with title, date, duration and participant list
 - Chat capture: meeting chat messages are saved alongside the transcript
