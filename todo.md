@@ -2,10 +2,6 @@
 
 ## Planned
 
-- [ ] Delete the leftover MeetScribe files
-  - `meetscribe/` and `meetscribe.zip` are an old packaged copy of the extension; `demo.html` and `seed-demo-data.js` belong to the old screenshot workflow
-  - None is part of the build or the release package; a seed script can be rewritten when new screenshots are made
-
 - [ ] Show the name of the meeting instead of the unique id like `gim-mxzg-xdx`
   - In the meetings list a call is titled with its Meet code unless it was renamed by hand, which makes meetings hard to tell apart
 
@@ -47,6 +43,9 @@
   - Likely from merging caption revisions in `transcript-store.ts`; reproduce before fixing
 
 ## Completed
+
+- [x] Delete the leftover MeetScribe files (2026-10-05)
+  - Removed `meetscribe/`, `meetscribe.zip`, `demo.html` and `seed-demo-data.js`; none was part of the build or the release package
 
 - [x] Remove the language dropdown and take the caption language from Meet's own CC options (2026-10-05)
   - Dropdown removed from the floating panel; the transcript follows whatever language Meet's captions are set to
