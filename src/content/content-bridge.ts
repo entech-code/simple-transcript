@@ -59,7 +59,7 @@ import { MSG, KEEPALIVE_PORT_NAME } from '../utils/types';
   });
 
   // Expose sessionId so other content scripts in this tab (floating-popup) can read it
-  document.documentElement.dataset.meetscribeSession = sessionId;
+  document.documentElement.dataset.simpleTranscriptSession = sessionId;
 
   // MAIN world → service worker relay
   window.addEventListener('message', (event) => {

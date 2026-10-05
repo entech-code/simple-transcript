@@ -900,7 +900,7 @@ import { exportFileName } from '../utils/export-filename';
     try {
       // Include sessionId in port name so the service worker can route messages
       // even if the keepalive port hasn't reconnected yet (race after SW restart)
-      const sessionId = document.documentElement.dataset.meetscribeSession;
+      const sessionId = document.documentElement.dataset.simpleTranscriptSession;
       const portName = sessionId ? `${POPUP_PORT_NAME}:${sessionId}` : POPUP_PORT_NAME;
       port = chrome.runtime.connect(undefined, { name: portName });
 
