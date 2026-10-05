@@ -191,7 +191,9 @@ compare the top of the view with the meeting's entry in the list.
 - **Meeting title**: what the extension shows for a meeting: Google Meet's name for the call, or
   the Meet code when there is none.
 - **Meeting name**: the name Google Meet reports for a call, present for calls created from a
-  calendar event and absent for instant calls.
+  calendar event and absent for instant calls. Google Calendar calls this the event's title; this
+  document says "name" only to tell it apart from the title the extension shows. In the code the
+  value is `meetingTitle`, and the browser tab's text it is read from is `meetingTabTitle`.
 - **Meet code**: the identifier in the call's address. Always present; the fallback title.
 
 ## Success Criteria *(mandatory)*

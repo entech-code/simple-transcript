@@ -100,7 +100,7 @@ tab title, lives in a pure module with tests. The service worker and the store o
 
 ## Design Notes
 
-- **Reading the name**: `meetingNameFromTabTitle(tabTitle, meetingCode)` returns the name, or
+- **Reading the name**: `meetingTitleFromTabTitle(meetingTabTitle, meetingCode)` returns the name, or
   nothing. It accepts a title that starts with "Meet", a separator (hyphen or dash) and some text;
   trims the text; and returns nothing when the text is empty or equals the meeting code. Anything
   else, such as a bare "Meet", returns nothing.

@@ -14,7 +14,7 @@ hand in live calls (see quickstart.md).
 
 ## Phase 1: Setup
 
-- [ ] T001 Run `npm run typecheck`, `npm test` and `npm run build` and confirm all pass with 98 tests before any change
+- [X] T001 Run `npm run typecheck`, `npm test` and `npm run build` and confirm all pass with 98 tests before any change
 
 ---
 
@@ -22,8 +22,8 @@ hand in live calls (see quickstart.md).
 
 **Purpose**: The name function that both title stories depend on.
 
-- [ ] T002 Create `tests/meeting-title.test.ts` with a test for every row of the "Name from a tab title" table in `specs/005-meeting-name/data-model.md`, plus: a code compared without regard to letter case, a name that merely contains the code, and a title with no space around the separator. Run it and confirm it fails because the module does not exist
-- [ ] T003 Create `src/utils/meeting-title.ts` exporting `meetingNameFromTabTitle(tabTitle: string | undefined, meetingCode: string): string | null`: accept "Meet", optional spaces, a hyphen or dash, then text; trim the text; return `null` when the title is missing or not in that form, or when the text is empty or equals the meeting code. Run the tests and confirm they pass
+- [X] T002 Create `tests/meeting-title.test.ts` with a test for every row of the "Name from a tab title" table in `specs/005-meeting-name/data-model.md`, plus: a code compared without regard to letter case, a name that merely contains the code, and a title with no space around the separator. Run it and confirm it fails because the module does not exist
+- [X] T003 Create `src/utils/meeting-title.ts` exporting `meetingTitleFromTabTitle(meetingTabTitle: string | undefined, meetingCode: string): string | null`: accept "Meet", optional spaces, a hyphen or dash, then text; trim the text; return `null` when the title is missing or not in that form, or when the text is empty or equals the meeting code. Run the tests and confirm they pass
 
 ---
 
@@ -33,9 +33,9 @@ hand in live calls (see quickstart.md).
 
 **Independent Test**: quickstart.md steps 2 and 5.
 
-- [ ] T004 [US1] In `src/utils/meeting-store.ts`, rename `renameMeeting` to `setMeetingTitle(id, title)` (same behaviour: set the title and save), and make `createMeeting` title a new meeting with its code only, without calling `findTitleByCode`
-- [ ] T005 [US1] In `src/background/service-worker.ts`, add `applyMeetName(sessionId, tabTitle)`: find the session's meeting, compute `meetingNameFromTabTitle(tabTitle, meeting.meetingCode)`, and when it yields a name that differs from the title, call `setMeetingTitle` and broadcast `meeting_renamed` for that session. A missing meeting or no name changes nothing
-- [ ] T006 [US1] In `src/background/service-worker.ts`, call `applyMeetName` in two places: in the existing `chrome.tabs.onUpdated` listener when `changeInfo.title` is present and the tab belongs to a session (after `sessionStateReady`), and after a meeting is created or resumed for a session, using the tab's current title from `chrome.tabs.get`. Also remove the use of `findTitleByCode` where a meeting's code becomes known
+- [X] T004 [US1] In `src/utils/meeting-store.ts`, rename `renameMeeting` to `setMeetingTitle(id, title)` (same behaviour: set the title and save), and make `createMeeting` title a new meeting with its code only, without calling `findTitleByCode`
+- [X] T005 [US1] In `src/background/service-worker.ts`, add `applyMeetingTitle(sessionId, meetingTabTitle)`: find the session's meeting, compute `meetingTitleFromTabTitle(meetingTabTitle, meeting.meetingCode)`, and when it yields a name that differs from the title, call `setMeetingTitle` and broadcast `meeting_renamed` for that session. A missing meeting or no name changes nothing
+- [X] T006 [US1] In `src/background/service-worker.ts`, call `applyMeetingTitle` in two places: in the existing `chrome.tabs.onUpdated` listener when `changeInfo.title` is present and the tab belongs to a session (after `sessionStateReady`), and after a meeting is created or resumed for a session, using the tab's current title from `chrome.tabs.get`. Also remove the use of `findTitleByCode` where a meeting's code becomes known
 
 **Checkpoint**: A named call shows its name in the panel and the list.
 
@@ -47,7 +47,7 @@ hand in live calls (see quickstart.md).
 
 **Independent Test**: quickstart.md step 3; the unit tests for "no name".
 
-- [ ] T007 [US2] Confirm by reading `applyMeetName` and its two callers that a `null` name, a failed `chrome.tabs.get`, and a tab with no session each leave the title untouched and raise no error; wrap the `chrome.tabs.get` call so a closed tab cannot reject unhandled
+- [X] T007 [US2] Confirm by reading `applyMeetingTitle` and its two callers that a `null` name, a failed `chrome.tabs.get`, and a tab with no session each leave the title untouched and raise no error; wrap the `chrome.tabs.get` call so a closed tab cannot reject unhandled
 
 ---
 

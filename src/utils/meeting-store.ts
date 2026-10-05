@@ -36,11 +36,10 @@ export function getMeetingTitles(): string[] {
 
 export function createMeeting(meetingCode: string): Meeting {
   const now = Date.now();
-  const existingTitle = findTitleByCode(meetingCode);
   const meeting: Meeting = {
     id: generateId(),
     meetingCode,
-    title: existingTitle ?? meetingCode,
+    title: meetingCode,
     description: '',
     startTime: now,
     endTime: null,
@@ -112,7 +111,7 @@ export function getMeeting(id: string): Meeting | null {
   return meetings.get(id) ?? null;
 }
 
-export function renameMeeting(id: string, title: string): Meeting | null {
+export function setMeetingTitle(id: string, title: string): Meeting | null {
   const meeting = meetings.get(id);
   if (!meeting) return null;
   meeting.title = title;
