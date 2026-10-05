@@ -12,7 +12,7 @@ Chrome extension for live Google Meet transcription with meeting history.
 - **Smart merging** - consecutive messages from the same speaker within 30 seconds are combined into a single entry
 - **Meeting history** - all meetings are saved locally with participants, timestamps, and full transcripts
 - **Floating popup** - draggable, resizable overlay on the Meet page with auto-scroll
-- **31 languages** - English, Spanish, Portuguese, French, German, Russian, Japanese, Chinese, and more
+- **Any caption language** - the transcript follows the caption language set in Google Meet
 - **Export formats** - Markdown, plain text, JSON, SRT, and VTT
 - **Copy to clipboard** - one-click copy as Markdown
 
@@ -47,7 +47,7 @@ Click the export button on any meeting to download as Markdown. Files are named 
 
 ### Language
 
-Use the language selector in the floating popup to switch transcription language. The setting persists across sessions.
+The transcript is in whatever language Google Meet's captions are set to. To change it, use Meet's own caption settings; the extension never changes it.
 
 ## Permissions
 
@@ -61,7 +61,7 @@ Use the language selector in the floating popup to switch transcription language
 
 All data stays in your browser. Nothing is sent to an external server: transcription is Google Meet's own caption system, no audio is recorded and no bot joins the call.
 
-The extension contacts no server other than Google Meet itself. From inside the Meet page it can ask Meet to change the caption language and to resend the participant list, using your existing Meet session. Nothing is sent anywhere else.
+The extension contacts no server other than Google Meet itself. From inside the Meet page it can ask Meet to resend the participant list, using your existing Meet session. Nothing is sent anywhere else.
 
 ## Testing
 

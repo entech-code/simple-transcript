@@ -2,8 +2,9 @@
 
 ## Planned
 
-- [ ] Remove the language dropdown and take the caption language from Meet's own CC options
-  - The transcript follows whatever language is set in Meet's caption settings, so there is one place to change it
+- [ ] Delete the leftover MeetScribe files
+  - `meetscribe/` and `meetscribe.zip` are an old packaged copy of the extension; `demo.html` and `seed-demo-data.js` belong to the old screenshot workflow
+  - None is part of the build or the release package; a seed script can be rewritten when new screenshots are made
 
 - [ ] Show the name of the meeting instead of the unique id like `gim-mxzg-xdx`
   - In the meetings list a call is titled with its Meet code unless it was renamed by hand, which makes meetings hard to tell apart
@@ -46,6 +47,11 @@
   - Likely from merging caption revisions in `transcript-store.ts`; reproduce before fixing
 
 ## Completed
+
+- [x] Remove the language dropdown and take the caption language from Meet's own CC options (2026-10-05)
+  - Dropdown removed from the floating panel; the transcript follows whatever language Meet's captions are set to
+  - The extension no longer sets, re-sends or remembers a caption language, and no longer writes Meet's saved preference
+  - `protobuf-encoder.ts` and `language-script.ts` deleted; the request to Meet that set the language is gone
 
 - [x] Remove the Notes functionality (2026-10-05)
   - Notes section and the "Transcription" header removed from the floating panel; notes block removed from past meetings in both popups

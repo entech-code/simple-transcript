@@ -59,7 +59,7 @@ import { MSG, KEEPALIVE_PORT_NAME } from '../utils/types';
   });
 
   // Expose sessionId so other content scripts in this tab (floating-popup) can read it
-  document.documentElement.dataset.meetscribeSession = sessionId;
+  document.documentElement.dataset.simpleTranscriptSession = sessionId;
 
   // MAIN world → service worker relay
   window.addEventListener('message', (event) => {
@@ -73,8 +73,7 @@ import { MSG, KEEPALIVE_PORT_NAME } from '../utils/types';
       data.type === MSG.RTC_DEVICE_INFO ||
       data.type === MSG.RTC_CHAT_MESSAGE ||
       data.type === MSG.INTERCEPTOR_READY ||
-      data.type === MSG.MEETING_CODE ||
-      data.type === MSG.LANGUAGE_OBSERVED
+      data.type === MSG.MEETING_CODE
     ) {
       if (isContextInvalidated()) return;
       try {
@@ -83,15 +82,9 @@ import { MSG, KEEPALIVE_PORT_NAME } from '../utils/types';
     }
   });
 
-  // Service worker → MAIN world relay (for language changes and device refresh)
+  // Service worker → MAIN world relay (for device refresh)
   chrome.runtime.onMessage.addListener((message): undefined => {
-    if (message.type === MSG.LANGUAGE_CHANGE) {
-      window.postMessage({
-        source: MESSAGE_SOURCE,
-        type: MSG.LANGUAGE_CHANGE,
-        language: message.language,
-      }, '*');
-    } else if (message.type === MSG.REFRESH_DEVICES) {
+    if (message.type === MSG.REFRESH_DEVICES) {
       window.postMessage({
         source: MESSAGE_SOURCE,
         type: MSG.REFRESH_DEVICES,

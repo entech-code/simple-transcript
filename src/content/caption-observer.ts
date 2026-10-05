@@ -2,8 +2,6 @@
   const LOG_PREFIX = "[MeetTranscript:Captions]";
   const MSG_CAPTION_SPEAKER_NAME = "caption_speaker_name";
   const MSG_RETRY_CAPTIONS = "retry_captions";
-  const MSG_CAPTIONS_ENABLING = "captions_enabling";
-  const MESSAGE_SOURCE = "meetscribe";
   let captionAutoEnabled = false;
   let participantScannerStarted = false;
   let contextInvalidated = false;
@@ -123,11 +121,8 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  // Every click here works Meet's own controls, so whatever caption language
-  // Meet announces in the next moments is its stored default, not a pick of
-  // the user's; the interceptor is told so it can send ours after it.
+  // Every click here works Meet's own controls.
   async function clickAndWait(el: Element, waitMs = 300): Promise<void> {
-    window.postMessage({ source: MESSAGE_SOURCE, type: MSG_CAPTIONS_ENABLING }, "*");
     (el as HTMLElement).click();
     await delay(waitMs);
   }
