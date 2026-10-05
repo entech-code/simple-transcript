@@ -1,4 +1,4 @@
-import { MSG, type Meeting, type TranscriptEntry, type NoteEntry } from '../utils/types';
+import { MSG, type Meeting, type TranscriptEntry } from '../utils/types';
 import { exportFileName } from '../utils/export-filename';
 
 (function () {
@@ -331,33 +331,13 @@ import { exportFileName } from '../utils/export-filename';
         meetingId,
       });
       const entries = (response?.entries ?? []) as TranscriptEntry[];
-      const meetingNotes = (response?.notes ?? []) as NoteEntry[];
       contentEl.innerHTML = '';
 
-      if (entries.length === 0 && meetingNotes.length === 0) {
+      if (entries.length === 0) {
         contentEl.innerHTML = '<div class="empty-state">No transcription entries</div>';
         footerEl.style.display = 'flex';
         footerLeft.textContent = '0 lines';
         return;
-      }
-
-      // Notes section
-      if (meetingNotes.length > 0) {
-        const notesSection = document.createElement('div');
-        notesSection.className = 'detail-notes';
-        notesSection.innerHTML = '<div class="detail-notes-title">Notes</div>';
-        const sortedNotes = [...meetingNotes].sort((a, b) => b.timestamp - a.timestamp);
-        for (const note of sortedNotes) {
-          const noteDiv = document.createElement('div');
-          noteDiv.className = 'note-item';
-          const time = new Date(note.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          noteDiv.innerHTML = `
-            <span class="note-time">${time}</span>
-            <span class="note-text">${escapeHtml(note.text)}</span>
-          `;
-          notesSection.appendChild(noteDiv);
-        }
-        contentEl.appendChild(notesSection);
       }
 
       const container = document.createElement('div');
@@ -368,7 +348,7 @@ import { exportFileName } from '../utils/export-filename';
       contentEl.appendChild(container);
 
       footerEl.style.display = 'flex';
-      footerLeft.textContent = `${entries.length} line${entries.length === 1 ? '' : 's'}${meetingNotes.length > 0 ? ` \u00b7 ${meetingNotes.length} note${meetingNotes.length === 1 ? '' : 's'}` : ''}`;
+      footerLeft.textContent = `${entries.length} line${entries.length === 1 ? '' : 's'}`;
     } catch {
       contentEl.innerHTML = '<div class="empty-state">Failed to load meeting</div>';
     }

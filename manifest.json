@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Simple Transcript: Copy & Save for Google Meet",
+  "name": "Simple Transcript – Copy & Save for Google Meet",
   "short_name": "Simple Transcript",
   "version": "2.25.0",
   "description": "Live Google Meet transcription with speaker names. Copy or save any call.",

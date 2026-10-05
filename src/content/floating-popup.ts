@@ -1,4 +1,4 @@
-import { MSG, POPUP_PORT_NAME, type TranscriptEntry, type NoteEntry, type Meeting } from '../utils/types';
+import { MSG, POPUP_PORT_NAME, type TranscriptEntry, type Meeting } from '../utils/types';
 import { LANGUAGE_CODES } from '../utils/constants';
 import { exportAsMarkdown } from '../utils/transcript-store';
 import { exportFileName } from '../utils/export-filename';
@@ -13,7 +13,6 @@ import { exportFileName } from '../utils/export-filename';
 
   let port: chrome.runtime.Port | null = null;
   let entries: TranscriptEntry[] = [];
-  let notes: NoteEntry[] = [];
   let currentMeeting: Meeting | null = null;
   let participantCount = 0;
   let isMinimized = false;
@@ -61,7 +60,6 @@ import { exportFileName } from '../utils/export-filename';
   let currentView: 'live' | 'meetings' | 'meeting-detail' = 'live';
   let viewingMeetingId: string | null = null;
   let detailEntries: TranscriptEntry[] = [];
-  let detailNotes: NoteEntry[] = [];
   let detailTitle = '';
   let detailStartTime = 0;
   let popupWidth = DEFAULT_WIDTH;
@@ -111,24 +109,7 @@ import { exportFileName } from '../utils/export-filename';
       </div>
       <div class="content-area" id="content-area">
         <div class="live-sections" id="live-sections">
-          <div class="section" id="section-notes">
-            <div class="section-header" id="section-notes-header">
-              <span class="section-title">Notes</span>
-              <span class="section-chevron">&#9660;</span>
-            </div>
-            <div class="section-body" id="section-notes-body">
-              <div class="notes-input-row">
-                <input type="text" class="notes-input" id="notes-input" placeholder="Add a note…" />
-                <button class="btn-small btn-add-note" id="btn-add-note">Add</button>
-              </div>
-              <div class="notes-list" id="notes-list"></div>
-            </div>
-          </div>
           <div class="section" id="section-transcript">
-            <div class="section-header" id="section-transcript-header">
-              <span class="section-title">Transcription</span>
-              <span class="section-chevron">&#9660;</span>
-            </div>
             <div class="section-body" id="section-transcript-body">
               <div class="placeholder" id="transcript-placeholder" hidden>Listening…</div>
               <div class="transcript" id="transcript"></div>
@@ -175,121 +156,21 @@ import { exportFileName } from '../utils/export-filename';
   const backNav = shadow.getElementById('back-nav')!;
   const btnBackLive = shadow.getElementById('btn-back-live')!;
   const liveSections = shadow.getElementById('live-sections')!;
-  const sectionNotesHeader = shadow.getElementById('section-notes-header')!;
-  const sectionNotesBody = shadow.getElementById('section-notes-body')!;
-  const sectionTranscriptHeader = shadow.getElementById('section-transcript-header')!;
-  const sectionTranscriptBody = shadow.getElementById('section-transcript-body')!;
-  const notesInput = shadow.getElementById('notes-input') as HTMLInputElement;
-  const btnAddNote = shadow.getElementById('btn-add-note')!;
-  const notesList = shadow.getElementById('notes-list')!;
   const placeholderEl = shadow.getElementById('transcript-placeholder')!;
 
   btnBackLive.addEventListener('click', () => {
     switchView('meetings');
   });
 
-  // --- Collapsible sections ---
-
-  function toggleSection(header: HTMLElement, body: HTMLElement): void {
-    const collapsed = body.style.display === 'none';
-    body.style.display = collapsed ? '' : 'none';
-    header.querySelector('.section-chevron')!.textContent = collapsed ? '\u25BC' : '\u25B6';
-    header.classList.toggle('collapsed', !collapsed);
-  }
-
-  sectionNotesHeader.addEventListener('click', () => toggleSection(sectionNotesHeader, sectionNotesBody));
-  sectionTranscriptHeader.addEventListener('click', () => toggleSection(sectionTranscriptHeader, sectionTranscriptBody));
-
-  function addNoteFromInput(): void {
-    const text = notesInput.value.trim();
-    if (!text || !currentMeeting) return;
-    notesInput.value = '';
-    chrome.runtime.sendMessage({
-      type: MSG.ADD_NOTE,
-      payload: { meetingId: currentMeeting.id, text },
-    }).catch(() => {});
-  }
-
-  btnAddNote.addEventListener('click', addNoteFromInput);
-  // Stop all keyboard events from reaching Google Meet's shortcut handler.
-  // Composed events escape the shadow DOM, so we catch them on the host in
-  // the capture phase. All input-specific logic (Enter to save) must live
-  // here too, because stopPropagation in capture prevents bubble listeners.
+  // Stop keyboard events from reaching Google Meet's shortcut handler while a
+  // title is being edited. Composed events escape the shadow DOM, so we catch
+  // them on the host in the capture phase.
   for (const evt of ['keydown', 'keyup', 'keypress'] as const) {
     host.addEventListener(evt, (e: Event) => {
       const active = shadow.activeElement as HTMLElement | null;
-      if (!active) return;
-      const isNotesInput = active === notesInput;
-      const isEditable = active.contentEditable === 'true';
-      if (!isNotesInput && !isEditable) return;
+      if (!active || active.contentEditable !== 'true') return;
       e.stopPropagation();
-      if (isNotesInput && evt === 'keydown' && (e as KeyboardEvent).key === 'Enter') {
-        e.preventDefault();
-        addNoteFromInput();
-      }
     }, true);
-  }
-
-  function renderNoteItem(note: NoteEntry): HTMLElement {
-    const div = document.createElement('div');
-    div.className = 'note-item';
-    div.dataset.noteId = note.id;
-    const time = new Date(note.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    div.innerHTML = `
-      <span class="note-time">${time}</span>
-      <div class="note-text">${escapeHtml(note.text)}</div>
-      <button class="note-delete" title="Delete note">\u2715</button>
-    `;
-    const textEl = div.querySelector('.note-text') as HTMLElement;
-
-    // Double-click to edit
-    textEl.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      textEl.contentEditable = 'true';
-      textEl.focus();
-      const range = document.createRange();
-      range.selectNodeContents(textEl);
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(range);
-    });
-    textEl.addEventListener('blur', () => {
-      if (textEl.contentEditable !== 'true') return;
-      textEl.contentEditable = 'false';
-      const newText = textEl.textContent?.trim();
-      if (newText && currentMeeting && newText !== note.text) {
-        note.text = newText;
-        chrome.runtime.sendMessage({
-          type: MSG.UPDATE_NOTE,
-          payload: { meetingId: currentMeeting.id, noteId: note.id, text: newText },
-        }).catch(() => {});
-      }
-    });
-    for (const evt of ['keydown', 'keyup', 'keypress'] as const) {
-      textEl.addEventListener(evt, (e: Event) => { e.stopPropagation(); });
-    }
-    textEl.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'Enter') { e.preventDefault(); textEl.blur(); }
-      if (e.key === 'Escape') { textEl.textContent = note.text; textEl.blur(); }
-    });
-
-    div.querySelector('.note-delete')!.addEventListener('click', () => {
-      if (!currentMeeting) return;
-      chrome.runtime.sendMessage({
-        type: MSG.DELETE_NOTE,
-        payload: { meetingId: currentMeeting.id, noteId: note.id },
-      }).catch(() => {});
-    });
-    return div;
-  }
-
-
-  function renderAllNotes(): void {
-    notesList.innerHTML = '';
-    const sorted = [...notes].sort((a, b) => b.timestamp - a.timestamp);
-    for (const note of sorted) {
-      notesList.appendChild(renderNoteItem(note));
-    }
   }
 
   // --- Language selector: build with recent languages at top ---
@@ -548,7 +429,7 @@ import { exportFileName } from '../utils/export-filename';
       // and lost in-memory data, so we format directly from the entries
       // that were already fetched and displayed.
       if (detailEntries.length > 0) {
-        const content = exportAsMarkdown(detailEntries, detailTitle, detailNotes);
+        const content = exportAsMarkdown(detailEntries, detailTitle);
         return { content, title: detailTitle, startTime: detailStartTime };
       }
       return chrome.runtime.sendMessage({
@@ -810,8 +691,7 @@ import { exportFileName } from '../utils/export-filename';
   function updateFooter(): void {
     if (currentView !== 'live' && currentView !== 'meeting-detail') return;
     const lines = currentView === 'live' ? entries.length : detailEntries.length;
-    const noteCount = currentView === 'live' ? notes.length : detailNotes.length;
-    footerLeft.textContent = `${lines} line${lines === 1 ? '' : 's'}${noteCount > 0 ? ` \u00b7 ${noteCount} note${noteCount === 1 ? '' : 's'}` : ''}`;
+    footerLeft.textContent = `${lines} line${lines === 1 ? '' : 's'}`;
 
     const meeting = currentView === 'live' ? currentMeeting : null;
     const parts: string[] = [];
@@ -1067,9 +947,7 @@ import { exportFileName } from '../utils/export-filename';
         meetingId,
       });
       const meetingEntries = (response?.entries ?? []) as TranscriptEntry[];
-      const meetingNotes = (response?.notes ?? []) as NoteEntry[];
       detailEntries = meetingEntries;
-      detailNotes = meetingNotes;
       detailTitle = title;
       detailStartTime = meetingEntries[0]?.timestamp ?? Date.now();
       detailEl.innerHTML = '';
@@ -1079,25 +957,6 @@ import { exportFileName } from '../utils/export-filename';
         footerLeft.textContent = '0 lines';
         footerRight.textContent = '';
         return;
-      }
-
-      // Notes section (if any)
-      if (meetingNotes.length > 0) {
-        const notesSection = document.createElement('div');
-        notesSection.className = 'detail-notes';
-        notesSection.innerHTML = '<div class="detail-notes-title">Notes</div>';
-        const sortedNotes = [...meetingNotes].sort((a, b) => b.timestamp - a.timestamp);
-        for (const note of sortedNotes) {
-          const noteDiv = document.createElement('div');
-          noteDiv.className = 'note-item';
-          const time = new Date(note.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          noteDiv.innerHTML = `
-            <span class="note-time">${time}</span>
-            <span class="note-text">${escapeHtml(note.text)}</span>
-          `;
-          notesSection.appendChild(noteDiv);
-        }
-        detailEl.appendChild(notesSection);
       }
 
       // Entries
@@ -1144,7 +1003,6 @@ import { exportFileName } from '../utils/export-filename';
           case 'meeting_snapshot':
             currentMeeting = message.meeting;
             entries = message.entries ?? [];
-            notes = message.notes ?? [];
             if (currentMeeting) {
               participantCount = countParticipants(currentMeeting);
               if (currentView === 'live') {
@@ -1152,7 +1010,6 @@ import { exportFileName } from '../utils/export-filename';
               }
             }
             renderAllEntries();
-            renderAllNotes();
             break;
 
           case 'new_entry':
@@ -1177,9 +1034,7 @@ import { exportFileName } from '../utils/export-filename';
           case 'meeting_started':
             currentMeeting = message.meeting;
             participantCount = 0;
-            notes = [];
             captionsMissing = false;
-            renderAllNotes();
             renderPlaceholder();
             if (currentView === 'live') {
               popupTitle.textContent = currentMeeting?.title ?? 'Live';
@@ -1189,8 +1044,6 @@ import { exportFileName } from '../utils/export-filename';
           case 'meeting_ended':
             currentMeeting = null;
             participantCount = 0;
-            notes = [];
-            renderAllNotes();
             renderPlaceholder();
             if (currentView === 'live') {
               popupTitle.textContent = 'Live';
@@ -1216,34 +1069,6 @@ import { exportFileName } from '../utils/export-filename';
               if (currentView === 'live') {
                 popupTitle.textContent = currentMeeting.title;
               }
-            }
-            break;
-
-          case 'note_added':
-            notes.unshift(message.note);
-            if (currentView === 'live') {
-              notesList.prepend(renderNoteItem(message.note));
-              updateFooter();
-            }
-            break;
-
-          case 'note_updated': {
-            const idx = notes.findIndex(n => n.id === message.note.id);
-            if (idx >= 0) notes[idx] = message.note;
-            if (currentView === 'live') {
-              const el = notesList.querySelector(`[data-note-id="${message.note.id}"] .note-text`);
-              if (el && el !== shadow.activeElement) {
-                el.textContent = message.note.text;
-              }
-            }
-            break;
-          }
-
-          case 'note_deleted':
-            notes = notes.filter(n => n.id !== message.noteId);
-            if (currentView === 'live') {
-              const noteEl = notesList.querySelector(`[data-note-id="${message.noteId}"]`);
-              if (noteEl) noteEl.remove();
             }
             break;
         }
@@ -1617,23 +1442,6 @@ import { exportFileName } from '../utils/export-filename';
         background: var(--bg-raised);
       }
 
-      .btn-small {
-        height: 26px;
-        padding: 0 10px;
-        font-size: 11px;
-        color: var(--text-dim);
-        white-space: nowrap;
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        transition: background-color var(--quick) var(--ease), color var(--quick) var(--ease);
-      }
-
-      .btn-small:hover {
-        color: var(--text);
-        background: var(--bg-hover);
-      }
-
       .toolbar-action {
         display: flex;
         align-items: center;
@@ -1661,126 +1469,8 @@ import { exportFileName } from '../utils/export-filename';
         border-bottom: none;
       }
 
-      .section-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 6px 10px;
-        cursor: pointer;
-        user-select: none;
-        transition: background-color var(--quick) var(--ease);
-      }
-
-      .section-header:hover {
-        background: var(--bg-hover);
-      }
-
-      .section-title {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--text-dim);
-      }
-
-      .section-chevron {
-        font-size: 9px;
-        color: var(--text-faint);
-      }
-
       .section-body {
-        padding: 0 10px 8px;
-      }
-
-      .notes-input-row {
-        display: flex;
-        gap: 6px;
-        margin-bottom: 6px;
-      }
-
-      .notes-input {
-        flex: 1;
-        min-width: 0;
-        height: 26px;
-        padding: 0 8px;
-        font: inherit;
-        font-size: 12px;
-        color: var(--text);
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        outline: none;
-      }
-
-      .notes-input:focus {
-        border-color: var(--accent);
-      }
-
-      .notes-input::placeholder {
-        color: var(--text-faint);
-      }
-
-      .btn-add-note {
-        flex-shrink: 0;
-      }
-
-      .notes-list {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      /* A note is the person's own words over the call, marked with a tint,
-         not a second colour. */
-      .note-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 6px;
-        padding: 4px 6px 4px 8px;
-        font-size: 12px;
-        background: var(--comment);
-        border-left: 2px solid var(--comment-strong);
-        border-radius: 0 var(--radius) var(--radius) 0;
-      }
-
-      .note-time {
-        flex-shrink: 0;
-        margin-top: 1px;
-        font-size: 10px;
-        font-variant-numeric: tabular-nums;
-        color: var(--text-faint);
-      }
-
-      .note-text {
-        flex: 1;
-        padding: 0 2px;
-        line-height: 1.4;
-        color: var(--text);
-        word-break: break-word;
-        border-radius: 3px;
-        outline: none;
-        cursor: text;
-      }
-
-      .note-text[contenteditable="true"] {
-        background: var(--bg-raised);
-        outline: 1px solid var(--accent);
-      }
-
-      .note-delete {
-        flex-shrink: 0;
-        padding: 0 2px;
-        font-size: 10px;
-        color: var(--text-faint);
-        opacity: 0;
-        transition: opacity var(--quick) var(--ease), color var(--quick) var(--ease);
-      }
-
-      .note-item:hover .note-delete,
-      .note-delete:focus-visible {
-        opacity: 1;
-      }
-
-      .note-delete:hover {
-        color: var(--danger);
+        padding: 6px 10px 8px;
       }
 
       .content-area {
@@ -1797,15 +1487,6 @@ import { exportFileName } from '../utils/export-filename';
         flex: 1;
         min-height: 0;
         overflow: hidden;
-      }
-
-      #section-notes {
-        flex-shrink: 0;
-      }
-
-      #section-notes .section-body {
-        max-height: 150px;
-        overflow-y: auto;
       }
 
       #section-transcript {
@@ -1846,21 +1527,18 @@ import { exportFileName } from '../utils/export-filename';
         scroll-behavior: smooth;
       }
 
-      #section-notes .section-body::-webkit-scrollbar,
       .transcript::-webkit-scrollbar,
       .meetings-view::-webkit-scrollbar,
       .detail-view::-webkit-scrollbar {
         width: 4px;
       }
 
-      #section-notes .section-body::-webkit-scrollbar-track,
       .transcript::-webkit-scrollbar-track,
       .meetings-view::-webkit-scrollbar-track,
       .detail-view::-webkit-scrollbar-track {
         background: transparent;
       }
 
-      #section-notes .section-body::-webkit-scrollbar-thumb,
       .transcript::-webkit-scrollbar-thumb,
       .meetings-view::-webkit-scrollbar-thumb,
       .detail-view::-webkit-scrollbar-thumb {
@@ -2136,23 +1814,6 @@ import { exportFileName } from '../utils/export-filename';
 
       .btn-back:hover {
         text-decoration: underline;
-      }
-
-      .detail-notes {
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .detail-notes-title {
-        margin-bottom: 6px;
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--text-dim);
-      }
-
-      .detail-notes .note-item {
-        margin-bottom: 4px;
       }
 
       .empty-state,

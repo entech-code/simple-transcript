@@ -2,10 +2,6 @@
 
 ## Planned
 
-- [ ] Remove the Notes functionality
-  - It is not really useful and not part of the core functionality, which is the transcript
-  - Existing notes are dropped, not migrated or exported: the extension is new, so there is nothing worth preserving
-
 - [ ] Remove the language dropdown and take the caption language from Meet's own CC options
   - The transcript follows whatever language is set in Meet's caption settings, so there is one place to change it
 
@@ -51,8 +47,13 @@
 
 ## Completed
 
+- [x] Remove the Notes functionality (2026-10-05)
+  - Notes section and the "Transcription" header removed from the floating panel; notes block removed from past meetings in both popups
+  - Note messages, storage functions and types deleted; Markdown and text exports no longer have a notes block
+  - A meeting is empty when it has no transcript lines; notes already in storage are left there, unread
+
 - [x] Remove Notula from the branding and replace it with "Simple Transcript" (2026-10-05)
-  - Named "Simple Transcript: Copy & Save for Google Meet"; "Simple Transcript" in the toolbar tooltip, panel title and popup header
+  - Named "Simple Transcript – Copy & Save for Google Meet"; "Simple Transcript" in the toolbar tooltip, panel title and popup header
   - Notula save feature, pairing screens, promo link and the only network code removed; five modules deleted
   - README, store listing text, release names and constitution updated; the notula.org redirect pages and the screenshot tooling deleted
 
