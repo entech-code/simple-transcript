@@ -1,32 +1,18 @@
-# Chrome Web Store Listing - Notula for Google Meet
+# Chrome Web Store Listing - Simple Transcript
 
 ## Title
-Notula for Google Meet
+Simple Transcript: Copy & Save for Google Meet
 
 ## Summary (132 chars max)
-Live Google Meet transcription with speaker names. A finished call saves itself as Markdown into a folder on your disk.
+Live Google Meet transcription with speaker names. Copy or save any call as Markdown, text, JSON or subtitles.
 
 ## Description
 
-Notula for Google Meet captures every word spoken in your Google Meet calls, in real time, with speaker names attached. No bots join your call and no audio leaves your browser. The extension works on your device, using Google Meet's built-in captions.
+Simple Transcript captures every word spoken in your Google Meet calls, in real time, with speaker names attached. No bots join your call and no audio leaves your browser. The extension works on your device, using Google Meet's built-in captions.
 
 WHAT YOU GET
 
 When you join a Google Meet call, the extension starts transcribing immediately. A compact floating panel on the page shows the live transcript as people speak. After the meeting, the full transcript is saved and accessible from the extension popup.
-
-SAVE TO NOTULA
-
-The folder your calls land in is your AI brain. It is a git repository - on GitHub, on GitLab, or wherever else you keep one - and everything that knows something about your work writes into it: this extension, the other tools you run, and you. Notula is how you get access to it, and your assistants read it from there, through Notula and not only through Notula.
-
-Save each meeting to Notula, and choose where to save it. Notula is a free Markdown editor for macOS and Windows that keeps documents in a folder on your disk, so a finished call becomes a Markdown file in a repository you already have.
-
-- Set one folder for everything, or skip the default and pick the repository and the folder for each meeting
-- A call that comes back every week goes where it went last time, the same way it takes its name
-- The panel says where the meeting will be saved, before it is saved and after
-- Save now writes what has been said so far, without waiting for the call to end
-- Notula asks before it lets the extension in, and the extension writes Markdown files and nothing else
-
-Build AI brain with Notula: https://notula.org/ai-brain
 
 KEY FEATURES
 
@@ -53,23 +39,18 @@ MANAGE YOUR MEETINGS
 
 PRIVACY
 
-Transcription is powered by Google Meet's own caption system. No audio is recorded, no bot joins your call, and nothing is sent to a server of ours. Meetings are stored in your browser's local storage. Saving to Notula goes to the app running on the same machine, over a local connection, and only into the folders you allowed it into.
+Transcription is powered by Google Meet's own caption system. No audio is recorded, no bot joins your call, and nothing is sent to a server of ours. Meetings are stored in your browser's local storage.
 
 HOW IT WORKS
 
-1. Install Notula for Google Meet
+1. Install Simple Transcript
 2. Join a Google Meet call
 3. Captions are enabled automatically, and the extension captures and organizes the text in real time
-4. Review, export, or save the transcript to Notula at any time
+4. Review or export the transcript at any time
 
 ## URLs
 
-These three fields are on the Store listing tab, under "Additional fields". They
-used to point at anetrebskii.github.io/meetscribe, which is now a redirect.
-
-- Homepage URL: https://notula.org/meet
-- Support URL: https://notula.org/#feedback
-- Privacy policy URL: https://notula.org/meet/privacy
+The homepage, support and privacy policy addresses are set when the store listing is prepared.
 
 ## Category
 Productivity > Communication

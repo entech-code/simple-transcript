@@ -2,23 +2,6 @@ import { MSG, POPUP_PORT_NAME, type TranscriptEntry, type NoteEntry, type Meetin
 import { LANGUAGE_CODES } from '../utils/constants';
 import { exportAsMarkdown } from '../utils/transcript-store';
 import { exportFileName } from '../utils/export-filename';
-import type { Snapshot as NotulaSnapshot, PairStage } from '../background/notula-sync';
-import {
-  AWAITING_POLL_MS,
-  LINK_ICON,
-  notulaUrl,
-  brainLink,
-  connected,
-  destinationFor,
-  renderConnect,
-  renderOffers,
-  renderScreen as renderNotulaScreen,
-  saveLine,
-  defaultLine,
-  stageAfter,
-  liveLine,
-} from '../utils/notula-ui';
-import type { NotulaContext, UiStage } from '../utils/notula-ui';
 
 (function () {
   const STORAGE_POS_KEY = 'popup_position';
@@ -84,17 +67,7 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
   let popupWidth = DEFAULT_WIDTH;
   let popupHeight = DEFAULT_HEIGHT;
 
-  // --- Notula: what the service worker last said, and which screen is up ---
-
-  let notulaSnapshot: NotulaSnapshot | null = null;
-  let pairStage: UiStage = 'idle';
-  let pairCode = '';
-  let awaitingTimer: ReturnType<typeof setInterval> | null = null;
   let captionsMissing = false;
-  let screenShown = false;
-  /** What the footer's where-line was last drawn from; cleared whenever the
-      footer is, so leaving the live view and coming back redraws it. */
-  let footerWhereKey = '';
 
   // --- Shadow DOM setup ---
 
@@ -115,7 +88,7 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
   container.innerHTML = `
     <div class="header" id="header">
       <div class="drag-handle" id="drag-handle">
-        <span class="title"><span class="title-prefix">Notula</span> <span class="title-sep">–</span> <span class="title-page" id="popup-title">Live</span></span>
+        <span class="title"><span class="title-prefix">Simple Transcript</span> <span class="title-sep">–</span> <span class="title-page" id="popup-title">Live</span></span>
       </div>
       <div class="header-actions">
         <button class="btn-icon" id="btn-meetings" title="Meetings">
@@ -127,9 +100,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
         <button class="btn-icon" id="btn-close" title="Close">&#215;</button>
       </div>
     </div>
-    <button class="connect" id="connect-offer" hidden>${LINK_ICON}<span>Save to your Git repo via Notula</span></button>
-    <div class="connect warning" id="connect-wait" hidden>Waiting for Notula</div>
-    <div class="default-line" id="default-line" hidden></div>
     <div class="body" id="body">
       <div class="toolbar" id="toolbar">
         <select class="lang-select" id="lang-select"></select>
@@ -140,8 +110,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
         <button class="btn-back-live" id="btn-back-live">&larr; Meetings</button>
       </div>
       <div class="content-area" id="content-area">
-        <div class="offers" id="offers"></div>
-        <div class="screen" id="screen" hidden></div>
         <div class="live-sections" id="live-sections">
           <div class="section" id="section-notes">
             <div class="section-header" id="section-notes-header">
@@ -214,19 +182,7 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
   const notesInput = shadow.getElementById('notes-input') as HTMLInputElement;
   const btnAddNote = shadow.getElementById('btn-add-note')!;
   const notesList = shadow.getElementById('notes-list')!;
-  const connectOffer = shadow.getElementById('connect-offer') as HTMLButtonElement;
-  const connectWait = shadow.getElementById('connect-wait')!;
-  const offersEl = shadow.getElementById('offers')!;
-  const screenEl = shadow.getElementById('screen')!;
-  const defaultEl = shadow.getElementById('default-line')!;
   const placeholderEl = shadow.getElementById('transcript-placeholder')!;
-
-  const notulaCtx: NotulaContext = {
-    snapshot: () => notulaSnapshot,
-    send: (message) => sendNotula(message),
-    container,
-    surface: 'meet-panel',
-  };
 
   btnBackLive.addEventListener('click', () => {
     switchView('meetings');
@@ -641,19 +597,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
 
   // --- View switching ---
 
-  /**
-   * The bar under the header: where a call with no memory of its own goes.
-   * Only on the list, where the lines on the cards are about particular calls
-   * and this one is about the setting behind them; the live view says the same
-   * thing about the call it is showing, in its footer.
-   */
-  function renderDefaultLine(): void {
-    const line = currentView === 'meetings' && !screenShown ? defaultLine(notulaCtx) : null;
-    defaultEl.innerHTML = '';
-    if (line) defaultEl.appendChild(line);
-    defaultEl.hidden = line === null;
-  }
-
   function applyViewDisplays(): void {
     const view = currentView;
     liveSections.style.display = view === 'live' ? '' : 'none';
@@ -662,9 +605,8 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
     toolbarEl.style.display = (view === 'live' || view === 'meeting-detail') ? '' : 'none';
     langSelect.style.display = view === 'live' ? '' : 'none';
     backNav.style.display = (view === 'live' || view === 'meeting-detail') ? '' : 'none';
-    footerEl.style.display = '';
-    offersEl.style.display = view === 'meeting-detail' ? 'none' : '';
-    renderDefaultLine();
+    // The list has nothing to say in a footer; the live and detail views count lines there.
+    footerEl.style.display = view === 'meetings' ? 'none' : '';
   }
 
   function switchView(view: typeof currentView): void {
@@ -680,17 +622,14 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
         break;
       case 'meetings':
         popupTitle.textContent = 'Meetings';
-        footerLeft.innerHTML = brainLink('meet-panel');
+        footerLeft.textContent = '';
         footerRight.textContent = '';
-        footerWhereKey = '';
         loadMeetingsList();
         break;
       case 'meeting-detail':
         // title set by loadMeetingDetail
         break;
     }
-    renderOffers(notulaCtx, offersEl);
-    renderScreen();
   }
 
   // --- Toggle popup visibility (from toolbar icon) ---
@@ -707,8 +646,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
       if (!isHidden && !port) {
         connectPort();
       }
-      // The panel was opened: one of the three occasions Notula is asked after.
-      if (!isHidden) sendNotula({ type: 'notula_check' });
     }
   });
 
@@ -877,20 +814,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
     footerLeft.textContent = `${lines} line${lines === 1 ? '' : 's'}${noteCount > 0 ? ` \u00b7 ${noteCount} note${noteCount === 1 ? '' : 's'}` : ''}`;
 
     const meeting = currentView === 'live' ? currentMeeting : null;
-    // Where this call will land, said before the file exists rather than after.
-    if (meeting && connected(notulaCtx)) {
-      const dest = destinationFor(notulaSnapshot, meeting.meetingCode);
-      const save = notulaSnapshot?.saves[meeting.id];
-      const key = `${meeting.id}:${dest?.workspace ?? ''}:${dest?.folder ?? ''}:${save?.state ?? ''}:${save?.path ?? ''}`;
-      if (footerWhereKey !== key) {
-        footerWhereKey = key;
-        footerRight.innerHTML = '';
-        const line = liveLine(notulaCtx, meeting);
-        if (line) footerRight.appendChild(line);
-      }
-      return;
-    }
-    footerWhereKey = '';
     const parts: string[] = [];
     if (participantCount > 0) {
       parts.push(`${participantCount} participant${participantCount !== 1 ? 's' : ''}`);
@@ -978,12 +901,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
 
     const titleEl = item.querySelector('.meeting-item-title') as HTMLElement;
     const actionsEl = item.querySelector('.meeting-item-actions') as HTMLElement;
-
-    // Under the name: where the call went, or where it will go while it is
-    // still on. The live one says it here too, because this view has no footer
-    // of its own to say it in.
-    const line = isCurrent ? liveLine(notulaCtx, m) : saveLine(notulaCtx, m);
-    if (line) item.appendChild(line);
 
     // --- Action button handlers ---
 
@@ -1080,7 +997,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
       // Don't navigate if clicking on rename input or action buttons
       if ((e.target as HTMLElement).getAttribute('contenteditable') === 'true') return;
       if ((e.target as HTMLElement).closest('.meeting-item-actions')) return;
-      if ((e.target as HTMLElement).closest('.where')) return;
 
       if (isCurrent) {
         switchView('live');
@@ -1162,7 +1078,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
         detailEl.innerHTML = '<div class="empty-state">No transcription entries</div>';
         footerLeft.textContent = '0 lines';
         footerRight.textContent = '';
-        footerWhereKey = '';
         return;
       }
 
@@ -1195,87 +1110,10 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
 
       updateFooter();
       footerRight.textContent = '';
-      footerWhereKey = '';
     } catch {
       detailEl.innerHTML = '<div class="empty-state">Failed to load meeting</div>';
     }
   }
-
-  // --- Notula ---
-
-  function sendNotula(message: Record<string, unknown>): void {
-    try {
-      port?.postMessage(message);
-    } catch { /* reconnecting */ }
-  }
-
-  function startAwaiting(): void {
-    if (awaitingTimer) return;
-    awaitingTimer = setInterval(() => {
-      const state = notulaSnapshot?.status.state ?? 'notPaired';
-      sendNotula({ type: state === 'notPaired' ? 'notula_pair_start' : 'notula_check' });
-    }, AWAITING_POLL_MS);
-  }
-
-  function stopAwaiting(): void {
-    if (awaitingTimer) clearInterval(awaitingTimer);
-    awaitingTimer = null;
-  }
-
-  function leaveScreen(): void {
-    if (pairStage === 'pairing') sendNotula({ type: 'notula_pair_cancel' });
-    pairStage = 'idle';
-    stopAwaiting();
-    renderNotula();
-  }
-
-  /** A screen takes the whole panel; when it goes, the view it covered comes back. */
-  function renderScreen(): void {
-    const show = renderNotulaScreen(notulaCtx, screenEl, pairStage, pairCode, {
-      later: leaveScreen,
-      get: () => {
-        window.open(notulaUrl('/', 'meet-panel', 'get'), '_blank', 'noopener');
-        pairStage = 'awaiting';
-        startAwaiting();
-        renderNotula();
-      },
-      awaiting: startAwaiting,
-    });
-    if (show) {
-      for (const view of [liveSections, meetingsEl, detailEl, toolbarEl, backNav, footerEl, offersEl]) view.style.display = 'none';
-      screenShown = true;
-    } else if (screenShown) {
-      screenShown = false;
-      if (pairStage === 'idle' && notulaSnapshot?.status.state !== 'noWorkspace') stopAwaiting();
-      applyViewDisplays();
-      return;
-    }
-    renderDefaultLine();
-  }
-
-  function renderNotula(): void {
-    renderConnect(notulaCtx, connectOffer, connectWait, pairStage);
-    renderOffers(notulaCtx, offersEl);
-    renderScreen();
-    footerWhereKey = '';
-    updateFooter();
-    if (currentView === 'meetings') void loadMeetingsList();
-  }
-
-  function onPairStage(stage: PairStage, code: string | undefined): void {
-    pairStage = stageAfter(pairStage, stage);
-    if (pairStage === 'pairing') pairCode = code ?? '';
-    if (pairStage !== 'awaiting') stopAwaiting();
-    renderNotula();
-  }
-
-  connectOffer.addEventListener('click', () => {
-    connectOffer.disabled = true;
-    sendNotula({ type: 'notula_pair_start' });
-    setTimeout(() => {
-      connectOffer.disabled = false;
-    }, 4000);
-  });
 
   // --- Communication with service worker ---
 
@@ -1294,27 +1132,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
 
       port.onMessage.addListener((message) => {
         switch (message.type) {
-          case 'notula_snapshot':
-            notulaSnapshot = message.snapshot as NotulaSnapshot;
-            if (notulaSnapshot.status.state === 'paired' && pairStage === 'awaiting') {
-              pairStage = 'idle';
-              stopAwaiting();
-            }
-            renderNotula();
-            break;
-
-          case 'notula_save':
-            if (notulaSnapshot) {
-              if (message.save) notulaSnapshot.saves[message.meetingId] = message.save as NotulaSnapshot['saves'][string];
-              else delete notulaSnapshot.saves[message.meetingId];
-            }
-            renderNotula();
-            break;
-
-          case 'notula_pair':
-            onPairStage(message.stage as PairStage, message.code);
-            break;
-
           case 'captions_missing':
             captionsMissing = true;
             renderPlaceholder();
@@ -1534,7 +1351,7 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
         display: none !important;
       }
 
-      /* Notula's palette, inlined: the panel lives inside somebody else's page
+      /* The palette, inlined: the panel lives inside somebody else's page
          and cannot import the app's stylesheet, so the same tokens are written
          here once, light and dark, and every rule below reads them. */
       .popup {
@@ -1759,62 +1576,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
         height: 14px;
       }
 
-      /* The connection line under the header. An offer is a button; a wait is
-         a band with nothing to press, because there is nothing to do. */
-      .connect {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        width: 100%;
-        padding: 6px 10px;
-        font-size: 11px;
-        text-align: start;
-        color: var(--accent);
-        background: var(--bg-sunken);
-        border-bottom: 1px solid var(--border);
-        flex-shrink: 0;
-        transition: background-color var(--quick) var(--ease);
-      }
-
-      .connect:hover {
-        background: var(--bg-hover);
-      }
-
-      .connect:disabled {
-        opacity: 0.6;
-        cursor: default;
-      }
-
-      .connect.warning,
-      .connect.warning:hover {
-        color: var(--warning-text);
-        background: var(--warning-bg);
-        border-bottom-color: var(--warning-border);
-        cursor: default;
-      }
-
-      .connect svg {
-        flex: none;
-        width: 12px;
-        height: 12px;
-      }
-
-      /* The one setting, as a bar rather than a menu: where new meetings go. */
-      .default-line {
-        padding: 3px 10px;
-        background: var(--bg-sunken);
-        border-bottom: 1px solid var(--border);
-        flex-shrink: 0;
-      }
-
-      .default-line .where {
-        margin-top: 0;
-      }
-
-      .default-line .where .dest {
-        background: var(--bg-raised);
-      }
-
       .body {
         display: flex;
         flex-direction: column;
@@ -1967,8 +1728,8 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
         gap: 4px;
       }
 
-      /* A note is the person's own words over the call, marked the way a
-         comment marks a passage in Notula - the same tint, not a second colour. */
+      /* A note is the person's own words over the call, marked with a tint,
+         not a second colour. */
       .note-item {
         display: flex;
         align-items: flex-start;
@@ -2088,24 +1849,21 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
       #section-notes .section-body::-webkit-scrollbar,
       .transcript::-webkit-scrollbar,
       .meetings-view::-webkit-scrollbar,
-      .detail-view::-webkit-scrollbar,
-      .menu::-webkit-scrollbar {
+      .detail-view::-webkit-scrollbar {
         width: 4px;
       }
 
       #section-notes .section-body::-webkit-scrollbar-track,
       .transcript::-webkit-scrollbar-track,
       .meetings-view::-webkit-scrollbar-track,
-      .detail-view::-webkit-scrollbar-track,
-      .menu::-webkit-scrollbar-track {
+      .detail-view::-webkit-scrollbar-track {
         background: transparent;
       }
 
       #section-notes .section-body::-webkit-scrollbar-thumb,
       .transcript::-webkit-scrollbar-thumb,
       .meetings-view::-webkit-scrollbar-thumb,
-      .detail-view::-webkit-scrollbar-thumb,
-      .menu::-webkit-scrollbar-thumb {
+      .detail-view::-webkit-scrollbar-thumb {
         background: var(--border-strong);
         border-radius: 2px;
       }
@@ -2189,512 +1947,6 @@ import type { NotulaContext, UiStage } from '../utils/notula-ui';
         justify-content: flex-end;
         gap: 4px;
         min-width: 0;
-      }
-
-      /* Where a meeting went, or why it did not: under its name on a card, and
-         for the call still going also at the end of the footer. The folder is
-         the one thing on the line that is pressed, so it is the one thing
-         drawn as a control. */
-      .where {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        min-height: 22px;
-        min-width: 0;
-        margin-top: 4px;
-        font-size: 11px;
-        color: var(--text-dim);
-      }
-
-      .footer .where {
-        margin-top: 0;
-      }
-
-      .where svg {
-        flex: none;
-        width: 12px;
-        height: 12px;
-        color: var(--text-faint);
-      }
-
-      .where .what {
-        min-width: 0;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-
-      .where.with-dest .what {
-        flex: none;
-      }
-
-      .where.warning {
-        color: var(--warning-text);
-      }
-
-      .where.danger {
-        color: var(--danger);
-      }
-
-      .where .dest {
-        display: inline-flex;
-        flex: 0 1 auto;
-        align-items: center;
-        gap: 4px;
-        min-width: 48px;
-        padding: 1px 6px;
-        overflow: hidden;
-        font-family: var(--font-code);
-        font-size: 11px;
-        color: var(--text);
-        white-space: nowrap;
-        background: var(--bg-sunken);
-        border: 1px solid var(--border);
-        border-radius: 5px;
-        transition: background-color var(--quick) var(--ease), border-color var(--quick) var(--ease);
-      }
-
-      /* The repository gives way first: it is recognisable from its first letters,
-         and the folder is what tells two meetings apart. */
-      .where .dest .repo {
-        flex: 1 1 0;
-        min-width: 2ch;
-        max-width: max-content;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        color: var(--text-dim);
-      }
-
-      .where .dest .sep {
-        flex: none;
-        color: var(--text-faint);
-      }
-
-      .where .dest .folder {
-        flex: 0 1 auto;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .footer .where .dest {
-        background: var(--bg-raised);
-      }
-
-      .where .dest:hover {
-        background: var(--bg-hover);
-        border-color: var(--border-strong);
-      }
-
-      /* Nowhere chosen yet: a chip with nothing in it, drawn as the gap it is. */
-      .where .dest.empty {
-        font-family: var(--font-ui);
-        color: var(--text-dim);
-        border-style: dashed;
-      }
-
-      .where .acts {
-        display: flex;
-        flex-shrink: 0;
-        gap: 2px;
-        margin-left: auto;
-      }
-
-      .where .acts button {
-        padding: 2px 6px;
-        font-size: 11px;
-        color: var(--accent);
-        border-radius: 5px;
-        transition: background-color var(--quick) var(--ease);
-      }
-
-      .where .acts button:hover {
-        background: var(--bg-hover);
-      }
-
-      /* A screen says one thing and offers one way out. */
-      .screen {
-        padding: 20px 16px;
-      }
-
-      .screen.centre {
-        text-align: center;
-      }
-
-      .screen h3 {
-        margin-bottom: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text);
-      }
-
-      .screen p {
-        font-size: 11px;
-        line-height: 1.5;
-        color: var(--text-dim);
-      }
-
-      /* Not scoped to the screen: the same line sits in the footer of the list,
-         which is the only place somebody already paired can find it. */
-      .why {
-        color: var(--accent);
-        text-decoration: none;
-        border-bottom: 1px solid transparent;
-      }
-
-      .why:hover {
-        border-bottom-color: currentColor;
-      }
-
-      /* In the footer it is the quietest thing on the surface, because the accent
-         on this list already belongs to Save to Notula and Open. */
-      .footer .why {
-        color: var(--text-dim);
-      }
-
-      .footer .why:hover {
-        color: var(--accent);
-      }
-
-      .screen .actions,
-      .offer .actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 6px;
-        margin-top: 14px;
-      }
-
-      .screen .code {
-        display: block;
-        margin: 8px 0 12px;
-        font-family: var(--font-code);
-        font-size: 20px;
-        font-weight: 600;
-        letter-spacing: 0.18em;
-        color: var(--text);
-      }
-
-      .steps {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-top: 10px;
-        padding-left: 0;
-        font-size: 11px;
-        line-height: 1.5;
-        color: var(--text-dim);
-        list-style: none;
-        counter-reset: step;
-      }
-
-      .steps li {
-        display: flex;
-        align-items: baseline;
-        gap: 8px;
-      }
-
-      .steps li::before {
-        content: counter(step);
-        counter-increment: step;
-        display: inline-grid;
-        flex: none;
-        place-items: center;
-        width: 16px;
-        height: 16px;
-        font-size: 10px;
-        color: var(--text-dim);
-        border: 1px solid var(--border-strong);
-        border-radius: 50%;
-      }
-
-      .primary {
-        padding: 4px 10px;
-        font-size: 11px;
-        font-weight: 500;
-        color: var(--accent-text);
-        background: var(--accent);
-        border-radius: var(--radius);
-        transition: opacity var(--quick) var(--ease);
-      }
-
-      .primary:hover {
-        opacity: 0.92;
-      }
-
-      .ghost {
-        padding: 4px 10px;
-        font-size: 11px;
-        color: var(--text-dim);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        transition: background-color var(--quick) var(--ease), color var(--quick) var(--ease);
-      }
-
-      .ghost:hover {
-        color: var(--text);
-        background: var(--bg-hover);
-      }
-
-      /* The two cards that show once: the rename, and the backlog after the first pairing. */
-      .offer {
-        margin: 8px 10px 0;
-        padding: 8px 10px;
-        background: var(--bg-sunken);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-      }
-
-      .offer .head {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-      }
-
-      .offer .what {
-        flex: 1;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text);
-      }
-
-      .offer .dismiss {
-        display: grid;
-        flex: none;
-        place-items: center;
-        width: 20px;
-        height: 20px;
-        margin: -2px -4px 0 0;
-        font-size: 14px;
-        color: var(--text-faint);
-        border-radius: 4px;
-      }
-
-      .offer .dismiss:hover {
-        color: var(--text);
-        background: var(--bg-hover);
-      }
-
-      .offer p {
-        margin-top: 4px;
-        font-size: 11px;
-        line-height: 1.5;
-        color: var(--text-dim);
-      }
-
-      .offer .actions {
-        margin-top: 8px;
-      }
-
-      /* The surface a picker is drawn on. */
-      .menu {
-        position: absolute;
-        z-index: 1001;
-        min-width: 170px;
-        max-height: 220px;
-        padding: 4px;
-        overflow-y: auto;
-        background: var(--bg-raised);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-      }
-
-      .menu .item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        width: 100%;
-        padding: 5px 8px;
-        font-family: var(--font-code);
-        font-size: 11px;
-        color: var(--text);
-        text-align: start;
-        border-radius: 4px;
-      }
-
-      .menu .item svg {
-        flex: none;
-        width: 12px;
-        height: 12px;
-        color: var(--text-faint);
-      }
-
-      .menu .item:hover {
-        background: var(--bg-hover);
-      }
-
-      .menu .item.on {
-        color: var(--accent);
-        background: var(--bg-active);
-      }
-
-      .menu .item.plain {
-        font-family: var(--font-ui);
-        color: var(--text-dim);
-      }
-
-      .menu .rule {
-        height: 1px;
-        margin: 4px 0;
-        background: var(--border);
-      }
-
-      /* The destination picker: the repository across the top, its folders as a
-         tree under it, and a field that filters them or names a new one. */
-      .menu.picker {
-        display: flex;
-        flex-direction: column;
-        left: 8px;
-        right: 8px;
-        min-width: 0;
-        padding: 0;
-        overflow: hidden;
-      }
-
-      .picker .head {
-        display: flex;
-        flex: none;
-        align-items: center;
-        gap: 6px;
-        width: 100%;
-        padding: 7px 10px;
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--text);
-        text-align: start;
-        border-bottom: 1px solid var(--border);
-        transition: background-color var(--quick) var(--ease);
-      }
-
-      .picker .head:hover {
-        background: var(--bg-hover);
-      }
-
-      .picker .head svg {
-        flex: none;
-        width: 12px;
-        height: 12px;
-        color: var(--text-faint);
-      }
-
-      .picker .head svg:last-child {
-        transform: rotate(90deg);
-        transition: transform var(--quick) var(--ease);
-      }
-
-      .picker .head.open svg:last-child {
-        transform: rotate(-90deg);
-      }
-
-      .picker .name {
-        flex: 1 1 auto;
-        min-width: 0;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-
-      .picker .filter {
-        flex: none;
-        margin: 6px 6px 2px;
-        padding: 4px 8px;
-        font: inherit;
-        font-size: 11px;
-        color: var(--text);
-        background: var(--bg-sunken);
-        border: 1px solid var(--border);
-        border-radius: 5px;
-        outline: none;
-        transition: border-color var(--quick) var(--ease);
-      }
-
-      .picker .filter:focus {
-        border-color: var(--border-strong);
-      }
-
-      .picker .filter::placeholder {
-        color: var(--text-faint);
-      }
-
-      .picker .body {
-        flex: 1 1 auto;
-        min-height: 0;
-        padding: 4px;
-        overflow-y: auto;
-      }
-
-      .picker .row {
-        padding-left: calc(6px + var(--depth, 0) * 14px);
-      }
-
-      .picker .row.cursor {
-        background: var(--bg-hover);
-      }
-
-      .picker .row.on.cursor {
-        background: var(--bg-active);
-      }
-
-      .picker .chev {
-        display: flex;
-        flex: none;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-        margin: -3px -4px -3px -5px;
-        color: var(--text-faint);
-        border-radius: 3px;
-      }
-
-      .picker .chev svg {
-        width: 10px;
-        height: 10px;
-        transition: transform var(--quick) var(--ease);
-      }
-
-      .picker .chev.open svg {
-        transform: rotate(90deg);
-      }
-
-      .picker .chev.none {
-        visibility: hidden;
-      }
-
-      .picker .chev:hover {
-        color: var(--text);
-        background: var(--bg-active);
-      }
-
-      .picker .tag {
-        flex: none;
-        padding: 0 4px;
-        font-family: var(--font-ui);
-        font-size: 9px;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: var(--text-faint);
-        border: 1px solid var(--border);
-        border-radius: 3px;
-      }
-
-      .picker .create .name {
-        font-family: var(--font-ui);
-        color: var(--text-dim);
-      }
-
-      .picker .create b {
-        font-family: var(--font-code);
-        font-weight: 400;
-        color: var(--text);
-      }
-
-      .picker .foot {
-        flex: none;
-        padding: 6px 10px;
-        white-space: normal;
-        border-top: 1px solid var(--border);
-        border-radius: 0;
       }
 
       /* Resize edges & corners */

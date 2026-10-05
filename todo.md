@@ -2,19 +2,6 @@
 
 ## Planned
 
-- [ ] Capture real `captions_v2`, participant and chat messages for tests
-  - Messages built from the structures documented in the code are not read by these parsers, so their content is untested
-  - Record a few raw messages in a live call, rebuild their shape in `tests/helpers/samples.ts` with invented content, and add content tests
-  - A suspected bug (v2 captions dropped at message number 128 or for long text) was not confirmed: a 43-minute call with 429 entries transcribed to the end. Re-check it against the real message shape
-
-- [ ] Fix doubled words at the end of some transcript entries
-  - Seen in a real export: "worst. worst.", "really. really.", "police police", "learns learns"
-  - Likely from merging caption revisions in `transcript-store.ts`; reproduce before fixing
-
-- [ ] Remove Notula from the branding and replace it with "Simple Transcript" as needed
-  - Remove any ads or links to external products
-  - All Notula-related features go too, including "Save to your Git repo via Notula"
-
 - [ ] Remove the Notes functionality
   - It is not really useful and not part of the core functionality, which is the transcript
   - Existing notes are dropped, not migrated or exported: the extension is new, so there is nothing worth preserving
@@ -30,6 +17,20 @@
 - [ ] Name saved transcript files like `Transcript - Entech Daily Meeting 1 - 2026-04-23 14-23.md`
   - Format is `Transcript - <meeting title> - <YYYY>-<MM>-<DD> <HH>-<mm>.md`, so files group by meeting and sort by date within it
 
+- [ ] Save the transcript as text instead of Markdown
+  - Export and download currently produce a `.md` file; make plain text (`.txt`) the saved format
+  - Decide whether Markdown stays as an option, and whether Copy follows the same format; the file-naming item above then ends in `.txt`
+
+- [ ] New icon and colours
+  - The current icon is the same as the published "Notula for Google Meet" one, so the two would be confused
+  - Draw a few simple SVG candidates, compare them at toolbar size (16px) and store size (128px), and avoid anything resembling Google Meet's logo or colours
+  - Needed before the first Chrome Web Store release
+
+- [ ] Rewrite the website pages, privacy policy and store listing for Simple Transcript
+  - The rebrand deleted the old website pages (redirects to notula.org) and the screenshot tooling, and only trimmed `WEBSTORE_LISTING.md`
+  - Write a home page and a privacy policy, publish them with GitHub Pages, finish the listing text and make new screenshots and tiles
+  - Needed before the first Chrome Web Store release, once the UI is in its final shape
+
 - [ ] Error logging and reporting for when captions are not coming through
   - A "Something's wrong?" action in the popup builds a diagnostic report (versions, channel names, message counts, errors) and opens a pre-filled GitHub issue, with a copy button as fallback
   - Enable Issues on the repo and add an issue template that tells users what to include
@@ -39,7 +40,21 @@
   - A search box above the meetings list filters by title, attendee name and transcript text
   - A match in the transcript shows the matching line under the meeting
 
+- [ ] Capture real `captions_v2`, participant and chat messages for tests
+  - Messages built from the structures documented in the code are not read by these parsers, so their content is untested
+  - Record a few raw messages in a live call, rebuild their shape in `tests/helpers/samples.ts` with invented content, and add content tests
+  - A suspected bug (v2 captions dropped at message number 128 or for long text) was not confirmed: a 43-minute call with 429 entries transcribed to the end. Re-check it against the real message shape
+
+- [ ] Fix doubled words at the end of some transcript entries
+  - Seen in a real export: "worst. worst.", "really. really.", "police police", "learns learns"
+  - Likely from merging caption revisions in `transcript-store.ts`; reproduce before fixing
+
 ## Completed
+
+- [x] Remove Notula from the branding and replace it with "Simple Transcript" (2026-10-05)
+  - Named "Simple Transcript: Copy & Save for Google Meet"; "Simple Transcript" in the toolbar tooltip, panel title and popup header
+  - Notula save feature, pairing screens, promo link and the only network code removed; five modules deleted
+  - README, store listing text, release names and constitution updated; the notula.org redirect pages and the screenshot tooling deleted
 
 - [x] Update Node from 22 to 24 (2026-10-02)
   - `release.yml`: `node-version: 24`; READMEs name Node 24
