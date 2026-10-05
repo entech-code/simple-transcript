@@ -1,4 +1,4 @@
-import type { TranscriptEntry, NoteEntry, Settings } from './types';
+import type { TranscriptEntry, Settings } from './types';
 import { DEFAULT_SETTINGS } from './types';
 
 let settings: Settings = { ...DEFAULT_SETTINGS };
@@ -200,37 +200,13 @@ export async function restoreFromStorage(): Promise<void> {
 
 // --- Export formatters ---
 
-function formatNotesBlock(notes: NoteEntry[], format: 'text' | 'md'): string {
-  if (notes.length === 0) return '';
-  const sorted = [...notes].sort((a, b) => b.timestamp - a.timestamp);
-  if (format === 'md') {
-    const lines = ['## Notes', ''];
-    for (const n of sorted) {
-      const time = new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      lines.push(`- _(${time})_ ${n.text}`);
-    }
-    lines.push('', '---', '');
-    return lines.join('\n');
-  }
-  // text format
-  const lines = ['=== Notes ==='];
-  for (const n of sorted) {
-    const time = new Date(n.timestamp).toLocaleTimeString();
-    lines.push(`[${time}] ${n.text}`);
-  }
-  lines.push('', '=== Transcript ===');
-  return lines.join('\n') + '\n';
-}
-
-export function exportAsText(data: TranscriptEntry[], notes?: NoteEntry[]): string {
-  const notesBlock = notes?.length ? formatNotesBlock(notes, 'text') : '';
-  const transcript = data
+export function exportAsText(data: TranscriptEntry[]): string {
+  return data
     .map(e => {
       const time = new Date(e.timestamp).toLocaleTimeString();
       return `[${time}] ${e.speaker}: ${e.text}`;
     })
     .join('\n');
-  return notesBlock + transcript;
 }
 
 export function exportAsSrt(data: TranscriptEntry[]): string {
@@ -277,17 +253,13 @@ export function exportAsJson(data: TranscriptEntry[]): string {
   return JSON.stringify(cleaned, null, 2);
 }
 
-export function exportAsMarkdown(data: TranscriptEntry[], title?: string, notes?: NoteEntry[]): string {
+export function exportAsMarkdown(data: TranscriptEntry[], title?: string): string {
   const heading = title ?? 'Meeting Transcript';
   const dateStr = data.length > 0
     ? new Date(data[0].timestamp).toLocaleDateString()
     : new Date().toLocaleDateString();
 
   const lines = [`# ${heading}`, `**Date:** ${dateStr}`, ''];
-
-  if (notes?.length) {
-    lines.push(formatNotesBlock(notes, 'md'));
-  }
 
   for (const e of data) {
     const time = new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
