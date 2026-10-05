@@ -10,9 +10,10 @@
 - [ ] Name saved transcript files like `Transcript - Entech Daily Meeting 1 - 2026-04-23 14-23.md`
   - Format is `Transcript - <meeting title> - <YYYY>-<MM>-<DD> <HH>-<mm>.md`, so files group by meeting and sort by date within it
 
-- [ ] Save the transcript as text instead of Markdown
-  - Export and download currently produce a `.md` file; make plain text (`.txt`) the saved format
-  - Decide whether Markdown stays as an option, and whether Copy follows the same format; the file-naming item above then ends in `.txt`
+- [ ] Save the transcript as plain text instead of Markdown
+  - Copy to clipboard and Download produce plain text by default, and downloads are `.txt`; do this before the first release, since changing a default afterwards disrupts users
+  - Layout: the meeting title and date at the top, then one block per speaker turn with the name and time on one line (`Dana Whitfield (2:05 PM)`) and the text below, separated by blank lines; times without seconds
+  - The file-naming item above then ends in `.txt`
 
 - [ ] New icon and colours
   - The current icon is the same as the published "Notula for Google Meet" one, so the two would be confused
@@ -32,6 +33,10 @@
 - [ ] Search across saved meetings
   - A search box above the meetings list filters by title, attendee name and transcript text
   - A match in the transcript shows the matching line under the meeting
+
+- [ ] Let the user choose the format for Copy to clipboard and Download
+  - Options: plain text (`.txt`, the default), Markdown (`.md`) and JSON (`.json`), with the choice remembered
+  - Today both buttons always produce Markdown, although text, JSON, SRT and VTT formatters already exist; decide whether SRT and VTT are offered or removed
 
 - [ ] Capture real `captions_v2`, participant and chat messages for tests
   - Messages built from the structures documented in the code are not read by these parsers, so their content is untested
