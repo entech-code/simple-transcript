@@ -61,7 +61,7 @@ Use the language selector in the floating popup to switch transcription language
 
 All data stays in your browser. Nothing is sent to an external server: transcription is Google Meet's own caption system, no audio is recorded and no bot joins the call.
 
-The extension makes no network requests of any kind.
+The extension contacts no server other than Google Meet itself. From inside the Meet page it can ask Meet to change the caption language and to resend the participant list, using your existing Meet session. Nothing is sent anywhere else.
 
 ## Testing
 
