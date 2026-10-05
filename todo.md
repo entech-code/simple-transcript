@@ -2,10 +2,6 @@
 
 ## Planned
 
-- [ ] Remove Notula from the branding and replace it with "Simple Transcript" as needed
-  - Remove any ads or links to external products
-  - All Notula-related features go too, including "Save to your Git repo via Notula"
-
 - [ ] Remove the Notes functionality
   - It is not really useful and not part of the core functionality, which is the transcript
   - Existing notes are dropped, not migrated or exported: the extension is new, so there is nothing worth preserving
@@ -31,7 +27,8 @@
   - Needed before the first Chrome Web Store release
 
 - [ ] Rewrite the website pages, privacy policy and store listing for Simple Transcript
-  - The rebrand only swaps the name in `docs/`, `WEBSTORE_LISTING.md` and `PROMOTION.md`; the text, layout and screenshots still date from Notula
+  - The rebrand deleted the old website pages (redirects to notula.org) and the screenshot tooling, and only trimmed `WEBSTORE_LISTING.md`
+  - Write a home page and a privacy policy, publish them with GitHub Pages, finish the listing text and make new screenshots and tiles
   - Needed before the first Chrome Web Store release, once the UI is in its final shape
 
 - [ ] Error logging and reporting for when captions are not coming through
@@ -53,6 +50,11 @@
   - Likely from merging caption revisions in `transcript-store.ts`; reproduce before fixing
 
 ## Completed
+
+- [x] Remove Notula from the branding and replace it with "Simple Transcript" (2026-10-05)
+  - Named "Simple Transcript: Copy & Save for Google Meet"; "Simple Transcript" in the toolbar tooltip, panel title and popup header
+  - Notula save feature, pairing screens, promo link and the only network code removed; five modules deleted
+  - README, store listing text, release names and constitution updated; the notula.org redirect pages and the screenshot tooling deleted
 
 - [x] Update Node from 22 to 24 (2026-10-02)
   - `release.yml`: `node-version: 24`; READMEs name Node 24
