@@ -2,10 +2,14 @@
 
 ## Planned
 
-- [ ] Fix `captions_v2` parsing dropping captions
-  - `parseCaptionMessageV2` returns nothing when the message number or revision reaches 128, or the caption data reaches 128 bytes (about 75 characters of text), so long sentences and captions later in a call are lost
-  - Read the message with the raw decoder from the top instead of relying on the decoder's text-or-nested guess; add tests for each case and verify in a live call
-  - Add the deferred content tests for `captions_v2`, participant and chat messages, which need the shape of a real message
+- [ ] Capture real `captions_v2`, participant and chat messages for tests
+  - Messages built from the structures documented in the code are not read by these parsers, so their content is untested
+  - Record a few raw messages in a live call, rebuild their shape in `tests/helpers/samples.ts` with invented content, and add content tests
+  - A suspected bug (v2 captions dropped at message number 128 or for long text) was not confirmed: a 43-minute call with 429 entries transcribed to the end. Re-check it against the real message shape
+
+- [ ] Fix doubled words at the end of some transcript entries
+  - Seen in a real export: "worst. worst.", "really. really.", "police police", "learns learns"
+  - Likely from merging caption revisions in `transcript-store.ts`; reproduce before fixing
 
 - [ ] Remove Notula from the branding and replace it with "Simple Transcript" as needed
   - Remove any ads or links to external products
@@ -49,7 +53,7 @@
   - `tests/`: protobuf decoding, the `captions` parser, malformed input for every parser, the five export formats and export file naming, run with `npm test` (Vitest)
   - `src/utils/export-filename.ts`: file name shared by both popups
   - `release.yml`: runs the tests before the build
-  - Content tests for `captions_v2`, participant and chat messages are deferred to the `captions_v2` fix; samples are built in code, not captured
+  - Content tests for `captions_v2`, participant and chat messages are deferred until real messages are captured; samples are built in code
 
 - [x] If user opens up the same meeting at the same day, then proceed transcription in that meeting (2026-02-27)
   - `meeting-store.ts`: `findSameDayMeeting()` + `resumeMeeting()`
