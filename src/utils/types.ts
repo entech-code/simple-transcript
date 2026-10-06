@@ -15,6 +15,7 @@ export interface Meeting {
   startTime: number;
   endTime: number | null;
   participants: Record<string, string>; // deviceId → name
+  selfName?: string; // the user's own name in this call, as Google Meet shows it
   entries: TranscriptEntry[];
 }
 

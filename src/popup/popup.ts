@@ -1,5 +1,6 @@
 import { MSG, type Meeting, type TranscriptEntry } from '../utils/types';
 import { exportFileName } from '../utils/export-filename';
+import { meetingDisplayTitle, meetingFileTitle } from '../utils/meeting-title';
 
 type MeetingSummary = Omit<Meeting, 'entries'>;
 
@@ -111,6 +112,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
   function createItem(m: MeetingSummary, isLive: boolean, detail: boolean): HTMLElement {
     const item = document.createElement('div');
     item.className = 'meeting-item' + (isLive ? ' current' : '') + (detail ? ' detail' : '');
+    const title = meetingDisplayTitle(m);
 
     const date = new Date(m.startTime).toLocaleDateString();
     const time = new Date(m.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -135,7 +137,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
       : '';
 
     item.innerHTML = `
-      <div class="meeting-item-title">${escapeHtml(m.title)}</div>
+      <div class="meeting-item-title">${escapeHtml(title)}</div>
       <div class="meeting-item-row">
         <span class="meeting-item-meta">${date} ${time}${durationStr ? ` · ${durationStr}` : ''}</span>
         <div class="meeting-item-actions">${ACTIONS_HTML}</div>
@@ -144,7 +146,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
     `;
 
     // A title longer than two lines is cut off; the whole of it is in the tooltip.
-    (item.querySelector('.meeting-item-title') as HTMLElement).title = m.title;
+    (item.querySelector('.meeting-item-title') as HTMLElement).title = title;
     const actionsEl = item.querySelector('.meeting-item-actions') as HTMLElement;
 
     // --- Action button handlers ---
@@ -170,7 +172,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
           payload: { id: m.id, format: 'md' },
         }).then((response) => {
           if (response?.content) {
-            download(response.content, response.title ?? m.title, response.startTime ?? m.startTime);
+            download(response.content, meetingFileTitle(m), response.startTime ?? m.startTime);
           }
         }).catch(() => {});
       }

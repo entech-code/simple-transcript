@@ -1,6 +1,7 @@
 import { MSG, POPUP_PORT_NAME, type TranscriptEntry, type Meeting } from '../utils/types';
 import { exportAsMarkdown } from '../utils/transcript-store';
 import { exportFileName } from '../utils/export-filename';
+import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../utils/meeting-title';
 
 (function () {
   const STORAGE_POS_KEY = 'popup_position';
@@ -178,15 +179,16 @@ import { exportFileName } from '../utils/export-filename';
       // and lost in-memory data, so we format directly from the entries
       // that were already fetched and displayed.
       if (detailEntries.length > 0 && detailMeeting) {
-        const content = exportAsMarkdown(detailEntries, detailMeeting.title);
-        return { content, title: detailMeeting.title, startTime: detailEntries[0]?.timestamp ?? detailMeeting.startTime };
+        const title = meetingDisplayTitle(detailMeeting);
+        const content = exportAsMarkdown(detailEntries, title);
+        return { content, title, startTime: detailEntries[0]?.timestamp ?? detailMeeting.startTime };
       }
       return chrome.runtime.sendMessage({
         type: MSG.EXPORT_MEETING,
         payload: { id: viewingMeetingId, format: 'md' },
       });
     }
-    const title = currentMeeting?.title ?? 'Meeting Transcript';
+    const title = currentMeeting ? meetingDisplayTitle(currentMeeting) : UNTITLED_MEETING;
     return chrome.runtime.sendMessage({
       type: MSG.EXPORT_TRANSCRIPT,
       payload: { format: 'md', title },
@@ -218,9 +220,10 @@ import { exportFileName } from '../utils/export-filename';
     try {
       const response = await getExportResponse();
       if (response?.content) {
+        const meeting = currentView === 'meeting-detail' ? detailMeeting : currentMeeting;
         download(
           response.content,
-          response.title ?? currentMeeting?.title ?? 'Meeting Transcript',
+          meeting ? meetingFileTitle(meeting) : UNTITLED_MEETING,
           response.startTime ?? currentMeeting?.startTime ?? Date.now(),
         );
       }
@@ -514,6 +517,7 @@ import { exportFileName } from '../utils/export-filename';
     item.className = 'meeting-item'
       + (mode === 'list' && isCurrent ? ' current' : '')
       + (mode === 'list' ? '' : ' detail');
+    const title = meetingDisplayTitle(m);
 
     const date = new Date(m.startTime).toLocaleDateString();
     const time = new Date(m.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -535,7 +539,7 @@ import { exportFileName } from '../utils/export-filename';
       : '';
 
     item.innerHTML = `
-      <div class="meeting-item-title">${escapeHtml(m.title)}</div>
+      <div class="meeting-item-title">${escapeHtml(title)}</div>
       <div class="meeting-item-row">
         <span class="meeting-item-meta">${date} ${time}${durationStr ? ` · ${durationStr}` : ''}</span>
         <div class="meeting-item-actions">${actionsHtml(mode)}</div>
@@ -544,7 +548,7 @@ import { exportFileName } from '../utils/export-filename';
     `;
 
     // A title longer than two lines is cut off; the whole of it is in the tooltip.
-    (item.querySelector('.meeting-item-title') as HTMLElement).title = m.title;
+    (item.querySelector('.meeting-item-title') as HTMLElement).title = title;
     const actionsEl = item.querySelector('.meeting-item-actions') as HTMLElement;
 
     // --- Action button handlers ---
@@ -580,7 +584,7 @@ import { exportFileName } from '../utils/export-filename';
           payload: { id: m.id, format: 'md' },
         }).then((response) => {
           if (response?.content) {
-            download(response.content, response.title ?? m.title, response.startTime ?? m.startTime);
+            download(response.content, meetingFileTitle(m), response.startTime ?? m.startTime);
           }
         }).catch(() => {});
       }
@@ -791,6 +795,7 @@ import { exportFileName } from '../utils/export-filename';
           case 'meeting_renamed':
             if (currentMeeting && message.meeting?.id === currentMeeting.id) {
               currentMeeting.title = message.meeting.title;
+              currentMeeting.selfName = message.meeting.selfName;
               if (currentView === 'live') renderMeetingHead();
             }
             break;

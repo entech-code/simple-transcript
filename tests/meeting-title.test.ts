@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { meetingTitleFromTabTitle } from '../src/utils/meeting-title';
+import { meetingDisplayTitle, meetingFileTitle, meetingTitleFromTabTitle } from '../src/utils/meeting-title';
 
 const CODE = 'eoq-yhou-uyp';
 
@@ -64,5 +64,66 @@ describe('meetingTitleFromTabTitle', () => {
 
   it('finds no name when there is no title', () => {
     expect(meetingTitleFromTabTitle(undefined, CODE)).toBeNull();
+  });
+});
+
+describe('meetingDisplayTitle', () => {
+  it('shows the title from Google Meet', () => {
+    expect(meetingDisplayTitle({ title: 'Entech Daily Meeting' })).toBe('Entech Daily Meeting');
+  });
+
+  it.each([
+    ['an empty title', ''],
+    ['a title of spaces only', '   '],
+  ])('calls a meeting with %s "Untitled meeting"', (_name, title) => {
+    expect(meetingDisplayTitle({ title })).toBe('Untitled meeting');
+  });
+});
+
+describe('meetingFileTitle', () => {
+  const ME = 'Eric Popivker';
+  const people = (...names: string[]): Record<string, string> =>
+    Object.fromEntries(names.map((name, i) => [`@spaces/x/devices/${i}`, name]));
+
+  it('uses the title from Google Meet', () => {
+    expect(meetingFileTitle({ title: 'Entech Daily Meeting', participants: people(ME, 'Alexey Kornakov'), selfName: ME })).toBe('Entech Daily Meeting');
+  });
+
+  it.each([
+    ['the user alone', [ME], 'Untitled meeting'],
+    ['no one', [], 'Untitled meeting'],
+    ['one other attendee', [ME, 'Alexey Kornakov'], 'Meeting with Alexey Kornakov'],
+    ['two others', [ME, 'Alexey Kornakov', 'Niraj Shah'], 'Meeting with Alexey Kornakov and Niraj Shah'],
+    ['three others', ['Alexey Kornakov', ME, 'Niraj Shah', 'Ana Lima'], 'Meeting with Alexey Kornakov, Niraj Shah and 1 other'],
+    ['six others', [ME, 'A One', 'B Two', 'C Three', 'D Four', 'E Five', 'F Six'], 'Meeting with A One, B Two and 4 others'],
+  ])('names an untitled meeting with %s', (_case, names, expected) => {
+    expect(meetingFileTitle({ title: '', participants: people(...names), selfName: ME })).toBe(expected);
+  });
+
+  it('leaves out the user regardless of spacing, letter case or "(You)"', () => {
+    for (const self of ['eric popivker', '  Eric   Popivker ', 'Eric Popivker (You)']) {
+      expect(meetingFileTitle({ title: '', participants: people(self, 'Alexey Kornakov'), selfName: ME })).toBe('Meeting with Alexey Kornakov');
+    }
+  });
+
+  it('counts an attendee listed twice once', () => {
+    expect(meetingFileTitle({ title: '', participants: people(ME, 'Alexey Kornakov', 'Alexey Kornakov'), selfName: ME })).toBe('Meeting with Alexey Kornakov');
+  });
+
+  it('skips devices whose name was never learned', () => {
+    expect(meetingFileTitle({ title: '', participants: people(ME, '@spaces/x/devices/9', 'Alexey Kornakov'), selfName: ME })).toBe('Meeting with Alexey Kornakov');
+  });
+
+  it('skips a Meet code picked up as a name', () => {
+    expect(meetingFileTitle({ title: '', participants: people(ME, 'brd-nnro-hdj'), selfName: ME })).toBe('Untitled meeting');
+    expect(meetingFileTitle({ title: '', participants: people(ME, 'brd-nnro-hdj', 'Alexey Kornakov'), selfName: ME })).toBe('Meeting with Alexey Kornakov');
+  });
+
+  it('does not name a meeting after a lone name when the user is not known', () => {
+    expect(meetingFileTitle({ title: '', participants: people('Alexey Kornakov') })).toBe('Untitled meeting');
+  });
+
+  it('names the attendees when the user is not known and there are two', () => {
+    expect(meetingFileTitle({ title: '', participants: people('Alexey Kornakov', 'Niraj Shah') })).toBe('Meeting with Alexey Kornakov and Niraj Shah');
   });
 });

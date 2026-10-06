@@ -164,11 +164,13 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
               const data = Uint8Array.from(binaryStr, c => c.charCodeAt(0));
               const device = parseDeviceInfo(data);
               if (device) {
-                debug('API: CreateMeetingDevice returned', device.deviceId, '→', device.deviceName);
+                // This browser registering itself in the call: the device is the user's own.
+                console.log(LOG_PREFIX, 'Own device from CreateMeetingDevice:', device.deviceId, '→', device.deviceName);
                 postToContentScript({
                   type: MSG.RTC_DEVICE_INFO,
                   deviceId: device.deviceId,
                   deviceName: device.deviceName,
+                  self: true,
                 });
               } else {
                 debug('API: CreateMeetingDevice no device parsed, dumping strings');
