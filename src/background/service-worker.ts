@@ -28,17 +28,16 @@ import {
   updateEntryText,
   updateEntrySpeaker,
   updateMeeting,
-  findTitleByCode,
   endMeeting,
   getMeetings,
   getMeeting,
-  renameMeeting,
+  setMeetingTitle,
   deleteMeeting,
   restoreMeetings,
-  getMeetingTitles,
   findRecentMeeting,
   resumeMeeting,
 } from '../utils/meeting-store';
+import { meetingTitleFromTabTitle } from '../utils/meeting-title';
 
 // --- Per-session state ---
 
@@ -245,6 +244,12 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       await updatePopupForTab(tabId, tab.url);
     } catch { /* tab may have been closed */ }
   }
+  // Meet puts the call's title in the tab title, a moment after the page knows its code.
+  if (changeInfo.title) {
+    await sessionStateReady;
+    const sessionId = tabSessionMap.get(tabId);
+    if (sessionId) applyMeetingTitle(sessionId, changeInfo.title);
+  }
 });
 
 // --- Toolbar icon click → toggle popup (only fires when popup is '' i.e. Meet tabs) ---
@@ -263,6 +268,7 @@ chrome.runtime.onConnect.addListener((port) => {
     const tabId = port.sender?.tab?.id;
     if (tabId != null) {
       tabSessionMap.set(tabId, sessionId);
+      refreshMeetingTitle(sessionId);
     }
 
     // The tab is back within the grace period: nothing ends.
@@ -352,6 +358,30 @@ function resolveDeviceName(deviceId: string): string | undefined {
   return entry.name;
 }
 
+/**
+ * The call's title, as Google Meet shows it in the tab title, becomes the title
+ * of the session's meeting. A tab title that carries none changes nothing, so a
+ * title is never replaced by the code.
+ */
+function applyMeetingTitle(sessionId: string, meetingTabTitle: string | undefined): void {
+  const meetingId = sessions.get(sessionId)?.meetingId;
+  const meeting = meetingId ? getMeeting(meetingId) : null;
+  if (!meeting) return;
+  const meetingTitle = meetingTitleFromTabTitle(meetingTabTitle, meeting.meetingCode);
+  if (!meetingTitle || meetingTitle === meeting.title) return;
+  const updated = setMeetingTitle(meeting.id, meetingTitle);
+  if (updated) broadcastToPopup({ type: 'meeting_renamed', meeting: updated }, sessionId);
+}
+
+/** Reads the title of the session's tab as it is now: it may have settled before the meeting existed. */
+function refreshMeetingTitle(sessionId: string): void {
+  for (const [tabId, sid] of tabSessionMap) {
+    if (sid !== sessionId) continue;
+    chrome.tabs.get(tabId).then((tab) => applyMeetingTitle(sessionId, tab.title)).catch(() => { /* tab closed */ });
+    return;
+  }
+}
+
 function ensureMeeting(sessionId: string, meetingCode?: string): string {
   const session = getOrCreateSession(sessionId);
 
@@ -371,6 +401,7 @@ function ensureMeeting(sessionId: string, meetingCode?: string): string {
     scheduleSessionPersist();
     updateExtensionIcon(true);
     broadcastToPopup({ type: 'meeting_started', meeting: recent }, sessionId);
+    refreshMeetingTitle(sessionId);
     return recent.id;
   }
 
@@ -383,6 +414,7 @@ function ensureMeeting(sessionId: string, meetingCode?: string): string {
   scheduleSessionPersist();
   updateExtensionIcon(true);
   broadcastToPopup({ type: 'meeting_started', meeting }, sessionId);
+  refreshMeetingTitle(sessionId);
 
   // Start monitoring for caption data — if none arrives, ask content script to retry enabling captions
   scheduleCaptionStallCheck(sessionId);
@@ -526,11 +558,11 @@ async function handleMessage(
 
         // If the meeting was created without a proper code, just patch it
         if (meeting && meeting.meetingCode === 'unknown') {
-          const title = findTitleByCode(msg.meetingCode) ?? msg.meetingCode;
-          updateMeeting(session.meetingId, { meetingCode: msg.meetingCode, title });
+          updateMeeting(session.meetingId, { meetingCode: msg.meetingCode, title: msg.meetingCode });
           session.meetingCode = msg.meetingCode;
           scheduleSessionPersist();
           broadcastToPopup({ type: 'meeting_started', meeting: getMeeting(session.meetingId) }, sessionId);
+          refreshMeetingTitle(sessionId);
           break;
         }
 
@@ -764,21 +796,6 @@ async function handleMessage(
       return;
     }
 
-    case MSG.RENAME_MEETING: {
-      const renameMsg = message.payload as { id: string; title: string };
-      const updated = renameMeeting(renameMsg.id, renameMsg.title);
-      if (updated) {
-        // Broadcast to all popup ports so live view stays in sync
-        for (const [sid, session] of sessions) {
-          if (session.meetingId === renameMsg.id) {
-            broadcastToPopup({ type: 'meeting_renamed', meeting: updated }, sid);
-            break;
-          }
-        }
-      }
-      sendResponse({ meeting: updated });
-      return;
-    }
 
     case MSG.DELETE_MEETING: {
       const deleteMsg = message.payload as { id: string };
@@ -806,10 +823,6 @@ async function handleMessage(
       return;
     }
 
-    case MSG.GET_MEETING_TITLES: {
-      sendResponse({ titles: getMeetingTitles() });
-      return;
-    }
 
     case MSG.GET_CURRENT_MEETING: {
       // Return the meeting for the sender's session (tab)

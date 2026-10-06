@@ -39,7 +39,9 @@ Then load the project root as an unpacked extension (same steps 3-5 above).
 
 1. Join a Google Meet call - captions are enabled and captured automatically
 2. Click the Simple Transcript icon in the toolbar to toggle the floating transcript popup
-3. Use the sidebar popup to browse past meetings, rename them, or export
+3. Use the sidebar popup to browse past meetings, copy or export them, or delete them
+
+A meeting created from a calendar event is titled with its name, as Google Meet shows it in the browser tab. A meeting without a name is titled with its Meet code.
 
 ### Export
 
