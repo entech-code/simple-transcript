@@ -2,18 +2,19 @@
 
 ## Planned
 
-- [ ] Name saved transcript files like `Transcript - Entech Daily Meeting 1 - 2026-04-23 14-23.md`
-  - Format is `Transcript - <meeting title> - <YYYY>-<MM>-<DD> <HH>-<mm>.md`, so files group by meeting and sort by date within it
-
 - [ ] Save the transcript as plain text instead of Markdown
   - Copy to clipboard and Download produce plain text by default, and downloads are `.txt`; do this before the first release, since changing a default afterwards disrupts users
   - Layout: the meeting title and date at the top, then one block per speaker turn with the name and time on one line (`Dana Whitfield (2:05 PM)`) and the text below, separated by blank lines; times without seconds
-  - The file-naming item above then ends in `.txt`
+  - Downloaded files then end in `.txt`
 
 - [ ] New icon and colours
   - The current icon is the same as the published "Notula for Google Meet" one, so the two would be confused
   - Draw a few simple SVG candidates, compare them at toolbar size (16px) and store size (128px), and avoid anything resembling Google Meet's logo or colours
   - Needed before the first Chrome Web Store release
+
+- [ ] Clean up the Copy, Export and Delete icons
+  - They are small and hard to see; make them larger, clearer and consistent between the floating panel and the toolbar popup
+  - Fits naturally with the new icon and colours above
 
 - [ ] Rewrite the website pages, privacy policy and store listing for Simple Transcript
   - The rebrand deleted the old website pages (redirects to notula.org) and the screenshot tooling, and only trimmed `WEBSTORE_LISTING.md`
@@ -42,8 +43,18 @@
   - Seen in a real export: "worst. worst.", "really. really.", "police police", "learns learns"
   - Likely from merging caption revisions in `transcript-store.ts`; reproduce before fixing
 
+- [ ] Stop an extra empty meeting appearing when a call starts from the Meet home page
+  - Seen 2026-10-06: an instant call showed two "Untitled meeting" cards, the live one and an empty one that was neither live nor ended; the empty one was deleted later, as empty meetings are
+  - Probably a meeting started from participant data before the code arrived; add logs for when a meeting is created, resumed and ended to find out
+
+- [ ] Separate meetings by Google account (to think about)
+  - Meetings are stored per Chrome profile, so meetings recorded under different Google accounts in the same profile appear in one list
+  - Decide whether to record the account a meeting was held under, and whether to filter, group or label meetings by it; separate Chrome profiles already keep lists apart
+
 ## Completed
 
+- [x] Name saved transcript files `<title> - <YYYY>-<MM>-<DD> <HH>-<mm> - Transcript.md`, with "Transcript" last so the date reads as the meeting's (2026-10-06)
+- [x] Call a meeting without a title "Untitled meeting", and name its files after the other attendees (2026-10-06)
 - [x] Show the name of the meeting instead of the unique id like `gim-mxzg-xdx` (2026-10-06)
   - A meeting is titled with its title from Google Meet, read from the browser tab ("Meet - <title>"); a call without one keeps its code
   - Renaming by hand removed; the Meet code is stored but no longer shown
