@@ -37,7 +37,7 @@ import {
   findRecentMeeting,
   resumeMeeting,
 } from '../utils/meeting-store';
-import { meetingTitleFromTabTitle } from '../utils/meeting-title';
+import { meetingDisplayTitle, meetingTitleFromTabTitle } from '../utils/meeting-title';
 
 // --- Per-session state ---
 
@@ -45,6 +45,8 @@ interface Session {
   meetingId: string | null;
   meetingCode: string | null;
   recentActiveDevices: Array<{ deviceId: string; timestamp: number }>;
+  /** The user's own name, from Meet's CreateMeetingDevice; it may come before the meeting exists. */
+  selfName?: string;
 }
 
 const sessions = new Map<string, Session>();
@@ -382,7 +384,18 @@ function refreshMeetingTitle(sessionId: string): void {
   }
 }
 
-function ensureMeeting(sessionId: string, meetingCode?: string): string {
+/** Stores the user's own name, once known, on the session's meeting. */
+function applySelfName(sessionId: string, announce: boolean): void {
+  const session = sessions.get(sessionId);
+  const meeting = session?.meetingId ? getMeeting(session.meetingId) : null;
+  if (!session?.selfName || !meeting || meeting.selfName === session.selfName) return;
+  const updated = updateMeeting(meeting.id, { selfName: session.selfName });
+  console.log('[MeetTranscript] Stored own name on meeting', meeting.id, ':', session.selfName);
+  if (updated && announce) broadcastToPopup({ type: 'meeting_renamed', meeting: updated }, sessionId);
+}
+
+/** `tabTitle` is the Meet tab's title when the message came from it, so a new meeting starts with its title. */
+function ensureMeeting(sessionId: string, meetingCode?: string, tabTitle?: string): string {
   const session = getOrCreateSession(sessionId);
 
   if (session.meetingId) return session.meetingId;
@@ -396,6 +409,7 @@ function ensureMeeting(sessionId: string, meetingCode?: string): string {
     resumeMeeting(recent.id);
     session.meetingId = recent.id;
     session.meetingCode = code;
+    applySelfName(sessionId, false);
     // Seed transcript store from meeting entries for dedup
     seedSession(sessionId, recent.entries);
     scheduleSessionPersist();
@@ -408,9 +422,10 @@ function ensureMeeting(sessionId: string, meetingCode?: string): string {
   // Clear transcript for this session
   clearEntries(sessionId);
 
-  const meeting = createMeeting(code);
+  const meeting = createMeeting(code, meetingTitleFromTabTitle(tabTitle, code) ?? '');
   session.meetingId = meeting.id;
   session.meetingCode = code;
+  applySelfName(sessionId, false);
   scheduleSessionPersist();
   updateExtensionIcon(true);
   broadcastToPopup({ type: 'meeting_started', meeting }, sessionId);
@@ -558,7 +573,7 @@ async function handleMessage(
 
         // If the meeting was created without a proper code, just patch it
         if (meeting && meeting.meetingCode === 'unknown') {
-          updateMeeting(session.meetingId, { meetingCode: msg.meetingCode, title: msg.meetingCode });
+          updateMeeting(session.meetingId, { meetingCode: msg.meetingCode });
           session.meetingCode = msg.meetingCode;
           scheduleSessionPersist();
           broadcastToPopup({ type: 'meeting_started', meeting: getMeeting(session.meetingId) }, sessionId);
@@ -584,7 +599,7 @@ async function handleMessage(
       }
       session.meetingCode = msg.meetingCode;
       scheduleSessionPersist();
-      ensureMeeting(sessionId, msg.meetingCode);
+      ensureMeeting(sessionId, msg.meetingCode, sender.tab?.title);
       break;
     }
 
@@ -640,7 +655,12 @@ async function handleMessage(
       if (!sessionId) break;
       const session = sessions.get(sessionId);
 
-      const devMsg = message as unknown as { deviceId: string; deviceName: string };
+      const devMsg = message as unknown as { deviceId: string; deviceName: string; self?: boolean };
+      if (devMsg.self && devMsg.deviceName) {
+        getOrCreateSession(sessionId).selfName = devMsg.deviceName.trim();
+        console.log('[MeetTranscript] Own name for session', sessionId, ':', devMsg.deviceName);
+        applySelfName(sessionId, true);
+      }
       if (devMsg.deviceId && devMsg.deviceName) {
         const oldName = resolveDeviceName(devMsg.deviceId);
         console.debug('[MeetTranscript] Device info received:', devMsg.deviceId, '→', devMsg.deviceName, '| previous:', oldName ?? '(none)', '| deviceMap size:', deviceMap.size);
@@ -682,7 +702,7 @@ async function handleMessage(
       // Track that we're receiving caption data (used by stall detection)
       lastCaptionTime.set(sessionId, Date.now());
 
-      const meetingId = ensureMeeting(sessionId);
+      const meetingId = ensureMeeting(sessionId, undefined, sender.tab?.title);
       const session = sessions.get(sessionId)!;
 
       let hasUnknownDevices = false;
@@ -735,7 +755,7 @@ async function handleMessage(
       if (!chatMsg.text) break;
 
       const chatSpeaker = resolveDeviceName(chatMsg.deviceId) ?? chatMsg.deviceId;
-      const meetingId = ensureMeeting(sessionId);
+      const meetingId = ensureMeeting(sessionId, undefined, sender.tab?.title);
 
       const result = updateOrAddEntry(sessionId, `[Chat] ${chatMsg.text}`, chatSpeaker);
       if (result) {
@@ -815,8 +835,9 @@ async function handleMessage(
       const meetingToExport = getMeeting(exportMsg.id);
       if (meetingToExport) {
         const format = exportMsg.format ?? 'md';
-        const content = formatExport(meetingToExport.entries, format, meetingToExport.title);
-        sendResponse({ content, format, title: meetingToExport.title, startTime: meetingToExport.startTime });
+        const title = meetingDisplayTitle(meetingToExport);
+        const content = formatExport(meetingToExport.entries, format, title);
+        sendResponse({ content, format, title, startTime: meetingToExport.startTime });
       } else {
         sendResponse({ content: null });
       }

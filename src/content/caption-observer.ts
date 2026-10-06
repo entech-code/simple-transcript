@@ -55,11 +55,13 @@
 
   // Filter out duration strings, timestamps, and other non-name text from DOM
   const NON_NAME_RE = /^\d+\s*(min|sec|hr|hour|:\d)/i;
+  // The meeting's code, which Meet shows in its meeting details, is not a name
+  const MEET_CODE_RE = /^[a-z]{3}-[a-z]{4}-[a-z]{3}$/i;
 
   function isValidName(name: string | null | undefined): name is string {
     if (!name) return false;
     const trimmed = name.trim();
-    return trimmed.length >= 2 && trimmed.length <= 60 && !NON_NAME_RE.test(trimmed);
+    return trimmed.length >= 2 && trimmed.length <= 60 && !NON_NAME_RE.test(trimmed) && !MEET_CODE_RE.test(trimmed);
   }
 
   function scanParticipantNames(): void {

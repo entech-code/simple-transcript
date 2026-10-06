@@ -41,11 +41,11 @@ Then load the project root as an unpacked extension (same steps 3-5 above).
 2. Click the Simple Transcript icon in the toolbar to toggle the floating transcript popup
 3. Use the sidebar popup to browse past meetings, copy or export them, or delete them
 
-A meeting created from a calendar event is titled with its name, as Google Meet shows it in the browser tab. A meeting without a name is titled with its Meet code.
+A meeting created from a calendar event is titled with its name, as Google Meet shows it in the browser tab. A meeting without a name is called "Untitled meeting".
 
 ### Export
 
-Click the export button on any meeting to download as Markdown. Files are named `Title YYYYMMDDHHmm.md`.
+Click the export button on any meeting to download as Markdown. Files are named `<title> - <YYYY>-<MM>-<DD> <HH>-<mm> - Transcript.md`, for example `Entech Daily Meeting - 2026-10-06 12-07 - Transcript.md`. A meeting without a title is named after the other attendees, such as `Meeting with Alexey Kornakov`, or `Untitled meeting` when there are none.
 
 ### Language
 

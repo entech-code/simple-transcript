@@ -12,12 +12,12 @@ function generateId(): string {
 }
 
 
-export function createMeeting(meetingCode: string): Meeting {
+export function createMeeting(meetingCode: string, title = ''): Meeting {
   const now = Date.now();
   const meeting: Meeting = {
     id: generateId(),
     meetingCode,
-    title: meetingCode,
+    title, // empty until Google Meet shows a title
     description: '',
     startTime: now,
     endTime: null,
