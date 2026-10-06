@@ -200,13 +200,33 @@ export async function restoreFromStorage(): Promise<void> {
 
 // --- Export formatters ---
 
-export function exportAsText(data: TranscriptEntry[]): string {
-  return data
-    .map(e => {
-      const time = new Date(e.timestamp).toLocaleTimeString();
-      return `[${time}] ${e.speaker}: ${e.text}`;
-    })
-    .join('\n');
+/** What the top of a plain-text transcript says about its meeting. */
+export interface TranscriptHeading {
+  title: string;
+  startTime: number;
+  attendees: string[];
+}
+
+/**
+ * The transcript as plain text: the meeting's name, start and attendees, then
+ * one block per entry as the panel shows it - the speaker and the time, then
+ * the text - with a blank line between blocks. Dates and times follow the
+ * user's locale and clock.
+ */
+export function exportAsText(data: TranscriptEntry[], heading: TranscriptHeading): string {
+  const lines = [
+    heading.title,
+    new Date(heading.startTime).toLocaleString([], { dateStyle: 'long', timeStyle: 'short' }),
+  ];
+  if (heading.attendees.length > 0) lines.push(`Attendees: ${heading.attendees.join(', ')}`);
+  lines.push('');
+
+  for (const e of data) {
+    const time = new Date(e.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    lines.push(`${e.speaker} (${time})`, e.text, '');
+  }
+
+  return lines.join('\n');
 }
 
 export function exportAsSrt(data: TranscriptEntry[]): string {
