@@ -2,11 +2,6 @@
 
 ## Planned
 
-- [ ] Show the name of the meeting instead of the unique id like `gim-mxzg-xdx`
-  - In the meetings list a call is titled with its Meet code unless it was renamed by hand, which makes meetings hard to tell apart
-
-  ![Meetings list showing Meet codes as titles](assets/todo-meeting-code-titles.png)
-
 - [ ] Name saved transcript files like `Transcript - Entech Daily Meeting 1 - 2026-04-23 14-23.md`
   - Format is `Transcript - <meeting title> - <YYYY>-<MM>-<DD> <HH>-<mm>.md`, so files group by meeting and sort by date within it
 
@@ -48,6 +43,12 @@
   - Likely from merging caption revisions in `transcript-store.ts`; reproduce before fixing
 
 ## Completed
+
+- [x] Show the name of the meeting instead of the unique id like `gim-mxzg-xdx` (2026-10-06)
+  - A meeting is titled with its title from Google Meet, read from the browser tab ("Meet - <title>"); a call without one keeps its code
+  - Renaming by hand removed; the Meet code is stored but no longer shown
+  - Meetings lists show titles on up to two lines with Copy, Export and Delete on the date line; an opened meeting and the live view start with the same block under "← Meetings"
+  - The floating panel's title bar keeps only Close
 
 - [x] Delete the leftover MeetScribe files (2026-10-05)
   - Removed `meetscribe/`, `meetscribe.zip`, `demo.html` and `seed-demo-data.js`; none was part of the build or the release package
