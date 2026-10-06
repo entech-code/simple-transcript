@@ -112,8 +112,8 @@ compare the top of the view with the meeting's entry in the list.
 4. **Given** an opened meeting with a long transcript, **When** the user scrolls, **Then** the
    block at the top stays in view.
 5. **Given** a call in progress, **When** the user opens the floating panel, **Then** the title
-   bar reads "Simple Transcript" and the same block is shown for the live call, with copy and
-   export buttons and without a delete button or a total duration.
+   bar reads "Simple Transcript" and the same block is shown for the live call, with its running
+   duration, with copy and export buttons and without a delete button.
 6. **Given** a call in progress, **When** another person joins or the call's name becomes known,
    **Then** the block updates without the panel being reopened.
 
@@ -181,10 +181,14 @@ compare the top of the view with the meeting's entry in the list.
   confirmation MUST return to the meetings list.
 - **FR-017**: During a live call, the floating panel MUST show the same block for the call in
   progress, below the "Meetings" back control: the title on up to two lines, the date and time
-  the call started, and the code and participants. It MUST have copy and export buttons, always
-  visible, and MUST NOT have a delete button or a total duration. The title and the participants
+  the call started with its running duration as the list shows it ("3 min (live)"), and the
+  participants. It MUST have copy and export buttons, always visible, and MUST NOT have a delete
+  button. The title and the participants
   MUST update as the name becomes known and as people join.
 - **FR-018**: Before a call is in progress, the live view MUST NOT show an empty block.
+- **FR-019**: The floating panel's title bar MUST have only a close button. The meetings list is
+  reached from the "Meetings" back control, and the live call from its entry at the top of the
+  list. The panel cannot be minimised; it is closed and reopened from the toolbar icon.
 
 ### Key Entities
 

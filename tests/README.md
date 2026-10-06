@@ -30,6 +30,7 @@ npm test
 | `malformed-input.test.ts`   | Every parser returns nothing, and never throws, on bad input |
 | `transcript-export.test.ts` | Markdown, text, JSON, SRT and VTT exports                    |
 | `export-filename.test.ts`   | The name of a downloaded transcript                          |
+| `meeting-title.test.ts`     | A meeting's title, read from the Google Meet tab's title     |
 
 Not covered yet: the content of `captions_v2`, participant and chat messages. Messages built from
 the structures documented in the code are not read by those parsers, because the decoder's

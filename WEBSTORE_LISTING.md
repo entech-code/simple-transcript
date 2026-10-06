@@ -33,7 +33,7 @@ EXPORT
 MANAGE YOUR MEETINGS
 
 - Browse all past meetings from the popup
-- Rename meetings with a click
+- Meetings are titled with their calendar event's name
 - Delete meetings you no longer need
 - See participant names, meeting codes and duration at a glance
 

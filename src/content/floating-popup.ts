@@ -14,7 +14,6 @@ import { exportFileName } from '../utils/export-filename';
   let entries: TranscriptEntry[] = [];
   let currentMeeting: Meeting | null = null;
   let participantCount = 0;
-  let isMinimized = false;
   let isHidden = true; // Start hidden, auto-show when in a real meeting
   let contextInvalidated = false;
 
@@ -59,8 +58,7 @@ import { exportFileName } from '../utils/export-filename';
   let currentView: 'live' | 'meetings' | 'meeting-detail' = 'live';
   let viewingMeetingId: string | null = null;
   let detailEntries: TranscriptEntry[] = [];
-  let detailTitle = '';
-  let detailStartTime = 0;
+  let detailMeeting: Omit<Meeting, 'entries'> | null = null;
   let popupWidth = DEFAULT_WIDTH;
   let popupHeight = DEFAULT_HEIGHT;
 
@@ -85,26 +83,17 @@ import { exportFileName } from '../utils/export-filename';
   container.innerHTML = `
     <div class="header" id="header">
       <div class="drag-handle" id="drag-handle">
-        <span class="title"><span class="title-prefix">Simple Transcript</span> <span class="title-sep">–</span> <span class="title-page" id="popup-title">Live</span></span>
+        <span class="title">Simple Transcript</span>
       </div>
       <div class="header-actions">
-        <button class="btn-icon" id="btn-meetings" title="Meetings">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-        </button>
-        <button class="btn-icon" id="btn-minimize" title="Minimize">&#8211;</button>
         <button class="btn-icon" id="btn-close" title="Close">&#215;</button>
       </div>
     </div>
     <div class="body" id="body">
-      <div class="toolbar" id="toolbar">
-        <button class="toolbar-action" id="btn-copy" title="Copy as Markdown"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        <button class="toolbar-action" id="btn-export" title="Export transcript"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-      </div>
       <div class="back-nav" id="back-nav">
         <button class="btn-back-live" id="btn-back-live">&larr; Meetings</button>
       </div>
+      <div class="meeting-head" id="meeting-head" hidden></div>
       <div class="content-area" id="content-area">
         <div class="live-sections" id="live-sections">
           <div class="section" id="section-transcript">
@@ -135,20 +124,15 @@ import { exportFileName } from '../utils/export-filename';
   // --- Element references ---
 
   const dragHandle = shadow.getElementById('drag-handle')!;
-  const popupTitle = shadow.getElementById('popup-title')!;
   const bodyEl = shadow.getElementById('body')!;
   const transcriptEl = shadow.getElementById('transcript')!;
   const meetingsEl = shadow.getElementById('meetings-view')!;
   const detailEl = shadow.getElementById('detail-view')!;
   const footerLeft = shadow.getElementById('footer-left')!;
   const footerRight = shadow.getElementById('footer-right')!;
-  const btnMinimize = shadow.getElementById('btn-minimize')!;
   const btnClose = shadow.getElementById('btn-close')!;
-  const btnMeetings = shadow.getElementById('btn-meetings')!;
-  const btnCopy = shadow.getElementById('btn-copy')!;
-  const btnExport = shadow.getElementById('btn-export')!;
   const edgeHandles = shadow.querySelectorAll<HTMLElement>('.edge');
-  const toolbarEl = shadow.getElementById('toolbar')!;
+  const meetingHead = shadow.getElementById('meeting-head')!;
   const footerEl = shadow.getElementById('footer')!;
   const backNav = shadow.getElementById('back-nav')!;
   const btnBackLive = shadow.getElementById('btn-back-live')!;
@@ -159,167 +143,11 @@ import { exportFileName } from '../utils/export-filename';
     switchView('meetings');
   });
 
-  // Stop keyboard events from reaching Google Meet's shortcut handler while a
-  // title is being edited. Composed events escape the shadow DOM, so we catch
-  // them on the host in the capture phase.
-  for (const evt of ['keydown', 'keyup', 'keypress'] as const) {
-    host.addEventListener(evt, (e: Event) => {
-      const active = shadow.activeElement as HTMLElement | null;
-      if (!active || active.contentEditable !== 'true') return;
-      e.stopPropagation();
-    }, true);
-  }
-
-  // --- Live title rename (double-click) ---
-
-  // --- Autocomplete helper ---
-
-  let acList: HTMLElement | null = null;
-  let acItems: string[] = [];
-  let acIndex = -1;
-  let acTarget: HTMLElement | null = null;
-
-  function showAutocomplete(target: HTMLElement): void {
-    removeAutocomplete();
-    acTarget = target;
-    acList = document.createElement('div');
-    acList.className = 'autocomplete-list';
-    // Position below the target
-    const rect = target.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    acList.style.left = `${rect.left - containerRect.left}px`;
-    acList.style.top = `${rect.bottom - containerRect.top + 2}px`;
-    acList.style.minWidth = `${rect.width}px`;
-    container.appendChild(acList);
-
-    chrome.runtime.sendMessage({ type: MSG.GET_MEETING_TITLES }).then((res) => {
-      acItems = (res?.titles ?? []) as string[];
-      filterAutocomplete();
-    }).catch(() => {});
-
-    target.addEventListener('input', onAcInput);
-  }
-
-  function onAcInput(): void { acIndex = -1; filterAutocomplete(); }
-
-  function filterAutocomplete(): void {
-    if (!acList || !acTarget) return;
-    const query = (acTarget.textContent ?? '').trim().toLowerCase();
-    const matches = query
-      ? acItems.filter(t => t.toLowerCase().includes(query) && t.toLowerCase() !== query)
-      : acItems;
-    acList.innerHTML = '';
-    acIndex = -1;
-    for (const title of matches.slice(0, 6)) {
-      const item = document.createElement('div');
-      item.className = 'autocomplete-item';
-      item.textContent = title;
-      item.addEventListener('mousedown', (e) => {
-        e.preventDefault(); // prevent blur
-        if (acTarget) {
-          acTarget.textContent = title;
-          acTarget.blur();
-        }
-      });
-      acList.appendChild(item);
-    }
-  }
-
-  function navigateAutocomplete(dir: number): void {
-    if (!acList) return;
-    const items = acList.querySelectorAll('.autocomplete-item');
-    if (items.length === 0) return;
-    if (acIndex >= 0) items[acIndex].classList.remove('active');
-    acIndex = (acIndex + dir + items.length) % items.length;
-    items[acIndex].classList.add('active');
-  }
-
-  function acceptAutocomplete(): boolean {
-    if (!acList || acIndex < 0) return false;
-    const items = acList.querySelectorAll('.autocomplete-item');
-    if (acIndex < items.length && acTarget) {
-      acTarget.textContent = items[acIndex].textContent;
-      return true;
-    }
-    return false;
-  }
-
-  function removeAutocomplete(): void {
-    if (acList) { acList.remove(); acList = null; }
-    if (acTarget) { acTarget.removeEventListener('input', onAcInput); }
-    acTarget = null;
-    acItems = [];
-    acIndex = -1;
-  }
-
-  popupTitle.addEventListener('dblclick', (e) => {
-    if (currentView !== 'live' || !currentMeeting) return;
-    e.stopPropagation();
-    popupTitle.contentEditable = 'true';
-    popupTitle.focus();
-    const range = document.createRange();
-    range.selectNodeContents(popupTitle);
-    const sel = window.getSelection();
-    sel?.removeAllRanges();
-    sel?.addRange(range);
-    showAutocomplete(popupTitle);
-  });
-  popupTitle.addEventListener('blur', () => {
-    if (popupTitle.contentEditable !== 'true') return;
-    popupTitle.contentEditable = 'false';
-    removeAutocomplete();
-    const newTitle = popupTitle.textContent?.trim();
-    if (newTitle && currentMeeting && newTitle !== currentMeeting.title) {
-      currentMeeting.title = newTitle;
-      chrome.runtime.sendMessage({
-        type: MSG.RENAME_MEETING,
-        payload: { id: currentMeeting.id, title: newTitle },
-      }).catch(() => {});
-    }
-  });
-  popupTitle.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (popupTitle.contentEditable !== 'true') return;
-    // Stop all keys from reaching Google Meet's shortcut handler (C=captions, D=camera, M=mic, etc.)
-    e.stopPropagation();
-    if (e.key === 'ArrowDown') { e.preventDefault(); navigateAutocomplete(1); return; }
-    if (e.key === 'ArrowUp') { e.preventDefault(); navigateAutocomplete(-1); return; }
-    if (e.key === 'Tab' || (e.key === 'Enter' && acIndex >= 0)) {
-      e.preventDefault();
-      if (acceptAutocomplete()) { popupTitle.blur(); }
-      return;
-    }
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      popupTitle.blur();
-    }
-    if (e.key === 'Escape') {
-      popupTitle.textContent = currentMeeting?.title ?? 'Live';
-      popupTitle.blur();
-    }
-  });
-
   // --- Event handlers ---
-
-  btnMinimize.addEventListener('click', () => {
-    isMinimized = !isMinimized;
-    bodyEl.style.display = isMinimized ? 'none' : '';
-    edgeHandles.forEach(el => el.style.display = isMinimized ? 'none' : '');
-    container.classList.toggle('minimized', isMinimized);
-    btnMinimize.innerHTML = isMinimized ? '&#9744;' : '&#8211;';
-    btnMinimize.title = isMinimized ? 'Expand' : 'Minimize';
-  });
 
   btnClose.addEventListener('click', () => {
     isHidden = true;
     host.style.display = 'none';
-  });
-
-  btnMeetings.addEventListener('click', () => {
-    if (currentView === 'meetings') {
-      switchView('live');
-    } else {
-      switchView('meetings');
-    }
   });
 
   async function copyToClipboard(text: string, feedbackEl: HTMLElement): Promise<void> {
@@ -349,9 +177,9 @@ import { exportFileName } from '../utils/export-filename';
       // Use locally cached entries — the service worker may have restarted
       // and lost in-memory data, so we format directly from the entries
       // that were already fetched and displayed.
-      if (detailEntries.length > 0) {
-        const content = exportAsMarkdown(detailEntries, detailTitle);
-        return { content, title: detailTitle, startTime: detailStartTime };
+      if (detailEntries.length > 0 && detailMeeting) {
+        const content = exportAsMarkdown(detailEntries, detailMeeting.title);
+        return { content, title: detailMeeting.title, startTime: detailEntries[0]?.timestamp ?? detailMeeting.startTime };
       }
       return chrome.runtime.sendMessage({
         type: MSG.EXPORT_MEETING,
@@ -365,14 +193,15 @@ import { exportFileName } from '../utils/export-filename';
     });
   }
 
-  btnCopy.addEventListener('click', async () => {
+  /** Copy for the view on screen: the live call or the opened meeting. */
+  async function copyCurrent(btn: HTMLElement): Promise<void> {
     try {
       const response = await getExportResponse();
       if (response?.content) {
-        await copyToClipboard(response.content, btnCopy);
+        await copyToClipboard(response.content, btn);
       }
     } catch { /* silent */ }
-  });
+  }
 
   function download(content: string, title: string, startTime: number): void {
     const blob = new Blob([content], { type: 'text/markdown' });
@@ -384,7 +213,8 @@ import { exportFileName } from '../utils/export-filename';
     URL.revokeObjectURL(url);
   }
 
-  btnExport.addEventListener('click', async () => {
+  /** Download for the view on screen: the live call or the opened meeting. */
+  async function exportCurrent(): Promise<void> {
     try {
       const response = await getExportResponse();
       if (response?.content) {
@@ -395,7 +225,7 @@ import { exportFileName } from '../utils/export-filename';
         );
       }
     } catch { /* silent */ }
-  });
+  }
 
   // --- View switching ---
 
@@ -404,31 +234,27 @@ import { exportFileName } from '../utils/export-filename';
     liveSections.style.display = view === 'live' ? '' : 'none';
     meetingsEl.style.display = view === 'meetings' ? '' : 'none';
     detailEl.style.display = view === 'meeting-detail' ? '' : 'none';
-    toolbarEl.style.display = (view === 'live' || view === 'meeting-detail') ? '' : 'none';
     backNav.style.display = (view === 'live' || view === 'meeting-detail') ? '' : 'none';
     // The list has nothing to say in a footer; the live and detail views count lines there.
     footerEl.style.display = view === 'meetings' ? 'none' : '';
+    renderMeetingHead();
   }
 
   function switchView(view: typeof currentView): void {
     currentView = view;
     applyViewDisplays();
 
-    btnMeetings.classList.toggle('active', view === 'meetings' || view === 'meeting-detail');
 
     switch (view) {
       case 'live':
-        popupTitle.textContent = currentMeeting ? currentMeeting.title : 'Live';
         renderAllEntries();
         break;
       case 'meetings':
-        popupTitle.textContent = 'Meetings';
         footerLeft.textContent = '';
         footerRight.textContent = '';
         loadMeetingsList();
         break;
       case 'meeting-detail':
-        // title set by loadMeetingDetail
         break;
     }
   }
@@ -625,6 +451,21 @@ import { exportFileName } from '../utils/export-filename';
   // Update duration every second
   setInterval(updateFooter, 1000);
 
+  /** How long the call in progress has run, as the list and the live header both show it. */
+  function liveDuration(startTime: number): string {
+    return `${Math.round((Date.now() - startTime) / 60000)} min (live)`;
+  }
+
+  // The live header's duration moves on with the call.
+  setInterval(() => {
+    if (currentView !== 'live' || !currentMeeting || meetingHead.hidden) return;
+    const meta = meetingHead.querySelector('.meeting-item-meta');
+    if (!meta) return;
+    const date = new Date(currentMeeting.startTime).toLocaleDateString();
+    const time = new Date(currentMeeting.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    meta.textContent = `${date} ${time} · ${liveDuration(currentMeeting.startTime)}`;
+  }, 30_000);
+
   // --- Meetings list view ---
 
   async function loadMeetingsList(): Promise<void> {
@@ -635,7 +476,7 @@ import { exportFileName } from '../utils/export-filename';
 
       // Current meeting at top if active
       if (currentMeeting) {
-        const currentItem = createMeetingListItem(currentMeeting, true);
+        const currentItem = createMeetingBlock(currentMeeting, true, 'list');
         meetingsEl.appendChild(currentItem);
       }
 
@@ -647,54 +488,63 @@ import { exportFileName } from '../utils/export-filename';
       }
 
       for (const m of pastMeetings) {
-        meetingsEl.appendChild(createMeetingListItem(m, false));
+        meetingsEl.appendChild(createMeetingBlock(m, false, 'list'));
       }
     } catch { /* silent */ }
   }
 
-  function createMeetingListItem(m: Omit<Meeting, 'entries'> | Meeting, isCurrent: boolean): HTMLElement {
+  type BlockMode = 'list' | 'detail' | 'live';
+
+  function actionsHtml(mode: BlockMode): string {
+    const copy = '<button class="meeting-action" data-action="copy" title="Copy as Markdown">⎘</button>';
+    const exp = '<button class="meeting-action" data-action="export" title="Export">↓</button>';
+    const del = '<button class="meeting-action" data-action="delete" title="Delete">✕</button>';
+    return mode === 'live' ? copy + exp : copy + exp + del;
+  }
+
+  /**
+   * A meeting's block: its title, the date line with the actions at its end,
+   * and the code and participants. In the list it opens the meeting and shows
+   * its actions on hover. At the top of an opened meeting (`detail`) and of
+   * the live view (`live`) it is not pressed and its actions always show; the
+   * live one has no delete.
+   */
+  function createMeetingBlock(m: Omit<Meeting, 'entries'> | Meeting, isCurrent: boolean, mode: BlockMode): HTMLElement {
     const item = document.createElement('div');
-    item.className = 'meeting-item' + (isCurrent ? ' current' : '');
+    item.className = 'meeting-item'
+      + (mode === 'list' && isCurrent ? ' current' : '')
+      + (mode === 'list' ? '' : ' detail');
 
     const date = new Date(m.startTime).toLocaleDateString();
     const time = new Date(m.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const participants = [...new Set(Object.values(m.participants || {}))]
       .filter(p => p !== m.meetingCode && !p.startsWith('@'));
 
-    let durationStr: string;
-    if (isCurrent) {
-      const dur = Math.round((Date.now() - m.startTime) / 60000);
-      durationStr = `${dur} min (live)`;
+    let durationStr = '';
+    if (isCurrent || mode === 'live') {
+      durationStr = liveDuration(m.startTime);
     } else if (m.endTime) {
       const dur = Math.round((m.endTime - m.startTime) / 60000);
       durationStr = `${dur} min`;
-    } else {
-      durationStr = '';
     }
 
-    const showCode = m.meetingCode && m.meetingCode !== 'unknown' && m.meetingCode !== m.title;
-    const codeTag = showCode ? `<span class="participant-tag">${escapeHtml(m.meetingCode)}</span>` : '';
     const participantTags = participants.map(p => `<span class="participant-tag">${escapeHtml(p)}</span>`).join('');
-    const tagsHtml = (codeTag || participantTags)
-      ? `<div class="meeting-item-participants">${codeTag}${participantTags}</div>`
+    // Only people here: the Meet code is stored with the meeting but not shown.
+    const tagsHtml = participantTags
+      ? `<div class="meeting-item-participants">${participantTags}</div>`
       : '';
 
     item.innerHTML = `
-      <div class="meeting-item-header">
-        <span class="meeting-item-title">${escapeHtml(m.title)}</span>
-
-        <div class="meeting-item-actions">
-          <button class="meeting-action" data-action="rename" title="Rename">\u270E</button>
-          <button class="meeting-action" data-action="copy" title="Copy as Markdown">\u2398</button>
-          <button class="meeting-action" data-action="export" title="Export">\u2193</button>
-          <button class="meeting-action" data-action="delete" title="Delete">\u2715</button>
-        </div>
+      <div class="meeting-item-title">${escapeHtml(m.title)}</div>
+      <div class="meeting-item-row">
+        <span class="meeting-item-meta">${date} ${time}${durationStr ? ` · ${durationStr}` : ''}</span>
+        <div class="meeting-item-actions">${actionsHtml(mode)}</div>
       </div>
-      <div class="meeting-item-meta">${date} ${time}${durationStr ? ` \u00b7 ${durationStr}` : ''}</div>
       ${tagsHtml}
     `;
 
-    const titleEl = item.querySelector('.meeting-item-title') as HTMLElement;
+    // A title longer than two lines is cut off; the whole of it is in the tooltip.
+    (item.querySelector('.meeting-item-title') as HTMLElement).title = m.title;
     const actionsEl = item.querySelector('.meeting-item-actions') as HTMLElement;
 
     // --- Action button handlers ---
@@ -705,18 +555,11 @@ import { exportFileName } from '../utils/export-filename';
       if (!btn) return;
       const action = btn.dataset.action;
 
-      if (action === 'rename') {
-        titleEl.contentEditable = 'true';
-        titleEl.focus();
-        const range = document.createRange();
-        range.selectNodeContents(titleEl);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-        showAutocomplete(titleEl);
-      }
-
       if (action === 'copy') {
+        if (mode !== 'list') {
+          void copyCurrent(btn);
+          return;
+        }
         chrome.runtime.sendMessage({
           type: MSG.EXPORT_MEETING,
           payload: { id: m.id, format: 'md' },
@@ -728,6 +571,10 @@ import { exportFileName } from '../utils/export-filename';
       }
 
       if (action === 'export') {
+        if (mode !== 'list') {
+          void exportCurrent();
+          return;
+        }
         chrome.runtime.sendMessage({
           type: MSG.EXPORT_MEETING,
           payload: { id: m.id, format: 'md' },
@@ -745,12 +592,7 @@ import { exportFileName } from '../utils/export-filename';
 
         // Refused, or answered No: the buttons come back.
         const restoreActions = (): void => {
-          actionsEl.innerHTML = `
-            <button class="meeting-action" data-action="rename" title="Rename">\u270E</button>
-            <button class="meeting-action" data-action="copy" title="Copy as Markdown">\u2398</button>
-            <button class="meeting-action" data-action="export" title="Export">\u2193</button>
-            <button class="meeting-action" data-action="delete" title="Delete">\u2715</button>
-          `;
+          actionsEl.innerHTML = actionsHtml(mode);
           actionsEl.style.opacity = '';
         };
 
@@ -765,6 +607,11 @@ import { exportFileName } from '../utils/export-filename';
               const line = actionsEl.querySelector('.delete-confirm');
               if (line) line.textContent = String(resp.error ?? 'Could not delete');
               setTimeout(restoreActions, 2400);
+              return;
+            }
+            // The opened meeting is gone: back to the list, which no longer has it.
+            if (mode === 'detail') {
+              switchView('meetings');
               return;
             }
             item.remove();
@@ -787,73 +634,45 @@ import { exportFileName } from '../utils/export-filename';
       }
     });
 
+    if (mode !== 'list') return item;
+
     // Click to view transcription
     item.addEventListener('click', (e) => {
-      // Don't navigate if clicking on rename input or action buttons
-      if ((e.target as HTMLElement).getAttribute('contenteditable') === 'true') return;
       if ((e.target as HTMLElement).closest('.meeting-item-actions')) return;
 
       if (isCurrent) {
         switchView('live');
       } else {
-        loadMeetingDetail(m.id, m.title);
-      }
-    });
-
-    // Double-click title to rename (keep existing behavior)
-    titleEl.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      titleEl.contentEditable = 'true';
-      titleEl.focus();
-      const range = document.createRange();
-      range.selectNodeContents(titleEl);
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(range);
-      showAutocomplete(titleEl);
-    });
-    titleEl.addEventListener('blur', () => {
-      titleEl.contentEditable = 'false';
-      removeAutocomplete();
-      const newTitle = titleEl.textContent?.trim();
-      if (newTitle && newTitle !== m.title) {
-        m.title = newTitle;
-        chrome.runtime.sendMessage({
-          type: MSG.RENAME_MEETING,
-          payload: { id: m.id, title: newTitle },
-        }).catch(() => {});
-      }
-    });
-    titleEl.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (titleEl.contentEditable !== 'true') return;
-      // Stop all keys from reaching Google Meet's shortcut handler
-      e.stopPropagation();
-      if (e.key === 'ArrowDown') { e.preventDefault(); navigateAutocomplete(1); return; }
-      if (e.key === 'ArrowUp') { e.preventDefault(); navigateAutocomplete(-1); return; }
-      if (e.key === 'Tab' || (e.key === 'Enter' && acIndex >= 0)) {
-        e.preventDefault();
-        if (acceptAutocomplete()) { titleEl.blur(); }
-        return;
-      }
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        titleEl.blur();
-      }
-      if (e.key === 'Escape') {
-        titleEl.textContent = m.title;
-        titleEl.blur();
+        loadMeetingDetail(m);
       }
     });
 
     return item;
   }
 
+  /** The block at the top of the live view and of an opened meeting; nothing before a call. */
+  function renderMeetingHead(): void {
+    meetingHead.innerHTML = '';
+    let block: HTMLElement | null = null;
+    if (currentView === 'live' && currentMeeting) {
+      block = createMeetingBlock(currentMeeting, true, 'live');
+    } else if (currentView === 'meeting-detail' && detailMeeting) {
+      block = createMeetingBlock(detailMeeting, false, 'detail');
+    }
+    if (block) meetingHead.appendChild(block);
+    meetingHead.hidden = block === null;
+    // The call in progress has the tint it has in the list.
+    bodyEl.classList.toggle('live-head', currentView === 'live' && block !== null);
+  }
+
   // --- Meeting detail view (viewing past meeting transcription) ---
 
-  async function loadMeetingDetail(meetingId: string, title: string): Promise<void> {
+  async function loadMeetingDetail(m: Omit<Meeting, 'entries'>): Promise<void> {
+    const meetingId = m.id;
     viewingMeetingId = meetingId;
+    detailMeeting = m;
+    detailEntries = [];
     switchView('meeting-detail');
-    popupTitle.textContent = title;
     detailEl.innerHTML = '<div class="loading">Loading...</div>';
 
     try {
@@ -863,8 +682,6 @@ import { exportFileName } from '../utils/export-filename';
       });
       const meetingEntries = (response?.entries ?? []) as TranscriptEntry[];
       detailEntries = meetingEntries;
-      detailTitle = title;
-      detailStartTime = meetingEntries[0]?.timestamp ?? Date.now();
       detailEl.innerHTML = '';
 
       if (meetingEntries.length === 0) {
@@ -916,11 +733,9 @@ import { exportFileName } from '../utils/export-filename';
             entries = message.entries ?? [];
             if (currentMeeting) {
               participantCount = countParticipants(currentMeeting);
-              if (currentView === 'live') {
-                popupTitle.textContent = currentMeeting.title;
-              }
             }
             renderAllEntries();
+            if (currentView === 'live') renderMeetingHead();
             break;
 
           case 'new_entry':
@@ -947,9 +762,7 @@ import { exportFileName } from '../utils/export-filename';
             participantCount = 0;
             captionsMissing = false;
             renderPlaceholder();
-            if (currentView === 'live') {
-              popupTitle.textContent = currentMeeting?.title ?? 'Live';
-            }
+            if (currentView === 'live') renderMeetingHead();
             break;
 
           case 'meeting_ended':
@@ -957,7 +770,7 @@ import { exportFileName } from '../utils/export-filename';
             participantCount = 0;
             renderPlaceholder();
             if (currentView === 'live') {
-              popupTitle.textContent = 'Live';
+              renderMeetingHead();
               updateFooter();
             }
             if (currentView === 'meetings') {
@@ -971,15 +784,14 @@ import { exportFileName } from '../utils/export-filename';
               currentMeeting.participants[message.deviceId] = message.deviceName;
               participantCount = countParticipants(currentMeeting);
               updateFooter();
+              if (currentView === 'live') renderMeetingHead();
             }
             break;
 
           case 'meeting_renamed':
             if (currentMeeting && message.meeting?.id === currentMeeting.id) {
               currentMeeting.title = message.meeting.title;
-              if (currentView === 'live') {
-                popupTitle.textContent = currentMeeting.title;
-              }
+              if (currentView === 'live') renderMeetingHead();
             }
             break;
         }
@@ -1157,12 +969,6 @@ import { exportFileName } from '../utils/export-filename';
         }
       }
 
-      .popup.minimized {
-        height: auto !important;
-        width: auto !important;
-        min-width: 160px;
-      }
-
       button {
         font: inherit;
         color: inherit;
@@ -1222,63 +1028,6 @@ import { exportFileName } from '../utils/export-filename';
         margin: -1px -3px;
       }
 
-      .title-prefix {
-        color: var(--text);
-      }
-
-      .title-sep {
-        color: var(--text-faint);
-      }
-
-      .title-page {
-        font-weight: 500;
-        color: var(--text-dim);
-        outline: none;
-        border-radius: 4px;
-        padding: 1px 3px;
-        margin: -1px -3px;
-      }
-
-      .title-page[contenteditable="true"] {
-        color: var(--text);
-        background: var(--bg-sunken);
-        outline: 1px solid var(--accent);
-        white-space: normal;
-        cursor: text;
-      }
-
-      .autocomplete-list {
-        position: absolute;
-        z-index: 1000;
-        max-height: 120px;
-        overflow-y: auto;
-        padding: 4px;
-        background: var(--bg-raised);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-      }
-
-      .autocomplete-list:empty {
-        display: none;
-      }
-
-      .autocomplete-item {
-        padding: 5px 8px;
-        overflow: hidden;
-        font-size: 12px;
-        color: var(--text);
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-
-      .autocomplete-item:hover,
-      .autocomplete-item.active {
-        background: var(--bg-hover);
-      }
-
       .header-actions {
         display: flex;
         gap: 2px;
@@ -1302,11 +1051,6 @@ import { exportFileName } from '../utils/export-filename';
         background: var(--bg-hover);
       }
 
-      .btn-icon.active {
-        color: var(--accent);
-        background: var(--bg-active);
-      }
-
       .btn-icon svg {
         width: 14px;
         height: 14px;
@@ -1318,35 +1062,6 @@ import { exportFileName } from '../utils/export-filename';
         flex: 1;
         min-height: 0;
         overflow: hidden;
-      }
-
-      .toolbar {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 6px;
-        padding: 6px 10px;
-        border-bottom: 1px solid var(--border);
-        flex-shrink: 0;
-      }
-
-      .toolbar-action {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        width: 26px;
-        height: 26px;
-        padding: 0;
-        color: var(--text-dim);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        transition: background-color var(--quick) var(--ease), color var(--quick) var(--ease);
-      }
-
-      .toolbar-action:hover {
-        color: var(--text);
-        background: var(--bg-hover);
       }
 
       .section {
@@ -1543,32 +1258,46 @@ import { exportFileName } from '../utils/export-filename';
         background: var(--bg-active);
       }
 
-      .meeting-item-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+      .meeting-item.detail {
+        margin-bottom: 0;
+        cursor: default;
       }
 
+      .meeting-item.detail:hover {
+        background: none;
+      }
+
+      /* The block at the top of the live view and of an opened meeting. It sits
+         outside the scrolling content, so it stays while the transcript moves. */
+      .meeting-head {
+        padding: 0 4px 4px;
+        background: var(--bg-hover);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+
+
+      /* Two lines at most; the rest is in the tooltip. */
       .meeting-item-title {
-        flex: 1;
-        min-width: 0;
-        padding: 1px 3px;
-        margin: -1px -3px;
+        display: -webkit-box;
         overflow: hidden;
         font-size: 12px;
         font-weight: 600;
         color: var(--text);
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        border-radius: 3px;
-        outline: none;
+        overflow-wrap: anywhere;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
       }
 
-      .meeting-item-title[contenteditable="true"] {
-        white-space: normal;
-        background: var(--bg-sunken);
-        outline: 1px solid var(--accent);
+      /* The date line, with the actions at its end: they never take width from the title. */
+      .meeting-item-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 22px;
+        margin-top: 2px;
       }
+
 
       /* Live is a dot, not a badge: the card already says so in its shade. */
       .live-badge {
@@ -1583,7 +1312,8 @@ import { exportFileName } from '../utils/export-filename';
       }
 
       .meeting-item-meta {
-        margin-top: 2px;
+        flex: 1;
+        min-width: 0;
         font-size: 11px;
         color: var(--text-faint);
       }
@@ -1592,6 +1322,10 @@ import { exportFileName } from '../utils/export-filename';
         padding: 4px 10px;
         border-bottom: 1px solid var(--border);
         flex-shrink: 0;
+      }
+
+      .live-head .meeting-head {
+        background: var(--bg-active);
       }
 
       .btn-back-live {
@@ -1637,7 +1371,8 @@ import { exportFileName } from '../utils/export-filename';
       }
 
       .meeting-item:hover .meeting-item-actions,
-      .meeting-item:focus-within .meeting-item-actions {
+      .meeting-item:focus-within .meeting-item-actions,
+      .meeting-item.detail .meeting-item-actions {
         opacity: 1;
       }
 

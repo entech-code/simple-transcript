@@ -117,38 +117,33 @@
       text-overflow: ellipsis;
     }
 
+    /* The top of an opened meeting: the way back, then the meeting's block. Both
+       sit outside the scrolling content, so they stay while the transcript moves. */
+    .back-row {
+      padding: 4px 6px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .detail-head {
+      padding: 2px 6px;
+      background: var(--bg-hover);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .detail-head.live { background: var(--bg-active); }
+
+
     .btn-back {
-      padding: 2px 4px;
-      font-size: 12px;
+      padding: 2px 6px;
+      font-size: 11px;
       color: var(--text-dim);
       border-radius: 4px;
       transition: color var(--quick) var(--ease), background-color var(--quick) var(--ease);
     }
 
     .btn-back:hover {
-      color: var(--text);
-      background: var(--bg-hover);
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 2px;
-      flex-shrink: 0;
-    }
-
-    .btn-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      font-size: 13px;
-      color: var(--text-dim);
-      border-radius: 5px;
-      transition: background-color var(--quick) var(--ease), color var(--quick) var(--ease);
-    }
-
-    .btn-icon:hover {
       color: var(--text);
       background: var(--bg-hover);
     }
@@ -175,30 +170,33 @@
     .meeting-item:hover { background: var(--bg-hover); }
     .meeting-item.current { background: var(--bg-active); }
 
-    .meeting-item-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .meeting-item.detail {
+      margin-bottom: 0;
+      cursor: default;
     }
 
+    /* The header carries the colour; the block inside it stays clear, live or not. */
+    .meeting-item.detail,
+    .meeting-item.detail:hover { background: none; }
+
+    /* Two lines at most; the rest is in the tooltip. */
     .meeting-item-title {
-      flex: 1;
-      min-width: 0;
-      padding: 1px 3px;
-      margin: -1px -3px;
+      display: -webkit-box;
       overflow: hidden;
       font-weight: 600;
       color: var(--text);
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      border-radius: 3px;
-      outline: none;
+      overflow-wrap: anywhere;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
     }
 
-    .meeting-item-title[contenteditable="true"] {
-      white-space: normal;
-      background: var(--bg-sunken);
-      outline: 1px solid var(--accent);
+    /* The date line, with the actions at its end: they never take width from the title. */
+    .meeting-item-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 22px;
+      margin-top: 2px;
     }
 
     .live-badge {
@@ -222,7 +220,8 @@
     }
 
     .meeting-item:hover .meeting-item-actions,
-    .meeting-item:focus-within .meeting-item-actions { opacity: 1; }
+    .meeting-item:focus-within .meeting-item-actions,
+    .meeting-item.detail .meeting-item-actions { opacity: 1; }
 
     .meeting-action {
       display: flex;
@@ -241,7 +240,8 @@
     .meeting-action[data-action="delete"]:hover { color: var(--danger); }
 
     .meeting-item-meta {
-      margin-top: 2px;
+      flex: 1;
+      min-width: 0;
       font-size: 11px;
       color: var(--text-faint);
     }
@@ -322,12 +322,13 @@
 </head>
 <body>
   <div class="header">
-    <button class="btn-back" id="btn-back" style="display:none" title="Back">&larr;</button>
-    <span class="header-title" id="header-title">Simple Transcript</span>
-    <div class="header-actions" id="header-actions" style="display:none">
-      <button class="btn-icon" id="detail-copy" title="Copy as Markdown">&#x2398;</button>
-      <button class="btn-icon" id="detail-export" title="Download .md">&#x2193;</button>
-    </div>
+    <span class="header-title">Simple Transcript</span>
+  </div>
+  <div class="back-row" id="back-row" hidden>
+    <button class="btn-back" id="btn-back">&larr; Meetings</button>
+  </div>
+  <div class="detail-head" id="detail-head" hidden>
+    <div id="detail-block"></div>
   </div>
   <div class="content" id="content">
     <div class="empty-state">Loading…</div>

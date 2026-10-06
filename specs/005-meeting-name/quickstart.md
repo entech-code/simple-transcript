@@ -72,10 +72,17 @@ Delete asks for confirmation and, when confirmed, returns to the list without th
 Join a call and open the floating panel.
 
 **Expected**: the title bar reads "Simple Transcript". Below the "← Meetings" row is the block for
-the call in progress: its name or code, the date and time it started with no duration, the code
-and the participants, with Copy and Export visible and no Delete. When another person joins,
+the call in progress: its name or code, the date and time it started with its running duration
+("3 min (live)", as in the list), and the participants, with Copy and Export visible and no
+Delete. When another person joins,
 their name is added to the block. When the call's name appears a moment after joining, the block
 updates. There is no separate Copy and Export toolbar. Before joining, no empty block is shown.
+
+## 4c. The title bar
+
+**Expected**: the floating panel's title bar shows "Simple Transcript" and a close button only.
+From the live view, "← Meetings" opens the list; in the list, clicking the live call returns to
+the live view.
 
 ## 5. A recurring call
 

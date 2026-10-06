@@ -57,16 +57,16 @@ hand in live calls (see quickstart.md).
 
 **Independent Test**: quickstart.md step 4, including its search.
 
-- [ ] T008 [US3] In `src/content/floating-popup.ts`, remove the "Live title rename" block (double-click editing of the panel title and the earlier-titles suggestions with their styles), the rename button and its handler in both the list item and the restored actions, the double-click, blur and keydown handlers on a list title, the keyboard guard for editable elements, the `contenteditable` checks in click handlers, and the styles for an editable title
-- [ ] T009 [P] [US3] In `src/popup/popup.ts`, remove the rename button and its handler in both the list item and the restored actions, the double-click, blur and keydown handlers on a title, and the `contenteditable` check in the click handler; in `popup.html`, remove the style for an editable title
-- [ ] T010 [US3] In `src/background/service-worker.ts`, remove the `RENAME_MEETING` and `GET_MEETING_TITLES` handlers and their imports; in `src/utils/meeting-store.ts`, delete `findTitleByCode` and `getMeetingTitles`; in `src/utils/types.ts`, remove `RENAME_MEETING` and `GET_MEETING_TITLES`
+- [X] T008 [US3] In `src/content/floating-popup.ts`, remove the "Live title rename" block (double-click editing of the panel title and the earlier-titles suggestions with their styles), the rename button and its handler in both the list item and the restored actions, the double-click, blur and keydown handlers on a list title, the keyboard guard for editable elements, the `contenteditable` checks in click handlers, and the styles for an editable title
+- [X] T009 [P] [US3] In `src/popup/popup.ts`, remove the rename button and its handler in both the list item and the restored actions, the double-click, blur and keydown handlers on a title, and the `contenteditable` check in the click handler; in `popup.html`, remove the style for an editable title
+- [X] T010 [US3] In `src/background/service-worker.ts`, remove the `RENAME_MEETING` and `GET_MEETING_TITLES` handlers and their imports; in `src/utils/meeting-store.ts`, delete `findTitleByCode` and `getMeetingTitles`; in `src/utils/types.ts`, remove `RENAME_MEETING` and `GET_MEETING_TITLES`
 
 ---
 
 ## Phase 6: Long titles and button placement (FR-012 to FR-014)
 
-- [ ] T011 [P] In `src/content/floating-popup.ts`, style a list title to wrap to at most two lines with an ellipsis and set its `title` attribute to the full text; move the action buttons from the title's row to the right end of the date line, shown on hover and focus
-- [ ] T012 [P] In `popup.html` and `src/popup/popup.ts`, apply the same two-line title, tooltip and button placement to the list
+- [X] T011 [P] In `src/content/floating-popup.ts`, style a list title to wrap to at most two lines with an ellipsis and set its `title` attribute to the full text; move the action buttons from the title's row to the right end of the date line, shown on hover and focus
+- [X] T012 [P] In `popup.html` and `src/popup/popup.ts`, apply the same two-line title, tooltip and button placement to the list
 
 ---
 
@@ -76,18 +76,19 @@ hand in live calls (see quickstart.md).
 
 **Independent Test**: quickstart.md step 4a.
 
-- [ ] T013 [US4] In `src/popup/popup.ts`, make the function that builds a list entry usable for the detail view: a flag keeps the buttons visible and makes the block not clickable, and a callback runs after a confirmed delete. Open a meeting by passing its summary, render a "← Meetings" back row and, below it, the block, both above the transcript in a part of the view that does not scroll; keep "Simple Transcript" in the header in every view; and remove the header's back arrow and its own copy and download buttons with their handlers; in `popup.html`, remove those elements and add the styles for the back row and the detail block
-- [ ] T014 [US4] In `src/content/floating-popup.ts`, do the same for the panel's detail view: keep the existing "← Meetings" back row at the top, render the meeting's block below it and above the transcript, show "Simple Transcript" alone in the title bar instead of the meeting's title, and return to the list after a confirmed delete
-- [ ] T014a [US4] In `src/content/floating-popup.ts`, show the same block in the live view for the call in progress: copy and export buttons only, the start date and time without a duration, and no block when no call is in progress; rebuild it on `meeting_snapshot`, `meeting_started`, `meeting_renamed`, `participant_update` and `meeting_ended`; make the panel's title bar a fixed "Simple Transcript" and remove the code that sets it per view; remove the Copy and Export toolbar and its styles, wiring the live block's buttons to the existing copy and export handlers
+- [X] T013 [US4] In `src/popup/popup.ts`, make the function that builds a list entry usable for the detail view: a flag keeps the buttons visible and makes the block not clickable, and a callback runs after a confirmed delete. Open a meeting by passing its summary, render a "← Meetings" back row and, below it, the block, both above the transcript in a part of the view that does not scroll; keep "Simple Transcript" in the header in every view; and remove the header's back arrow and its own copy and download buttons with their handlers; in `popup.html`, remove those elements and add the styles for the back row and the detail block
+- [X] T014 [US4] In `src/content/floating-popup.ts`, do the same for the panel's detail view: keep the existing "← Meetings" back row at the top, render the meeting's block below it and above the transcript, show "Simple Transcript" alone in the title bar instead of the meeting's title, and return to the list after a confirmed delete
+- [X] T014b [US4] In `src/content/floating-popup.ts`, remove the Meetings and Minimize buttons from the title bar, with their handlers, state and styles; keep Close
+- [X] T014a [US4] In `src/content/floating-popup.ts`, show the same block in the live view for the call in progress: copy and export buttons only, the start date and time without a duration, and no block when no call is in progress; rebuild it on `meeting_snapshot`, `meeting_started`, `meeting_renamed`, `participant_update` and `meeting_ended`; make the panel's title bar a fixed "Simple Transcript" and remove the code that sets it per view; remove the Copy and Export toolbar and its styles, wiring the live block's buttons to the existing copy and export handlers
 
 ---
 
 ## Phase 8: Polish
 
-- [ ] T015 Run `npm run typecheck`, `npm test` and `npm run build`; run a stricter pass with `--noUnusedLocals` and remove anything this change left unused; run the search in quickstart.md step 4, which must return nothing
-- [ ] T016 [P] In `README.md`, change the usage line so it no longer mentions renaming meetings, and say that a meeting is titled with its Google Meet name when it has one; add `meeting-title.test.ts` to the table in `tests/README.md`; check `WEBSTORE_LISTING.md` for a mention of renaming and remove it
-- [ ] T017 Manual, by the maintainer (quickstart.md steps 2 to 8): reload the unpacked extension without removing it and refresh the Meet tab; confirm a named call shows its name in the panel and the lists, a long name wraps to two lines with a tooltip, the buttons appear on the date line, an opened meeting shows the same block with the buttons visible, an instant call shows its code, no rename control exists, existing meetings keep their titles, and captions are captured as before
-- [ ] T018 In `todo.md`, move "Show the name of the meeting…" to Completed with the date and a short summary, and remove the screenshot it refers to if it is no longer used
+- [X] T015 Run `npm run typecheck`, `npm test` and `npm run build`; run a stricter pass with `--noUnusedLocals` and remove anything this change left unused; run the search in quickstart.md step 4, which must return nothing
+- [X] T016 [P] In `README.md`, change the usage line so it no longer mentions renaming meetings, and say that a meeting is titled with its Google Meet name when it has one; add `meeting-title.test.ts` to the table in `tests/README.md`; check `WEBSTORE_LISTING.md` for a mention of renaming and remove it
+- [X] T017 Manual, by the maintainer (quickstart.md steps 2 to 8): reload the unpacked extension without removing it and refresh the Meet tab; confirm a named call shows its name in the panel and the lists, a long name wraps to two lines with a tooltip, the buttons appear on the date line, an opened meeting shows the same block with the buttons visible, an instant call shows its code, no rename control exists, existing meetings keep their titles, and captions are captured as before
+- [X] T018 In `todo.md`, move "Show the name of the meeting…" to Completed with the date and a short summary, and remove the screenshot it refers to if it is no longer used
 
 ---
 

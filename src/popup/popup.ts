@@ -1,17 +1,22 @@
 import { MSG, type Meeting, type TranscriptEntry } from '../utils/types';
 import { exportFileName } from '../utils/export-filename';
 
+type MeetingSummary = Omit<Meeting, 'entries'>;
+
 (function () {
   const contentEl = document.getElementById('content')!;
-  const headerTitle = document.getElementById('header-title')!;
+  const backRow = document.getElementById('back-row')!;
+  const detailHead = document.getElementById('detail-head')!;
+  const detailBlock = document.getElementById('detail-block')!;
   const btnBack = document.getElementById('btn-back') as HTMLButtonElement;
   const footerEl = document.getElementById('footer')!;
   const footerLeft = document.getElementById('footer-left')!;
-  const headerActions = document.getElementById('header-actions')!;
-  const detailCopyBtn = document.getElementById('detail-copy') as HTMLButtonElement;
-  const detailExportBtn = document.getElementById('detail-export') as HTMLButtonElement;
-  let viewingMeetingId: string | null = null;
-  let viewingMeetingTitle: string = '';
+
+  const ACTIONS_HTML = `
+    <button class="meeting-action" data-action="copy" title="Copy as Markdown">⎘</button>
+    <button class="meeting-action" data-action="export" title="Export">↓</button>
+    <button class="meeting-action" data-action="delete" title="Delete">✕</button>
+  `;
 
   function escapeHtml(str: string): string {
     const div = document.createElement('div');
@@ -26,54 +31,44 @@ import { exportFileName } from '../utils/export-filename';
   });
 
   function showList(): void {
-    headerTitle.textContent = 'Simple Transcript';
-    btnBack.style.display = 'none';
-    headerActions.style.display = 'none';
+    backRow.hidden = true;
+    detailHead.hidden = true;
+    detailBlock.innerHTML = '';
     footerEl.style.display = 'none';
-    viewingMeetingId = null;
-    viewingMeetingTitle = '';
     loadMeetings();
   }
 
-  function showDetail(meetingId: string, title: string): void {
-    viewingMeetingId = meetingId;
-    viewingMeetingTitle = title;
-    headerTitle.textContent = title;
-    btnBack.style.display = 'block';
-    headerActions.style.display = 'flex';
-    loadDetail(meetingId);
+  /** An opened meeting starts with the block it has in the list, its buttons always showing. */
+  function showDetail(m: MeetingSummary, isLive: boolean): void {
+    detailBlock.innerHTML = '';
+    detailBlock.appendChild(createItem(m, isLive, true));
+    // A call still in progress has the tint it has in the list.
+    detailHead.classList.toggle('live', isLive);
+    backRow.hidden = false;
+    detailHead.hidden = false;
+    loadDetail(m.id);
   }
 
-  // --- Detail header actions ---
-
-  detailCopyBtn.addEventListener('click', () => {
-    if (!viewingMeetingId) return;
-    chrome.runtime.sendMessage({
-      type: MSG.EXPORT_MEETING,
-      payload: { id: viewingMeetingId, format: 'md' },
-    }).then(async (response) => {
-      if (response?.content) {
-        try {
-          await navigator.clipboard.writeText(response.content);
-        } catch {
-          const ta = document.createElement('textarea');
-          ta.value = response.content;
-          ta.style.cssText = 'position:fixed;left:-9999px';
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand('copy');
-          document.body.removeChild(ta);
-        }
-        const orig = detailCopyBtn.textContent;
-        detailCopyBtn.textContent = '\u2713';
-        detailCopyBtn.title = 'Copied!';
-        setTimeout(() => {
-          detailCopyBtn.textContent = orig;
-          detailCopyBtn.title = 'Copy as Markdown';
-        }, 1500);
-      }
-    }).catch(() => {});
-  });
+  async function copyText(content: string, btn: HTMLElement): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(content);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = content;
+      ta.style.cssText = 'position:fixed;left:-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    btn.title = 'Copied!';
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.title = 'Copy as Markdown';
+    }, 1500);
+  }
 
   function download(content: string, title: string, startTime: number): void {
     const blob = new Blob([content], { type: 'text/markdown' });
@@ -85,24 +80,12 @@ import { exportFileName } from '../utils/export-filename';
     URL.revokeObjectURL(url);
   }
 
-  detailExportBtn.addEventListener('click', () => {
-    if (!viewingMeetingId) return;
-    chrome.runtime.sendMessage({
-      type: MSG.EXPORT_MEETING,
-      payload: { id: viewingMeetingId, format: 'md' },
-    }).then((response) => {
-      if (response?.content) {
-        download(response.content, response.title ?? viewingMeetingTitle, response.startTime ?? Date.now());
-      }
-    }).catch(() => {});
-  });
-
   // --- Meetings list ---
 
   async function loadMeetings(): Promise<void> {
     try {
       const response = await chrome.runtime.sendMessage({ type: MSG.GET_MEETINGS });
-      const meetings = (response?.meetings ?? []) as Omit<Meeting, 'entries'>[];
+      const meetings = (response?.meetings ?? []) as MeetingSummary[];
       const liveMeetingIds = (response?.liveMeetingIds ?? []) as string[];
 
       if (meetings.length === 0) {
@@ -112,16 +95,22 @@ import { exportFileName } from '../utils/export-filename';
 
       contentEl.innerHTML = '';
       for (const m of meetings) {
-        contentEl.appendChild(createItem(m, liveMeetingIds.includes(m.id)));
+        contentEl.appendChild(createItem(m, liveMeetingIds.includes(m.id), false));
       }
     } catch {
       contentEl.innerHTML = '<div class="empty-state">Failed to load meetings</div>';
     }
   }
 
-  function createItem(m: Omit<Meeting, 'entries'>, isLive: boolean): HTMLElement {
+  /**
+   * A meeting's block: its title, the date line with the actions at its end,
+   * and the code and participants. In the list it opens the meeting and shows
+   * its actions on hover; at the top of an opened meeting (`detail`) it is not
+   * pressed and the actions always show.
+   */
+  function createItem(m: MeetingSummary, isLive: boolean, detail: boolean): HTMLElement {
     const item = document.createElement('div');
-    item.className = 'meeting-item' + (isLive ? ' current' : '');
+    item.className = 'meeting-item' + (isLive ? ' current' : '') + (detail ? ' detail' : '');
 
     const date = new Date(m.startTime).toLocaleDateString();
     const time = new Date(m.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -139,28 +128,23 @@ import { exportFileName } from '../utils/export-filename';
       durationStr = '';
     }
 
-    const showCode = m.meetingCode && m.meetingCode !== 'unknown' && m.meetingCode !== m.title;
-    const codeTag = showCode ? `<span class="participant-tag">${escapeHtml(m.meetingCode)}</span>` : '';
     const participantTags = participants.map(p => `<span class="participant-tag">${escapeHtml(p)}</span>`).join('');
-    const tagsHtml = (codeTag || participantTags)
-      ? `<div class="meeting-item-participants">${codeTag}${participantTags}</div>`
+    // Only people here: the Meet code is stored with the meeting but not shown.
+    const tagsHtml = participantTags
+      ? `<div class="meeting-item-participants">${participantTags}</div>`
       : '';
 
     item.innerHTML = `
-      <div class="meeting-item-header">
-        <span class="meeting-item-title">${escapeHtml(m.title)}</span>
-        <div class="meeting-item-actions">
-          <button class="meeting-action" data-action="rename" title="Rename">\u270E</button>
-          <button class="meeting-action" data-action="copy" title="Copy as Markdown">\u2398</button>
-          <button class="meeting-action" data-action="export" title="Export">\u2193</button>
-          <button class="meeting-action" data-action="delete" title="Delete">\u2715</button>
-        </div>
+      <div class="meeting-item-title">${escapeHtml(m.title)}</div>
+      <div class="meeting-item-row">
+        <span class="meeting-item-meta">${date} ${time}${durationStr ? ` · ${durationStr}` : ''}</span>
+        <div class="meeting-item-actions">${ACTIONS_HTML}</div>
       </div>
-      <div class="meeting-item-meta">${date} ${time}${durationStr ? ` \u00b7 ${durationStr}` : ''}</div>
       ${tagsHtml}
     `;
 
-    const titleEl = item.querySelector('.meeting-item-title') as HTMLElement;
+    // A title longer than two lines is cut off; the whole of it is in the tooltip.
+    (item.querySelector('.meeting-item-title') as HTMLElement).title = m.title;
     const actionsEl = item.querySelector('.meeting-item-actions') as HTMLElement;
 
     // --- Action button handlers ---
@@ -171,41 +155,12 @@ import { exportFileName } from '../utils/export-filename';
       if (!btn) return;
       const action = btn.dataset.action;
 
-      if (action === 'rename') {
-        titleEl.contentEditable = 'true';
-        titleEl.focus();
-        const range = document.createRange();
-        range.selectNodeContents(titleEl);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-      }
-
       if (action === 'copy') {
         chrome.runtime.sendMessage({
           type: MSG.EXPORT_MEETING,
           payload: { id: m.id, format: 'md' },
-        }).then(async (response) => {
-          if (response?.content) {
-            try {
-              await navigator.clipboard.writeText(response.content);
-            } catch {
-              const ta = document.createElement('textarea');
-              ta.value = response.content;
-              ta.style.cssText = 'position:fixed;left:-9999px';
-              document.body.appendChild(ta);
-              ta.select();
-              document.execCommand('copy');
-              document.body.removeChild(ta);
-            }
-            const orig = btn.textContent;
-            btn.textContent = '\u2713';
-            btn.title = 'Copied!';
-            setTimeout(() => {
-              btn.textContent = orig;
-              btn.title = 'Copy as Markdown';
-            }, 1500);
-          }
+        }).then((response) => {
+          if (response?.content) void copyText(response.content, btn);
         }).catch(() => {});
       }
 
@@ -226,12 +181,7 @@ import { exportFileName } from '../utils/export-filename';
 
         // Refused, or answered No: the buttons come back.
         const restoreActions = (): void => {
-          actionsEl.innerHTML = `
-            <button class="meeting-action" data-action="rename" title="Rename">\u270E</button>
-            <button class="meeting-action" data-action="copy" title="Copy as Markdown">\u2398</button>
-            <button class="meeting-action" data-action="export" title="Export">\u2193</button>
-            <button class="meeting-action" data-action="delete" title="Delete">\u2715</button>
-          `;
+          actionsEl.innerHTML = ACTIONS_HTML;
           actionsEl.style.opacity = '';
         };
 
@@ -248,6 +198,11 @@ import { exportFileName } from '../utils/export-filename';
               setTimeout(restoreActions, 2400);
               return;
             }
+            // The opened meeting is gone: back to the list, which no longer has it.
+            if (detail) {
+              showList();
+              return;
+            }
             item.remove();
             if (contentEl.children.length === 0) {
               contentEl.innerHTML = '<div class="empty-state">No meetings yet</div>';
@@ -262,9 +217,10 @@ import { exportFileName } from '../utils/export-filename';
       }
     });
 
+    if (detail) return item;
+
     // Click to view transcription
     item.addEventListener('click', (e) => {
-      if ((e.target as HTMLElement).getAttribute('contenteditable') === 'true') return;
       if ((e.target as HTMLElement).closest('.meeting-item-actions')) return;
 
       if (isLive) {
@@ -275,46 +231,13 @@ import { exportFileName } from '../utils/export-filename';
             chrome.tabs.update(meetTab.id, { active: true });
             window.close();
           } else {
-            showDetail(m.id, m.title);
+            showDetail(m, isLive);
           }
         });
         return;
       }
 
-      showDetail(m.id, m.title);
-    });
-
-    // Double-click title to rename
-    titleEl.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      titleEl.contentEditable = 'true';
-      titleEl.focus();
-      const range = document.createRange();
-      range.selectNodeContents(titleEl);
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(range);
-    });
-    titleEl.addEventListener('blur', () => {
-      titleEl.contentEditable = 'false';
-      const newTitle = titleEl.textContent?.trim();
-      if (newTitle && newTitle !== m.title) {
-        m.title = newTitle;
-        chrome.runtime.sendMessage({
-          type: MSG.RENAME_MEETING,
-          payload: { id: m.id, title: newTitle },
-        }).catch(() => {});
-      }
-    });
-    titleEl.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        titleEl.blur();
-      }
-      if (e.key === 'Escape') {
-        titleEl.textContent = m.title;
-        titleEl.blur();
-      }
+      showDetail(m, isLive);
     });
 
     return item;

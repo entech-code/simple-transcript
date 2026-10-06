@@ -34,7 +34,6 @@ import {
   setMeetingTitle,
   deleteMeeting,
   restoreMeetings,
-  getMeetingTitles,
   findRecentMeeting,
   resumeMeeting,
 } from '../utils/meeting-store';
@@ -797,21 +796,6 @@ async function handleMessage(
       return;
     }
 
-    case MSG.RENAME_MEETING: {
-      const renameMsg = message.payload as { id: string; title: string };
-      const updated = setMeetingTitle(renameMsg.id, renameMsg.title);
-      if (updated) {
-        // Broadcast to all popup ports so live view stays in sync
-        for (const [sid, session] of sessions) {
-          if (session.meetingId === renameMsg.id) {
-            broadcastToPopup({ type: 'meeting_renamed', meeting: updated }, sid);
-            break;
-          }
-        }
-      }
-      sendResponse({ meeting: updated });
-      return;
-    }
 
     case MSG.DELETE_MEETING: {
       const deleteMsg = message.payload as { id: string };
@@ -839,10 +823,6 @@ async function handleMessage(
       return;
     }
 
-    case MSG.GET_MEETING_TITLES: {
-      sendResponse({ titles: getMeetingTitles() });
-      return;
-    }
 
     case MSG.GET_CURRENT_MEETING: {
       // Return the meeting for the sender's session (tab)

@@ -146,6 +146,9 @@ tab title, lives in a pure module with tests. The service worker and the store o
   becomes a fixed "Simple Transcript"; the code that wrote "Live", "Meetings" or a meeting's
   title into it is removed, as is the separate Copy and Export toolbar, which is now empty in
   every view. The footer keeps the line count, participant count and running time.
+- **Title bar buttons**: the Meetings and Minimize buttons are removed, leaving Close. Every route
+  the Meetings button offered exists elsewhere ("← Meetings", and the live call's entry in the
+  list), and a minimised panel showed only its title.
 - **Service worker restarts**: Chrome may stop the service worker mid-call. The title-change
   listener waits for the saved session state to be restored before looking up the tab's meeting,
   as the other listeners do.
