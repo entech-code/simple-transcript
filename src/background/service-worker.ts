@@ -2,6 +2,7 @@ import {
   MSG,
   KEEPALIVE_PORT_NAME,
   POPUP_PORT_NAME,
+  type Meeting,
   type TranscriptEntry,
   type ExtensionMessage,
 } from '../utils/types';
@@ -37,7 +38,8 @@ import {
   findRecentMeeting,
   resumeMeeting,
 } from '../utils/meeting-store';
-import { meetingDisplayTitle, meetingTitleFromTabTitle } from '../utils/meeting-title';
+import { meetingAttendees } from '../utils/meeting-attendees';
+import { meetingDisplayTitle, meetingTitleFromTabTitle, UNTITLED_MEETING } from '../utils/meeting-title';
 
 // --- Per-session state ---
 
@@ -782,10 +784,11 @@ async function handleMessage(
     }
 
     case MSG.EXPORT_TRANSCRIPT: {
-      const payload = message.payload as { format?: string; title?: string };
+      const payload = message.payload as { format?: string };
       const format = payload?.format ?? 'txt';
       const entries = sessionId ? getEntries(sessionId) : [];
-      const exported = formatExport(entries, format, payload?.title);
+      const meetingId = sessionId ? sessions.get(sessionId)?.meetingId : null;
+      const exported = formatExport(entries, format, meetingId ? getMeeting(meetingId) : null);
       sendResponse({ content: exported, format });
       return;
     }
@@ -834,9 +837,9 @@ async function handleMessage(
       const exportMsg = message.payload as { id: string; format?: string };
       const meetingToExport = getMeeting(exportMsg.id);
       if (meetingToExport) {
-        const format = exportMsg.format ?? 'md';
+        const format = exportMsg.format ?? 'txt';
         const title = meetingDisplayTitle(meetingToExport);
-        const content = formatExport(meetingToExport.entries, format, title);
+        const content = formatExport(meetingToExport.entries, format, meetingToExport);
         sendResponse({ content, format, title, startTime: meetingToExport.startTime });
       } else {
         sendResponse({ content: null });
@@ -867,13 +870,19 @@ async function handleMessage(
   sendResponse({ ok: true });
 }
 
-function formatExport(entries: TranscriptEntry[], format: string, title?: string): string {
+/** The transcript in a format; the meeting gives the heading, or none outside a call. */
+function formatExport(entries: TranscriptEntry[], format: string, meeting: Meeting | null): string {
+  const title = meeting ? meetingDisplayTitle(meeting) : UNTITLED_MEETING;
   switch (format) {
     case 'srt': return exportAsSrt(entries);
     case 'vtt': return exportAsVtt(entries);
     case 'json': return exportAsJson(entries);
     case 'md': return exportAsMarkdown(entries, title);
     case 'txt':
-    default: return exportAsText(entries);
+    default: return exportAsText(entries, {
+      title,
+      startTime: meeting?.startTime ?? Date.now(),
+      attendees: meeting ? meetingAttendees(meeting) : [],
+    });
   }
 }

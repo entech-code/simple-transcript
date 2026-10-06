@@ -4,7 +4,7 @@
 Simple Transcript – Copy & Save for Google Meet
 
 ## Summary (132 chars max)
-Live Google Meet transcription with speaker names. Copy or save any call as Markdown, text, JSON or subtitles.
+Live Google Meet transcription with speaker names. Copy or save any call as plain text.
 
 ## Description
 
@@ -27,8 +27,8 @@ KEY FEATURES
 
 EXPORT
 
-- Download as Markdown (.md), formatted with speaker names and timestamps
-- Copy to clipboard, one click to copy the full transcript as Markdown
+- Download as a plain text file (.txt), with the meeting's name, date, attendees, and each line under its speaker's name and time
+- Copy to clipboard, one click to copy the full transcript as plain text
 
 MANAGE YOUR MEETINGS
 

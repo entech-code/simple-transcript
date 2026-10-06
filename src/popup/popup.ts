@@ -1,5 +1,6 @@
 import { MSG, type Meeting, type TranscriptEntry } from '../utils/types';
 import { exportFileName } from '../utils/export-filename';
+import { meetingAttendees } from '../utils/meeting-attendees';
 import { meetingDisplayTitle, meetingFileTitle } from '../utils/meeting-title';
 
 type MeetingSummary = Omit<Meeting, 'entries'>;
@@ -14,7 +15,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
   const footerLeft = document.getElementById('footer-left')!;
 
   const ACTIONS_HTML = `
-    <button class="meeting-action" data-action="copy" title="Copy as Markdown">⎘</button>
+    <button class="meeting-action" data-action="copy" title="Copy">⎘</button>
     <button class="meeting-action" data-action="export" title="Export">↓</button>
     <button class="meeting-action" data-action="delete" title="Delete">✕</button>
   `;
@@ -67,12 +68,12 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
     btn.title = 'Copied!';
     setTimeout(() => {
       btn.textContent = orig;
-      btn.title = 'Copy as Markdown';
+      btn.title = 'Copy';
     }, 1500);
   }
 
   function download(content: string, title: string, startTime: number): void {
-    const blob = new Blob([content], { type: 'text/markdown' });
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -116,8 +117,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
 
     const date = new Date(m.startTime).toLocaleDateString();
     const time = new Date(m.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const participants = [...new Set(Object.values(m.participants || {}))]
-      .filter(p => p !== m.meetingCode && !p.startsWith('@'));
+    const participants = meetingAttendees(m);
 
     let durationStr: string;
     if (isLive) {
@@ -160,7 +160,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
       if (action === 'copy') {
         chrome.runtime.sendMessage({
           type: MSG.EXPORT_MEETING,
-          payload: { id: m.id, format: 'md' },
+          payload: { id: m.id, format: 'txt' },
         }).then((response) => {
           if (response?.content) void copyText(response.content, btn);
         }).catch(() => {});
@@ -169,7 +169,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
       if (action === 'export') {
         chrome.runtime.sendMessage({
           type: MSG.EXPORT_MEETING,
-          payload: { id: m.id, format: 'md' },
+          payload: { id: m.id, format: 'txt' },
         }).then((response) => {
           if (response?.content) {
             download(response.content, meetingFileTitle(m), response.startTime ?? m.startTime);

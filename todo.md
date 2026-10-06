@@ -2,11 +2,6 @@
 
 ## Planned
 
-- [ ] Save the transcript as plain text instead of Markdown
-  - Copy to clipboard and Download produce plain text by default, and downloads are `.txt`; do this before the first release, since changing a default afterwards disrupts users
-  - Layout: the meeting title and date at the top, then one block per speaker turn with the name and time on one line (`Dana Whitfield (2:05 PM)`) and the text below, separated by blank lines; times without seconds
-  - Downloaded files then end in `.txt`
-
 - [ ] New icon and colours
   - The current icon is the same as the published "Notula for Google Meet" one, so the two would be confused
   - Draw a few simple SVG candidates, compare them at toolbar size (16px) and store size (128px), and avoid anything resembling Google Meet's logo or colours
@@ -15,6 +10,11 @@
 - [ ] Clean up the Copy, Export and Delete icons
   - They are small and hard to see; make them larger, clearer and consistent between the floating panel and the toolbar popup
   - Fits naturally with the new icon and colours above
+
+- [ ] Don't offer Delete for a meeting that is in progress
+  - The live call's own view hides Delete, but the live meeting's card in the meetings list and in the toolbar popup still shows it
+  - The service worker already refuses, and the card shows "Cannot delete a live meeting" after the confirmation; hide the button on the live card in both lists instead
+  - Fits with the icon clean-up above
 
 - [ ] Rewrite the website pages, privacy policy and store listing for Simple Transcript
   - The rebrand deleted the old website pages (redirects to notula.org) and the screenshot tooling, and only trimmed `WEBSTORE_LISTING.md`
@@ -53,6 +53,7 @@
 
 ## Completed
 
+- [x] Save the transcript as plain text instead of Markdown: Copy and Download give plain text with the meeting's name, date and attendees at the top, and downloads end in `.txt` (2026-10-06)
 - [x] Name saved transcript files `<title> - <YYYY>-<MM>-<DD> <HH>-<mm> - Transcript.md`, with "Transcript" last so the date reads as the meeting's (2026-10-06)
 - [x] Call a meeting without a title "Untitled meeting", and name its files after the other attendees (2026-10-06)
 - [x] Show the name of the meeting instead of the unique id like `gim-mxzg-xdx` (2026-10-06)

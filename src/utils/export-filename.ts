@@ -21,12 +21,12 @@ function safeFileTitle(title: string): string {
 
 /**
  * File name for a downloaded transcript: "<title> - <YYYY>-<MM>-<DD> <HH>-<mm> -
- * Transcript.md", with the start time in local time. "Transcript" comes last so
+ * Transcript.txt", with the start time in local time. "Transcript" comes last so
  * the date reads as the meeting's, not as when the file was saved.
  */
 export function exportFileName(title: string, startTime: number): string {
   const d = new Date(startTime);
   const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const time = `${pad(d.getHours())}-${pad(d.getMinutes())}`;
-  return `${safeFileTitle(title)} - ${date} ${time} - Transcript.md`;
+  return `${safeFileTitle(title)} - ${date} ${time} - Transcript.txt`;
 }

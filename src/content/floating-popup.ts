@@ -1,6 +1,7 @@
 import { MSG, POPUP_PORT_NAME, type TranscriptEntry, type Meeting } from '../utils/types';
-import { exportAsMarkdown } from '../utils/transcript-store';
+import { exportAsText } from '../utils/transcript-store';
 import { exportFileName } from '../utils/export-filename';
+import { meetingAttendees } from '../utils/meeting-attendees';
 import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../utils/meeting-title';
 
 (function () {
@@ -169,7 +170,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
     feedbackEl.title = 'Copied!';
     setTimeout(() => {
       feedbackEl.innerHTML = orig;
-      feedbackEl.title = 'Copy as Markdown';
+      feedbackEl.title = 'Copy';
     }, 1500);
   }
 
@@ -180,18 +181,21 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
       // that were already fetched and displayed.
       if (detailEntries.length > 0 && detailMeeting) {
         const title = meetingDisplayTitle(detailMeeting);
-        const content = exportAsMarkdown(detailEntries, title);
+        const content = exportAsText(detailEntries, {
+          title,
+          startTime: detailMeeting.startTime,
+          attendees: meetingAttendees(detailMeeting),
+        });
         return { content, title, startTime: detailEntries[0]?.timestamp ?? detailMeeting.startTime };
       }
       return chrome.runtime.sendMessage({
         type: MSG.EXPORT_MEETING,
-        payload: { id: viewingMeetingId, format: 'md' },
+        payload: { id: viewingMeetingId, format: 'txt' },
       });
     }
-    const title = currentMeeting ? meetingDisplayTitle(currentMeeting) : UNTITLED_MEETING;
     return chrome.runtime.sendMessage({
       type: MSG.EXPORT_TRANSCRIPT,
-      payload: { format: 'md', title },
+      payload: { format: 'txt' },
     });
   }
 
@@ -206,7 +210,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
   }
 
   function download(content: string, title: string, startTime: number): void {
-    const blob = new Blob([content], { type: 'text/markdown' });
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -363,8 +367,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
   // --- Rendering ---
 
   function countParticipants(m: Meeting | Omit<Meeting, 'entries'>): number {
-    const names = Object.values(m.participants || {});
-    return new Set(names.filter(p => p !== m.meetingCode && !p.startsWith('@'))).size;
+    return meetingAttendees(m).length;
   }
 
   function escapeHtml(str: string): string {
@@ -499,7 +502,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
   type BlockMode = 'list' | 'detail' | 'live';
 
   function actionsHtml(mode: BlockMode): string {
-    const copy = '<button class="meeting-action" data-action="copy" title="Copy as Markdown">⎘</button>';
+    const copy = '<button class="meeting-action" data-action="copy" title="Copy">⎘</button>';
     const exp = '<button class="meeting-action" data-action="export" title="Export">↓</button>';
     const del = '<button class="meeting-action" data-action="delete" title="Delete">✕</button>';
     return mode === 'live' ? copy + exp : copy + exp + del;
@@ -521,8 +524,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
 
     const date = new Date(m.startTime).toLocaleDateString();
     const time = new Date(m.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const participants = [...new Set(Object.values(m.participants || {}))]
-      .filter(p => p !== m.meetingCode && !p.startsWith('@'));
+    const participants = meetingAttendees(m);
 
     let durationStr = '';
     if (isCurrent || mode === 'live') {
@@ -566,7 +568,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
         }
         chrome.runtime.sendMessage({
           type: MSG.EXPORT_MEETING,
-          payload: { id: m.id, format: 'md' },
+          payload: { id: m.id, format: 'txt' },
         }).then(async (response) => {
           if (response?.content) {
             await copyToClipboard(response.content, btn);
@@ -581,7 +583,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
         }
         chrome.runtime.sendMessage({
           type: MSG.EXPORT_MEETING,
-          payload: { id: m.id, format: 'md' },
+          payload: { id: m.id, format: 'txt' },
         }).then((response) => {
           if (response?.content) {
             download(response.content, meetingFileTitle(m), response.startTime ?? m.startTime);
