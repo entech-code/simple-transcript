@@ -72,3 +72,13 @@ npm test
 ```
 
 Runs the unit tests for message decoding, caption parsing and transcript export. They need Node 24 and no browser. See [tests/README.md](tests/README.md) for what is covered and how to add a sample message.
+
+## Icons
+
+The icon is drawn in `icons/icon.svg` (128 and 48px), `icons/icon-32.svg` and `icons/icon-16.svg`. After changing one, remake the PNGs the extension uses:
+
+```bash
+npm run icons
+```
+
+It renders each SVG at its exact size with the Chrome installed on your machine (set `CHROME_PATH` if Chrome is somewhere unusual) and writes `icons/icon16.png`, `icon32.png`, `icon48.png` and `icon128.png`.
