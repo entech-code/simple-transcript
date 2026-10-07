@@ -14,11 +14,13 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
   const footerEl = document.getElementById('footer')!;
   const footerLeft = document.getElementById('footer-left')!;
 
-  const ACTIONS_HTML = `
-    <button class="meeting-action" data-action="copy" title="Copy">⎘</button>
-    <button class="meeting-action" data-action="export" title="Export">↓</button>
-    <button class="meeting-action" data-action="delete" title="Delete">✕</button>
-  `;
+  /** A meeting in progress cannot be deleted, so it is not offered. */
+  function actionsHtml(isLive: boolean): string {
+    const copy = '<button class="meeting-action" data-action="copy" title="Copy">⎘</button>';
+    const exp = '<button class="meeting-action" data-action="export" title="Export">↓</button>';
+    const del = '<button class="meeting-action" data-action="delete" title="Delete">✕</button>';
+    return isLive ? copy + exp : copy + exp + del;
+  }
 
   function escapeHtml(str: string): string {
     const div = document.createElement('div');
@@ -140,7 +142,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
       <div class="meeting-item-title">${escapeHtml(title)}</div>
       <div class="meeting-item-row">
         <span class="meeting-item-meta">${date} ${time}${durationStr ? ` · ${durationStr}` : ''}</span>
-        <div class="meeting-item-actions">${ACTIONS_HTML}</div>
+        <div class="meeting-item-actions">${actionsHtml(isLive)}</div>
       </div>
       ${tagsHtml}
     `;
@@ -183,7 +185,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
 
         // Refused, or answered No: the buttons come back.
         const restoreActions = (): void => {
-          actionsEl.innerHTML = ACTIONS_HTML;
+          actionsEl.innerHTML = actionsHtml(isLive);
           actionsEl.style.opacity = '';
         };
 

@@ -61,6 +61,8 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
   let viewingMeetingId: string | null = null;
   let detailEntries: TranscriptEntry[] = [];
   let detailMeeting: Omit<Meeting, 'entries'> | null = null;
+  // Meetings in progress in any tab, as of the last time the list was loaded
+  let liveMeetingIds = new Set<string>();
   let popupWidth = DEFAULT_WIDTH;
   let popupHeight = DEFAULT_HEIGHT;
 
@@ -478,6 +480,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
     try {
       const response = await chrome.runtime.sendMessage({ type: MSG.GET_MEETINGS });
       const meetingsList = (response?.meetings ?? []) as Omit<Meeting, 'entries'>[];
+      liveMeetingIds = new Set((response?.liveMeetingIds ?? []) as string[]);
       meetingsEl.innerHTML = '';
 
       // Current meeting at top if active
@@ -501,11 +504,12 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
 
   type BlockMode = 'list' | 'detail' | 'live';
 
-  function actionsHtml(mode: BlockMode): string {
+  /** A meeting in progress cannot be deleted, so it is not offered. */
+  function actionsHtml(isLive: boolean): string {
     const copy = '<button class="meeting-action" data-action="copy" title="Copy">⎘</button>';
     const exp = '<button class="meeting-action" data-action="export" title="Export">↓</button>';
     const del = '<button class="meeting-action" data-action="delete" title="Delete">✕</button>';
-    return mode === 'live' ? copy + exp : copy + exp + del;
+    return isLive ? copy + exp : copy + exp + del;
   }
 
   /**
@@ -516,6 +520,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
    * live one has no delete.
    */
   function createMeetingBlock(m: Omit<Meeting, 'entries'> | Meeting, isCurrent: boolean, mode: BlockMode): HTMLElement {
+    const isLive = isCurrent || mode === 'live' || liveMeetingIds.has(m.id);
     const item = document.createElement('div');
     item.className = 'meeting-item'
       + (mode === 'list' && isCurrent ? ' current' : '')
@@ -544,7 +549,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
       <div class="meeting-item-title">${escapeHtml(title)}</div>
       <div class="meeting-item-row">
         <span class="meeting-item-meta">${date} ${time}${durationStr ? ` · ${durationStr}` : ''}</span>
-        <div class="meeting-item-actions">${actionsHtml(mode)}</div>
+        <div class="meeting-item-actions">${actionsHtml(isLive)}</div>
       </div>
       ${tagsHtml}
     `;
@@ -598,7 +603,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
 
         // Refused, or answered No: the buttons come back.
         const restoreActions = (): void => {
-          actionsEl.innerHTML = actionsHtml(mode);
+          actionsEl.innerHTML = actionsHtml(isLive);
           actionsEl.style.opacity = '';
         };
 
