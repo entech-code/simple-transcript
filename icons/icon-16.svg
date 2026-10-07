@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- 16px. 8 units = 1px. Edge to edge, everything on whole pixels:
+       2px outline, 2x2px dots, 2px bars. The dots and bar ends are only slightly rounded,
+       so their colours stay solid at this size. -->
+  <path d="M8 24 C8 15.2 15.2 8 24 8 H104 C112.8 8 120 15.2 120 24 V72 C120 80.8 112.8 88 104 88 H52 L28 116 V88 H24 C15.2 88 8 80.8 8 72 Z"
+        fill="#ffffff" stroke="#818cf8" stroke-width="16" stroke-linejoin="round"/>
+
+  <rect x="24" y="24" width="16" height="16" rx="4" fill="#0284c7"/>
+  <rect x="48" y="24" width="56" height="16" rx="4" fill="#4338ca"/>
+
+  <rect x="24" y="56" width="16" height="16" rx="4" fill="#e11d48"/>
+  <rect x="48" y="56" width="40" height="16" rx="4" fill="#4338ca"/>
+</svg>

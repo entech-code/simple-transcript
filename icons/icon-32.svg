@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- 32px. 4 units = 1px. Try-1's drawing with the dots and bars moved onto whole pixels:
+       3px outline, 4x4px dots, 4px bars. -->
+  <path d="M14 28 C14 19 21 14 30 14 H102 C111 14 118 19 118 28 V76 C118 85 111 90 102 90 H50 L26 114 V90 C18 90 14 85 14 76 Z"
+        fill="#ffffff" stroke="#818cf8" stroke-width="12" stroke-linejoin="round"/>
+
+  <circle cx="36" cy="40" r="8" fill="#0284c7"/>
+  <rect x="52" y="32" width="48" height="16" rx="8" fill="#4338ca"/>
+
+  <circle cx="36" cy="68" r="8" fill="#e11d48"/>
+  <rect x="52" y="60" width="36" height="16" rx="8" fill="#4338ca"/>
+</svg>

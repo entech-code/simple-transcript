@@ -2,11 +2,6 @@
 
 ## Planned
 
-- [ ] New icon and colours
-  - The current icon is the same as the published "Notula for Google Meet" one, so the two would be confused
-  - Draw a few simple SVG candidates, compare them at toolbar size (16px) and store size (128px), and avoid anything resembling Google Meet's logo or colours
-  - Needed before the first Chrome Web Store release
-
 - [ ] Clean up the Copy, Export and Delete icons
   - They are small and hard to see; make them larger, clearer and consistent between the floating panel and the toolbar popup
   - Fits naturally with the new icon and colours above
@@ -53,6 +48,7 @@
 
 ## Completed
 
+- [x] New icon and colours: a white speech bubble with a periwinkle outline and coloured speaker dots, and an indigo accent in the panel and popup instead of Notula's terracotta (2026-10-06)
 - [x] Save the transcript as plain text instead of Markdown: Copy and Download give plain text with the meeting's name, date and attendees at the top, and downloads end in `.txt` (2026-10-06)
 - [x] Name saved transcript files `<title> - <YYYY>-<MM>-<DD> <HH>-<mm> - Transcript.md`, with "Transcript" last so the date reads as the meeting's (2026-10-06)
 - [x] Call a meeting without a title "Untitled meeting", and name its files after the other attendees (2026-10-06)
