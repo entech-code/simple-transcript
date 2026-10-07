@@ -6,15 +6,20 @@
   - They are small and hard to see; make them larger, clearer and consistent between the floating panel and the toolbar popup
   - Fits naturally with the new icon and colours above
 
-- [ ] Don't offer Delete for a meeting that is in progress
-  - The live call's own view hides Delete, but the live meeting's card in the meetings list and in the toolbar popup still shows it
-  - The service worker already refuses, and the card shows "Cannot delete a live meeting" after the confirmation; hide the button on the live card in both lists instead
-  - Fits with the icon clean-up above
-
 - [ ] Rewrite the website pages, privacy policy and store listing for Simple Transcript
   - The rebrand deleted the old website pages (redirects to notula.org) and the screenshot tooling, and only trimmed `WEBSTORE_LISTING.md`
   - Write a home page and a privacy policy, publish them with GitHub Pages, finish the listing text and make new screenshots and tiles
   - Needed before the first Chrome Web Store release, once the UI is in its final shape
+
+- [ ] Publish to the Chrome Web Store
+  - Upload the release zip in the Chrome Web Store developer dashboard, with the listing text from `WEBSTORE_LISTING.md`, screenshots, the small promo tile (440x280) and the privacy policy link
+  - Fill in the privacy practices form: the single purpose, a justification for each permission, and the data-use declarations
+  - Submit for review; depends on the website, privacy policy and store listing item above
+
+- [ ] Always leave the user's own name out of an untitled meeting's file name
+  - Seen 2026-10-07: a two-person call was saved as "Meeting with Alex Netrebskiy and Eric Popivker"; the meeting had no `selfName`, so the user was not recognised
+  - The name comes from Meet's `CreateMeetingDevice` response on joining, which was missed or not parsed on that join; the page console had already dropped the lines that would say which
+  - Remember the name once it is found and use it in later meetings when a participant has it; keep it with the session across service-worker restarts; log the join response once in the service worker console
 
 - [ ] Error logging and reporting for when captions are not coming through
   - A "Something's wrong?" action in the popup builds a diagnostic report (versions, channel names, message counts, errors) and opens a pre-filled GitHub issue, with a copy button as fallback
@@ -48,6 +53,7 @@
 
 ## Completed
 
+- [x] Don't offer Delete for a meeting that is in progress: its card and opened view show only Copy and Export, in the panel and the toolbar popup (2026-10-07)
 - [x] New icon and colours: a white speech bubble with a periwinkle outline and coloured speaker dots, and an indigo accent in the panel and popup instead of Notula's terracotta (2026-10-06)
 - [x] Save the transcript as plain text instead of Markdown: Copy and Download give plain text with the meeting's name, date and attendees at the top, and downloads end in `.txt` (2026-10-06)
 - [x] Name saved transcript files `<title> - <YYYY>-<MM>-<DD> <HH>-<mm> - Transcript.md`, with "Transcript" last so the date reads as the meeting's (2026-10-06)
