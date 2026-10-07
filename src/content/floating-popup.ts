@@ -1,5 +1,6 @@
 import { MSG, POPUP_PORT_NAME, type TranscriptEntry, type Meeting } from '../utils/types';
 import { exportAsText } from '../utils/transcript-store';
+import { ICON_COPIED, meetingActionsHtml } from '../utils/action-icons';
 import { exportFileName } from '../utils/export-filename';
 import { meetingAttendees } from '../utils/meeting-attendees';
 import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../utils/meeting-title';
@@ -167,11 +168,15 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
+    // Already showing the tick from a click a moment ago
+    if (feedbackEl.classList.contains('copied')) return;
     const orig = feedbackEl.innerHTML;
-    feedbackEl.textContent = '\u2713';
+    feedbackEl.innerHTML = ICON_COPIED;
+    feedbackEl.classList.add('copied');
     feedbackEl.title = 'Copied!';
     setTimeout(() => {
       feedbackEl.innerHTML = orig;
+      feedbackEl.classList.remove('copied');
       feedbackEl.title = 'Copy';
     }, 1500);
   }
@@ -504,14 +509,6 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
 
   type BlockMode = 'list' | 'detail' | 'live';
 
-  /** A meeting in progress cannot be deleted, so it is not offered. */
-  function actionsHtml(isLive: boolean): string {
-    const copy = '<button class="meeting-action" data-action="copy" title="Copy">⎘</button>';
-    const exp = '<button class="meeting-action" data-action="export" title="Export">↓</button>';
-    const del = '<button class="meeting-action" data-action="delete" title="Delete">✕</button>';
-    return isLive ? copy + exp : copy + exp + del;
-  }
-
   /**
    * A meeting's block: its title, the date line with the actions at its end,
    * and the code and participants. In the list it opens the meeting and shows
@@ -549,7 +546,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
       <div class="meeting-item-title">${escapeHtml(title)}</div>
       <div class="meeting-item-row">
         <span class="meeting-item-meta">${date} ${time}${durationStr ? ` · ${durationStr}` : ''}</span>
-        <div class="meeting-item-actions">${actionsHtml(isLive)}</div>
+        <div class="meeting-item-actions">${meetingActionsHtml(isLive)}</div>
       </div>
       ${tagsHtml}
     `;
@@ -603,7 +600,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
 
         // Refused, or answered No: the buttons come back.
         const restoreActions = (): void => {
-          actionsEl.innerHTML = actionsHtml(isLive);
+          actionsEl.innerHTML = meetingActionsHtml(isLive);
           actionsEl.style.opacity = '';
         };
 
@@ -931,6 +928,8 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
         --warning-border: #e0cb96;
         --warning-text: #6b5312;
         --danger: #a83a2a;
+        --danger-bg: rgba(168, 58, 42, 0.1);
+        --success: #15803d;
         --comment: rgba(67, 56, 202, 0.18);
         --comment-strong: rgba(67, 56, 202, 0.38);
         --shadow: 0 1px 2px rgba(28, 28, 26, 0.05), 0 8px 24px -14px rgba(28, 28, 26, 0.28);
@@ -975,6 +974,8 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
           --warning-border: #5c4f2e;
           --warning-text: #e3cb96;
           --danger: #e08476;
+          --danger-bg: rgba(224, 132, 118, 0.16);
+          --success: #4ade80;
           --comment: rgba(129, 140, 248, 0.2);
           --comment-strong: rgba(129, 140, 248, 0.42);
           --shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
@@ -1392,12 +1393,11 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
         padding: 0;
-        font-size: 12px;
         color: var(--text-dim);
-        border-radius: 5px;
+        border-radius: 6px;
         transition: background-color var(--quick) var(--ease), color var(--quick) var(--ease);
       }
 
@@ -1408,6 +1408,13 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
 
       .meeting-action[data-action="delete"]:hover {
         color: var(--danger);
+        background: var(--danger-bg);
+      }
+
+      /* The tick shown for a moment after copying */
+      .meeting-action.copied,
+      .meeting-action.copied:hover {
+        color: var(--success);
       }
 
       .delete-confirm {
