@@ -2,10 +2,6 @@
 
 ## Planned
 
-- [ ] Clean up the Copy, Export and Delete icons
-  - They are small and hard to see; make them larger, clearer and consistent between the floating panel and the toolbar popup
-  - Fits naturally with the new icon and colours above
-
 - [ ] Rewrite the website pages, privacy policy and store listing for Simple Transcript
   - The rebrand deleted the old website pages (redirects to notula.org) and the screenshot tooling, and only trimmed `WEBSTORE_LISTING.md`
   - Write a home page and a privacy policy, publish them with GitHub Pages, finish the listing text and make new screenshots and tiles
@@ -53,6 +49,7 @@
 
 ## Completed
 
+- [x] Clean up the Copy, Export and Delete icons: drawn icons instead of text characters, slightly larger, the same in the panel and the toolbar popup, with a tick after copying (2026-10-07)
 - [x] Don't offer Delete for a meeting that is in progress: its card and opened view show only Copy and Export, in the panel and the toolbar popup (2026-10-07)
 - [x] New icon and colours: a white speech bubble with a periwinkle outline and coloured speaker dots, and an indigo accent in the panel and popup instead of Notula's terracotta (2026-10-06)
 - [x] Save the transcript as plain text instead of Markdown: Copy and Download give plain text with the meeting's name, date and attendees at the top, and downloads end in `.txt` (2026-10-06)

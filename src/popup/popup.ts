@@ -1,4 +1,5 @@
 import { MSG, type Meeting, type TranscriptEntry } from '../utils/types';
+import { ICON_COPIED, meetingActionsHtml } from '../utils/action-icons';
 import { exportFileName } from '../utils/export-filename';
 import { meetingAttendees } from '../utils/meeting-attendees';
 import { meetingDisplayTitle, meetingFileTitle } from '../utils/meeting-title';
@@ -13,14 +14,6 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
   const btnBack = document.getElementById('btn-back') as HTMLButtonElement;
   const footerEl = document.getElementById('footer')!;
   const footerLeft = document.getElementById('footer-left')!;
-
-  /** A meeting in progress cannot be deleted, so it is not offered. */
-  function actionsHtml(isLive: boolean): string {
-    const copy = '<button class="meeting-action" data-action="copy" title="Copy">⎘</button>';
-    const exp = '<button class="meeting-action" data-action="export" title="Export">↓</button>';
-    const del = '<button class="meeting-action" data-action="delete" title="Delete">✕</button>';
-    return isLive ? copy + exp : copy + exp + del;
-  }
 
   function escapeHtml(str: string): string {
     const div = document.createElement('div');
@@ -65,11 +58,15 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
-    const orig = btn.textContent;
-    btn.textContent = '✓';
+    // Already showing the tick from a click a moment ago
+    if (btn.classList.contains('copied')) return;
+    const orig = btn.innerHTML;
+    btn.innerHTML = ICON_COPIED;
+    btn.classList.add('copied');
     btn.title = 'Copied!';
     setTimeout(() => {
-      btn.textContent = orig;
+      btn.innerHTML = orig;
+      btn.classList.remove('copied');
       btn.title = 'Copy';
     }, 1500);
   }
@@ -142,7 +139,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
       <div class="meeting-item-title">${escapeHtml(title)}</div>
       <div class="meeting-item-row">
         <span class="meeting-item-meta">${date} ${time}${durationStr ? ` · ${durationStr}` : ''}</span>
-        <div class="meeting-item-actions">${actionsHtml(isLive)}</div>
+        <div class="meeting-item-actions">${meetingActionsHtml(isLive)}</div>
       </div>
       ${tagsHtml}
     `;
@@ -185,7 +182,7 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
 
         // Refused, or answered No: the buttons come back.
         const restoreActions = (): void => {
-          actionsEl.innerHTML = actionsHtml(isLive);
+          actionsEl.innerHTML = meetingActionsHtml(isLive);
           actionsEl.style.opacity = '';
         };
 
