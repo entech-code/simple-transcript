@@ -7,7 +7,7 @@ const BACKSLASH = String.fromCharCode(92);
 // The test run is fixed to UTC (vitest.config.mts), so local time is UTC here.
 describe('exportFileName', () => {
   it('puts the title first, then "Transcript", the date and the time', () => {
-    expect(exportFileName(MEETING_TITLE, MEETING_START)).toBe('Entech Daily Meeting 1 - 2026-03-09 14-05 - Transcript.txt');
+    expect(exportFileName(MEETING_TITLE, MEETING_START)).toBe('Team Daily Meeting 1 - 2026-03-09 14-05 - Transcript.txt');
   });
 
   it('pads the month, day, hour and minute to two digits', () => {
@@ -20,8 +20,8 @@ describe('exportFileName', () => {
   });
 
   it('keeps punctuation that file names allow', () => {
-    expect(exportFileName("Eric's team_sync-weekly (Q3) & review", MEETING_START))
-      .toBe("Eric's team_sync-weekly (Q3) & review - 2026-03-09 14-05 - Transcript.txt");
+    expect(exportFileName("Dana's team_sync-weekly (Q3) & review", MEETING_START))
+      .toBe("Dana's team_sync-weekly (Q3) & review - 2026-03-09 14-05 - Transcript.txt");
   });
 
   it('keeps a title written in a non-Latin script', () => {

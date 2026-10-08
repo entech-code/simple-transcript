@@ -45,7 +45,7 @@ A meeting created from a calendar event is titled with its name, as Google Meet 
 
 ### Export
 
-Click the export button on any meeting to download it as plain text; the copy button copies the same text. It starts with the meeting's name, start date and time, and attendees, then each caption under its speaker's name and time. Files are named `<title> - <YYYY>-<MM>-<DD> <HH>-<mm> - Transcript.txt`, for example `Entech Daily Meeting - 2026-10-06 12-07 - Transcript.txt`. A meeting without a title is named after the other attendees, such as `Meeting with Alexey Kornakov`, or `Untitled meeting` when there are none.
+Click the export button on any meeting to download it as plain text; the copy button copies the same text. It starts with the meeting's name, start date and time, and attendees, then each caption under its speaker's name and time. Files are named `<title> - <YYYY>-<MM>-<DD> <HH>-<mm> - Transcript.txt`, for example `Team Daily Meeting - 2026-10-06 12-07 - Transcript.txt`. A meeting without a title is named after the other attendees, such as `Meeting with Marcus Oyelaran`, or `Untitled meeting` when there are none.
 
 ### Language
 

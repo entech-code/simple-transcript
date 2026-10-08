@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { meetingDisplayTitle, meetingFileTitle, meetingTitleFromTabTitle } from '../src/utils/meeting-title';
 
-const CODE = 'eoq-yhou-uyp';
+const CODE = 'kxp-mwrd-tzb';
 
 describe('meetingTitleFromTabTitle', () => {
   // Observed in live calls on 2026-10-05, in an English-language Chrome.
   it('reads the name of a call created from a calendar event', () => {
-    expect(meetingTitleFromTabTitle('Meet - Entech Daily Meeting', CODE)).toBe('Entech Daily Meeting');
+    expect(meetingTitleFromTabTitle('Meet - Team Daily Meeting', CODE)).toBe('Team Daily Meeting');
   });
 
   it('finds no name when an instant call shows its own code', () => {
-    expect(meetingTitleFromTabTitle('Meet - eoq-yhou-uyp', CODE)).toBeNull();
+    expect(meetingTitleFromTabTitle('Meet - kxp-mwrd-tzb', CODE)).toBeNull();
   });
 
   it('compares the code without regard to letter case', () => {
-    expect(meetingTitleFromTabTitle('Meet - EOQ-YHOU-UYP', CODE)).toBeNull();
+    expect(meetingTitleFromTabTitle('Meet - KXP-MWRD-TZB', CODE)).toBeNull();
   });
 
   // The code is not always known yet when the title is read.
@@ -23,7 +23,7 @@ describe('meetingTitleFromTabTitle', () => {
   });
 
   it('keeps a name that merely contains the code', () => {
-    expect(meetingTitleFromTabTitle('Meet - Sync (eoq-yhou-uyp)', CODE)).toBe('Sync (eoq-yhou-uyp)');
+    expect(meetingTitleFromTabTitle('Meet - Sync (kxp-mwrd-tzb)', CODE)).toBe('Sync (kxp-mwrd-tzb)');
   });
 
   it('trims spaces around the name', () => {
@@ -55,7 +55,7 @@ describe('meetingTitleFromTabTitle', () => {
     ['a separator with nothing after it', 'Meet - '],
     ['only spaces after the separator', 'Meet -    '],
     ['another page', 'Google Calendar'],
-    ['a name without the Meet prefix', 'Entech Daily Meeting'],
+    ['a name without the Meet prefix', 'Team Daily Meeting'],
     ['a word that only starts with Meet', 'Meeting notes - Budget'],
     ['an empty title', ''],
   ])('finds no name in %s', (_name, title) => {
@@ -69,7 +69,7 @@ describe('meetingTitleFromTabTitle', () => {
 
 describe('meetingDisplayTitle', () => {
   it('shows the title from Google Meet', () => {
-    expect(meetingDisplayTitle({ title: 'Entech Daily Meeting' })).toBe('Entech Daily Meeting');
+    expect(meetingDisplayTitle({ title: 'Team Daily Meeting' })).toBe('Team Daily Meeting');
   });
 
   it.each([
@@ -81,49 +81,49 @@ describe('meetingDisplayTitle', () => {
 });
 
 describe('meetingFileTitle', () => {
-  const ME = 'Eric Popivker';
+  const ME = 'Dana Whitfield';
   const people = (...names: string[]): Record<string, string> =>
     Object.fromEntries(names.map((name, i) => [`@spaces/x/devices/${i}`, name]));
 
   it('uses the title from Google Meet', () => {
-    expect(meetingFileTitle({ title: 'Entech Daily Meeting', participants: people(ME, 'Alexey Kornakov'), selfName: ME })).toBe('Entech Daily Meeting');
+    expect(meetingFileTitle({ title: 'Team Daily Meeting', participants: people(ME, 'Marcus Oyelaran'), selfName: ME })).toBe('Team Daily Meeting');
   });
 
   it.each([
     ['the user alone', [ME], 'Untitled meeting'],
     ['no one', [], 'Untitled meeting'],
-    ['one other attendee', [ME, 'Alexey Kornakov'], 'Meeting with Alexey Kornakov'],
-    ['two others', [ME, 'Alexey Kornakov', 'Niraj Shah'], 'Meeting with Alexey Kornakov and Niraj Shah'],
-    ['three others', ['Alexey Kornakov', ME, 'Niraj Shah', 'Ana Lima'], 'Meeting with Alexey Kornakov, Niraj Shah and 1 other'],
+    ['one other attendee', [ME, 'Marcus Oyelaran'], 'Meeting with Marcus Oyelaran'],
+    ['two others', [ME, 'Marcus Oyelaran', 'Priya Raman'], 'Meeting with Marcus Oyelaran and Priya Raman'],
+    ['three others', ['Marcus Oyelaran', ME, 'Priya Raman', 'Ana Lima'], 'Meeting with Marcus Oyelaran, Priya Raman and 1 other'],
     ['six others', [ME, 'A One', 'B Two', 'C Three', 'D Four', 'E Five', 'F Six'], 'Meeting with A One, B Two and 4 others'],
   ])('names an untitled meeting with %s', (_case, names, expected) => {
     expect(meetingFileTitle({ title: '', participants: people(...names), selfName: ME })).toBe(expected);
   });
 
   it('leaves out the user regardless of spacing, letter case or "(You)"', () => {
-    for (const self of ['eric popivker', '  Eric   Popivker ', 'Eric Popivker (You)']) {
-      expect(meetingFileTitle({ title: '', participants: people(self, 'Alexey Kornakov'), selfName: ME })).toBe('Meeting with Alexey Kornakov');
+    for (const self of ['dana whitfield', '  Dana   Whitfield ', 'Dana Whitfield (You)']) {
+      expect(meetingFileTitle({ title: '', participants: people(self, 'Marcus Oyelaran'), selfName: ME })).toBe('Meeting with Marcus Oyelaran');
     }
   });
 
   it('counts an attendee listed twice once', () => {
-    expect(meetingFileTitle({ title: '', participants: people(ME, 'Alexey Kornakov', 'Alexey Kornakov'), selfName: ME })).toBe('Meeting with Alexey Kornakov');
+    expect(meetingFileTitle({ title: '', participants: people(ME, 'Marcus Oyelaran', 'Marcus Oyelaran'), selfName: ME })).toBe('Meeting with Marcus Oyelaran');
   });
 
   it('skips devices whose name was never learned', () => {
-    expect(meetingFileTitle({ title: '', participants: people(ME, '@spaces/x/devices/9', 'Alexey Kornakov'), selfName: ME })).toBe('Meeting with Alexey Kornakov');
+    expect(meetingFileTitle({ title: '', participants: people(ME, '@spaces/x/devices/9', 'Marcus Oyelaran'), selfName: ME })).toBe('Meeting with Marcus Oyelaran');
   });
 
   it('skips a Meet code picked up as a name', () => {
-    expect(meetingFileTitle({ title: '', participants: people(ME, 'brd-nnro-hdj'), selfName: ME })).toBe('Untitled meeting');
-    expect(meetingFileTitle({ title: '', participants: people(ME, 'brd-nnro-hdj', 'Alexey Kornakov'), selfName: ME })).toBe('Meeting with Alexey Kornakov');
+    expect(meetingFileTitle({ title: '', participants: people(ME, 'hsu-vbke-cmn'), selfName: ME })).toBe('Untitled meeting');
+    expect(meetingFileTitle({ title: '', participants: people(ME, 'hsu-vbke-cmn', 'Marcus Oyelaran'), selfName: ME })).toBe('Meeting with Marcus Oyelaran');
   });
 
   it('does not name a meeting after a lone name when the user is not known', () => {
-    expect(meetingFileTitle({ title: '', participants: people('Alexey Kornakov') })).toBe('Untitled meeting');
+    expect(meetingFileTitle({ title: '', participants: people('Marcus Oyelaran') })).toBe('Untitled meeting');
   });
 
   it('names the attendees when the user is not known and there are two', () => {
-    expect(meetingFileTitle({ title: '', participants: people('Alexey Kornakov', 'Niraj Shah') })).toBe('Meeting with Alexey Kornakov and Niraj Shah');
+    expect(meetingFileTitle({ title: '', participants: people('Marcus Oyelaran', 'Priya Raman') })).toBe('Meeting with Marcus Oyelaran and Priya Raman');
   });
 });
