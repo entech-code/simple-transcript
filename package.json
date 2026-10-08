@@ -9,7 +9,8 @@
     "dev": "rollup -c rollup.config.mjs --watch",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "vitest run",
-    "icons": "node scripts/export-icons.mjs"
+    "icons": "node scripts/export-icons.mjs",
+    "store-images": "node scripts/store-images.mjs"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.0",
