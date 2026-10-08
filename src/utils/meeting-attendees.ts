@@ -7,6 +7,20 @@ export function nameKey(name: string): string {
 }
 
 /**
+ * Meet's page sometimes holds a name twice in one element, which reads as
+ * "Dana WhitfieldDana Whitfield". A text made of the same half twice is that
+ * half.
+ */
+export function undoubledName(name: string): string {
+  const text = name.trim();
+  const half = text.length / 2;
+  if (text.length >= 4 && Number.isInteger(half) && text.slice(0, half) === text.slice(half)) {
+    return text.slice(0, half).trim();
+  }
+  return text;
+}
+
+/**
  * Who attended a meeting, the user included: its participants' names, once
  * each, in the order they joined. Devices whose name was never learned (shown
  * as "@…") are left out, and so is a Meet code, which was once picked up from

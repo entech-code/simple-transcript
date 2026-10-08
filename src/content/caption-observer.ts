@@ -1,3 +1,5 @@
+import { undoubledName } from '../utils/meeting-attendees';
+
 (function () {
   const LOG_PREFIX = "[MeetTranscript:Captions]";
   const MSG_CAPTION_SPEAKER_NAME = "caption_speaker_name";
@@ -17,8 +19,9 @@
     }
   }
 
+  // Status lines go to the console's "Verbose" level, which Chrome hides by default.
   function log(...args: unknown[]): void {
-    console.log(LOG_PREFIX, ...args);
+    console.debug(LOG_PREFIX, ...args);
   }
 
   // ========================================
@@ -94,7 +97,7 @@
     }
 
     // Deduplicate and emit new names
-    for (const name of names) {
+    for (const name of names.map(undoubledName)) {
       if (!knownParticipants.has(name)) {
         knownParticipants.add(name);
         log("Found participant name:", name);
@@ -313,7 +316,7 @@
       await delay(3000);
     }
 
-    log("Could not auto-enable captions after", retries, "attempts");
+    console.warn(LOG_PREFIX, "Could not auto-enable captions after", retries, "attempts");
   }
 
   function isMeetingJoined(): boolean {
