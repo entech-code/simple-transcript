@@ -50,7 +50,10 @@ HOW IT WORKS
 
 ## URLs
 
-The homepage, support and privacy policy addresses are set when the store listing is prepared.
+- Homepage: https://entech-code.github.io/simple-transcript/
+- Support: https://entech-code.github.io/simple-transcript/support.html
+- Privacy policy: https://entech-code.github.io/simple-transcript/privacy.html
+- Support email: support@entechsolutions.com
 
 ## Category
 Productivity > Communication

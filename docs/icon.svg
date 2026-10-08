@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- 128 and 48px. The bubble with its outline is about 110px wide, leaving a 9px transparent margin -->
+  <path d="M14 26 C14 18 20 12 30 12 H98 C108 12 114 18 114 26 V76 C114 84 108 90 98 90 H52 L28 116 V90 C18 90 14 84 14 76 Z"
+        fill="#ffffff" stroke="#818cf8" stroke-width="10" stroke-linejoin="round"/>
+
+  <!-- Three transcript lines, each with its speaker's dot -->
+  <circle cx="34" cy="34" r="5" fill="#0284c7"/>
+  <rect x="46" y="30" width="52" height="8" rx="4" fill="#4338ca"/>
+
+  <circle cx="34" cy="50" r="5" fill="#e11d48"/>
+  <rect x="46" y="46" width="38" height="8" rx="4" fill="#4338ca"/>
+
+  <circle cx="34" cy="66" r="5" fill="#0284c7"/>
+  <rect x="46" y="62" width="46" height="8" rx="4" fill="#4338ca"/>
+</svg>
