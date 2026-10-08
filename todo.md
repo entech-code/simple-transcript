@@ -18,11 +18,6 @@
   - Try Meet's `GetUser` request first: the page makes it on the home page and on every call page before joining, so it should name the user without depending on the join
   - Remember the name once it is found and use it in later meetings when a participant has it; keep it with the session across service-worker restarts; log the join response once in the service worker console
 
-- [ ] Decide how a meeting with many attendees looks in the meetings list
-  - Every attendee gets a tag under the meeting, and the tags wrap onto as many lines as they need, so a call with 5 or more people makes its card several lines taller and the list uneven
-  - Try it with 5, 10 and 20 attendees in the panel and the toolbar popup, then choose: show the first few and "+N more", keep one line that cuts off, or leave it wrapping
-  - The opened meeting can still show everyone
-
 - [ ] Error logging and reporting for when captions are not coming through
   - A "Something's wrong?" action in the popup builds a diagnostic report (versions, channel names, message counts, errors) and opens a pre-filled GitHub issue, with a copy button as fallback
   - Issues is on; add an issue template that asks for the version, what happened and how the call was joined, and says not to paste transcripts or logs there but to email them
@@ -56,6 +51,7 @@
 
 ## Completed
 
+- [x] Meetings with many attendees in the lists: up to four are named; from five, the first three and a "+N more" button that names the rest in place (2026-10-08)
 - [x] Website: a home page, the privacy policy and a support page, published with GitHub Pages at https://entech-code.github.io/simple-transcript/ (2026-10-08)
 - [x] Clean up the Copy, Export and Delete icons: drawn icons instead of text characters, slightly larger, the same in the panel and the toolbar popup, with a tick after copying (2026-10-07)
 - [x] Don't offer Delete for a meeting that is in progress: its card and opened view show only Copy and Export, in the panel and the toolbar popup (2026-10-07)
