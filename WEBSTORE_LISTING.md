@@ -4,49 +4,46 @@
 Simple Transcript – Copy & Save for Google Meet
 
 ## Summary (132 chars max)
-Live Google Meet transcription with speaker names. Copy or save any call as plain text.
+A transcript of your Google Meet call with speaker names. Copy it or save it as a text file. Everything stays in your browser.
 
 ## Description
 
-Simple Transcript captures every word spoken in your Google Meet calls, in real time, with speaker names attached. No bots join your call and no audio leaves your browser. The extension works on your device, using Google Meet's built-in captions.
-
-WHAT YOU GET
-
-When you join a Google Meet call, the extension starts transcribing immediately. A compact floating panel on the page shows the live transcript as people speak. After the meeting, the full transcript is saved and accessible from the extension popup.
-
-KEY FEATURES
-
-- Real-time transcription with automatic speaker identification
-- Any language Google Meet can caption: the transcript follows the caption language you set in Meet
-- Floating in-page panel: draggable, resizable and minimizable
-- Complete meeting history: every past meeting stored locally with title, date, duration and participant list
-- Chat capture: meeting chat messages are saved alongside the transcript
-- Smart merging: consecutive messages from the same speaker are combined into paragraphs
-- Meeting resume: rejoin within 10 minutes and the transcript picks up where it left off
-- A meeting that ended with nothing said in it is removed, so joining the wrong call by accident leaves nothing behind
-
-EXPORT
-
-- Download as a plain text file (.txt), with the meeting's name, date, attendees, and each line under its speaker's name and time
-- Copy to clipboard, one click to copy the full transcript as plain text
-
-MANAGE YOUR MEETINGS
-
-- Browse all past meetings from the popup
-- Meetings are titled with their calendar event's name
-- Delete meetings you no longer need
-- See participant names, meeting codes and duration at a glance
-
-PRIVACY
-
-Transcription is powered by Google Meet's own caption system. No audio is recorded, no bot joins your call, and nothing is sent to a server of ours. Meetings are stored in your browser's local storage.
+Simple Transcript turns Google Meet's own captions into a transcript, with each line under the name of the person who said it. Copy it or save it as a text file, during the call or afterwards. No bot joins your call, no audio is recorded, and nothing leaves your browser.
 
 HOW IT WORKS
 
-1. Install Simple Transcript
-2. Join a Google Meet call
-3. Captions are enabled automatically, and the extension captures and organizes the text in real time
-4. Review or export the transcript at any time
+1. Join a Google Meet call. The extension turns on Meet's captions for you and starts the transcript.
+2. A small panel on the Meet page shows each line as it is spoken, with the speaker's name and the time.
+3. Copy the transcript or download it as a text file, during the call or later.
+
+WHAT YOU GET
+
+- Speaker names on every line, as Google Meet shows them
+- Plain text that pastes cleanly into email, chat and documents: the meeting's name, date and attendees at the top, then the conversation
+- Your past meetings, each kept with its title, date, length and attendees: open one from the toolbar icon to read, copy, save or delete it
+- Sensible file names, such as "Weekly planning - 2026-10-08 10-02 - Transcript.txt"
+- Meetings titled with their calendar event's name; a call without a title is saved under the names of the people you met with
+- Any language Google Meet can caption: the transcript follows the caption language you choose in Meet
+- Chat messages from the meeting, saved in the transcript and marked as chat
+- Rejoin a call within ten minutes and the transcript continues in the same meeting
+- A panel you can move and resize, or hide with the toolbar icon; it keeps transcribing while hidden
+- A call that ended with nothing said in it is removed, so joining the wrong call by mistake leaves nothing behind
+
+PRIVATE BY DESIGN
+
+Your transcripts are stored in your own browser, on your own computer. There is no account and no server of ours: the extension talks to no site other than Google Meet. No audio or video is recorded; the text comes from the captions Google Meet already produces.
+
+It asks only for what it needs: access to meet.google.com, storage for your meetings, and a timer to close a meeting after its tab is closed.
+
+GOOD TO KNOW
+
+- A transcript includes what other people say. Tell the people you meet with, and make sure you have any consent the law requires where you and they are.
+- The transcript is as accurate as Google Meet's captions.
+- Simple Transcript is not made by or affiliated with Google. Google Meet is a trademark of Google LLC.
+
+SUPPORT
+
+Questions and problems: https://entech-code.github.io/simple-transcript/support.html
 
 ## URLs
 

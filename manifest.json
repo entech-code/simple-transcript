@@ -3,7 +3,7 @@
   "name": "Simple Transcript – Copy & Save for Google Meet",
   "short_name": "Simple Transcript",
   "version": "2.25.0",
-  "description": "Live Google Meet transcription with speaker names. Copy or save any call.",
+  "description": "A transcript of your Google Meet call with speaker names. Copy it or save it as a text file. Everything stays in your browser.",
   "permissions": ["storage", "alarms"],
   "host_permissions": ["https://meet.google.com/*"],
   "background": {
