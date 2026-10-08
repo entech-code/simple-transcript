@@ -1,6 +1,7 @@
 import { MSG, type Meeting, type TranscriptEntry } from '../utils/types';
 import { ICON_COPIED, meetingActionsHtml } from '../utils/action-icons';
 import { exportFileName } from '../utils/export-filename';
+import { renderAttendeeTags } from '../utils/attendee-tags';
 import { meetingAttendees } from '../utils/meeting-attendees';
 import { meetingDisplayTitle, meetingFileTitle } from '../utils/meeting-title';
 
@@ -129,11 +130,8 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
       durationStr = '';
     }
 
-    const participantTags = participants.map(p => `<span class="participant-tag">${escapeHtml(p)}</span>`).join('');
     // Only people here: the Meet code is stored with the meeting but not shown.
-    const tagsHtml = participantTags
-      ? `<div class="meeting-item-participants">${participantTags}</div>`
-      : '';
+    const tagsHtml = participants.length > 0 ? '<div class="meeting-item-participants"></div>' : '';
 
     item.innerHTML = `
       <div class="meeting-item-title">${escapeHtml(title)}</div>
@@ -143,6 +141,9 @@ type MeetingSummary = Omit<Meeting, 'entries'>;
       </div>
       ${tagsHtml}
     `;
+
+    const tagsEl = item.querySelector('.meeting-item-participants') as HTMLElement | null;
+    if (tagsEl) renderAttendeeTags(tagsEl, participants, !detail);
 
     // A title longer than two lines is cut off; the whole of it is in the tooltip.
     (item.querySelector('.meeting-item-title') as HTMLElement).title = title;

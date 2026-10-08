@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { meetingAttendees } from '../src/utils/meeting-attendees';
+import { attendeesForList, meetingAttendees } from '../src/utils/meeting-attendees';
 
 const people = (...names: string[]): Record<string, string> =>
   Object.fromEntries(names.map((name, i) => [`@spaces/x/devices/${i}`, name]));
@@ -30,5 +30,27 @@ describe('meetingAttendees', () => {
   it('is empty without participants', () => {
     expect(meetingAttendees({ participants: {} })).toEqual([]);
     expect(meetingAttendees({})).toEqual([]);
+  });
+});
+
+describe('attendeesForList', () => {
+  const names = (n: number): string[] => Array.from({ length: n }, (_, i) => `Person ${i + 1}`);
+
+  it.each([0, 1, 3, 4])('names all of %i attendees', (n) => {
+    expect(attendeesForList(names(n))).toEqual({ shown: names(n), hidden: [] });
+  });
+
+  it('names the first three of five and leaves two to "+2 more"', () => {
+    expect(attendeesForList(names(5))).toEqual({
+      shown: ['Person 1', 'Person 2', 'Person 3'],
+      hidden: ['Person 4', 'Person 5'],
+    });
+  });
+
+  it('names the first three of twelve, in the order they joined', () => {
+    const { shown, hidden } = attendeesForList(names(12));
+    expect(shown).toEqual(['Person 1', 'Person 2', 'Person 3']);
+    expect(hidden).toHaveLength(9);
+    expect(hidden[0]).toBe('Person 4');
   });
 });

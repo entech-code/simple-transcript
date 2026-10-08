@@ -2,6 +2,7 @@ import { MSG, POPUP_PORT_NAME, type TranscriptEntry, type Meeting } from '../uti
 import { exportAsText } from '../utils/transcript-store';
 import { ICON_COPIED, meetingActionsHtml } from '../utils/action-icons';
 import { exportFileName } from '../utils/export-filename';
+import { renderAttendeeTags } from '../utils/attendee-tags';
 import { meetingAttendees } from '../utils/meeting-attendees';
 import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../utils/meeting-title';
 
@@ -536,11 +537,8 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
       durationStr = `${dur} min`;
     }
 
-    const participantTags = participants.map(p => `<span class="participant-tag">${escapeHtml(p)}</span>`).join('');
     // Only people here: the Meet code is stored with the meeting but not shown.
-    const tagsHtml = participantTags
-      ? `<div class="meeting-item-participants">${participantTags}</div>`
-      : '';
+    const tagsHtml = participants.length > 0 ? '<div class="meeting-item-participants"></div>' : '';
 
     item.innerHTML = `
       <div class="meeting-item-title">${escapeHtml(title)}</div>
@@ -550,6 +548,9 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
       </div>
       ${tagsHtml}
     `;
+
+    const tagsEl = item.querySelector('.meeting-item-participants') as HTMLElement | null;
+    if (tagsEl) renderAttendeeTags(tagsEl, participants, mode === 'list');
 
     // A title longer than two lines is cut off; the whole of it is in the tooltip.
     (item.querySelector('.meeting-item-title') as HTMLElement).title = title;
@@ -1372,6 +1373,21 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
         background: var(--bg-sunken);
         border: 1px solid var(--border);
         border-radius: 8px;
+      }
+
+      /* "+N more" and "show less": a button that names the rest, or puts them away */
+      .participant-tag.more {
+        flex-shrink: 0;
+        font-size: 10px;
+        color: var(--accent);
+        background: none;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: background-color var(--quick) var(--ease);
+      }
+
+      .participant-tag.more:hover {
+        background: var(--bg-active);
       }
 
       .meeting-item-actions {
