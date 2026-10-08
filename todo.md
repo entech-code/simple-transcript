@@ -2,15 +2,10 @@
 
 ## Planned
 
-- [ ] Finish the Chrome Web Store listing
-  - Bring `WEBSTORE_LISTING.md` up to date with what the extension does now, and write the answers for the privacy practices form: the single purpose, a justification for each permission, and the data-use declarations
-  - Make the screenshots (1280x800) and the small promo tile (440x280)
-  - Needed before publishing
-
 - [ ] Publish to the Chrome Web Store
-  - Upload the release zip in the Chrome Web Store developer dashboard, with the listing text from `WEBSTORE_LISTING.md`, screenshots, the small promo tile (440x280) and the privacy policy link
-  - Fill in the privacy practices form: the single purpose, a justification for each permission, and the data-use declarations
-  - Submit for review; depends on the website, privacy policy and store listing item above
+  - Upload the release zip in the Chrome Web Store developer dashboard, with the title, summary and description from `WEBSTORE_LISTING.md`, the three screenshots and the promo tile from `store/`, and the privacy policy link
+  - Fill in the privacy practices tab from the answers in `WEBSTORE_LISTING.md`
+  - Test the release zip in a clean profile first, then submit for review
 
 - [ ] Always leave the user's own name out of an untitled meeting's file name
   - Seen 2026-10-07: a two-person call was saved as "Meeting with <colleague> and <the user>"; the meeting had no `selfName`, so the user was not recognised
@@ -51,6 +46,7 @@
 
 ## Completed
 
+- [x] Chrome Web Store listing: the text, the answers for the privacy practices form, three screenshots and the promo tile (2026-10-08)
 - [x] Meetings with many attendees in the lists: up to four are named; from five, the first three and a "+N more" button that names the rest in place (2026-10-08)
 - [x] Website: a home page, the privacy policy and a support page, published with GitHub Pages at https://entech-code.github.io/simple-transcript/ (2026-10-08)
 - [x] Clean up the Copy, Export and Delete icons: drawn icons instead of text characters, slightly larger, the same in the panel and the toolbar popup, with a tick after copying (2026-10-07)
