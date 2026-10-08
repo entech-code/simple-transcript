@@ -38,3 +38,16 @@ export function meetingAttendees(meeting: { participants?: Record<string, string
   }
   return attendees;
 }
+
+/** How many attendees a meeting names in a list before the rest are counted. */
+const LIST_ATTENDEE_LIMIT = 3;
+
+/**
+ * The attendees to name on a meeting's card in a list, and those left to a
+ * "+N more" tag. One more than the limit is still named in full: "+1 more"
+ * would take the room of the name it hides.
+ */
+export function attendeesForList(attendees: string[]): { shown: string[]; hidden: string[] } {
+  if (attendees.length <= LIST_ATTENDEE_LIMIT + 1) return { shown: attendees, hidden: [] };
+  return { shown: attendees.slice(0, LIST_ATTENDEE_LIMIT), hidden: attendees.slice(LIST_ATTENDEE_LIMIT) };
+}
