@@ -52,6 +52,52 @@ Questions and problems: https://entech-code.github.io/simple-transcript/support.
 - Privacy policy: https://entech-code.github.io/simple-transcript/privacy.html
 - Support email: support@entechsolutions.com
 
+## Privacy practices form
+
+Answers for the "Privacy practices" tab of the developer dashboard.
+
+### Single purpose
+
+Simple Transcript has one purpose: to turn the captions of the Google Meet call you are in into a transcript with speaker names, which you can read, copy or save as a text file.
+
+### Permission justifications
+
+**Host permission: `https://meet.google.com/*`**
+
+The extension works only on Google Meet. It needs access to Meet pages to read the captions, chat messages and participant names of the call the user is in, to turn captions on, and to show the transcript panel on the page. It also uses this access to tell a Meet tab from any other tab, so that the toolbar icon shows the panel on Meet and the list of saved meetings elsewhere. It requests no other site.
+
+**`storage`**
+
+To save the user's meetings (transcript, title, date, attendees) and a few settings, such as the panel's position, in the browser's local storage, so that past meetings can be read, copied, downloaded or deleted later. Nothing is stored anywhere else.
+
+**`alarms`**
+
+To end a meeting a short while after its Meet tab has been closed. A timer inside the service worker would be lost when Chrome puts the worker to sleep, leaving the meeting marked as in progress; an alarm still fires.
+
+### Remote code
+
+No. All code is in the extension package. It loads and runs no code from elsewhere.
+
+### Data usage
+
+What the extension handles: the text of the call's captions and chat, the participants' display names (including the user's), and the meeting's title, code and times. All of it is read from the Google Meet page the user has open, kept in the browser's local storage on the user's computer, and never sent to Entech Solutions or anyone else.
+
+Types of data to tick, if the form is answered on the basis of what the extension handles:
+
+- Personally identifiable information: participants' names
+- Personal communications: the transcript and chat messages
+- Website content: text read from the Google Meet page
+
+Leave the others unticked: health, financial and payment, authentication, location, web history, user activity.
+
+Certifications (tick all three):
+
+- I do not sell or transfer user data to third parties, outside of the approved use cases
+- I do not use or transfer user data for purposes that are unrelated to my item's single purpose
+- I do not use or transfer user data to determine creditworthiness or for lending purposes
+
+Privacy policy URL: https://entech-code.github.io/simple-transcript/privacy.html
+
 ## Category
 Productivity > Communication
 
