@@ -15,7 +15,13 @@
 - [ ] Always leave the user's own name out of an untitled meeting's file name
   - Seen 2026-10-07: a two-person call was saved as "Meeting with Alex Netrebskiy and Eric Popivker"; the meeting had no `selfName`, so the user was not recognised
   - The name comes from Meet's `CreateMeetingDevice` response on joining, which was missed or not parsed on that join; the page console had already dropped the lines that would say which
+  - Try Meet's `GetUser` request first: the page makes it on the home page and on every call page before joining, so it should name the user without depending on the join
   - Remember the name once it is found and use it in later meetings when a participant has it; keep it with the session across service-worker restarts; log the join response once in the service worker console
+
+- [ ] Decide how a meeting with many attendees looks in the meetings list
+  - Every attendee gets a tag under the meeting, and the tags wrap onto as many lines as they need, so a call with 5 or more people makes its card several lines taller and the list uneven
+  - Try it with 5, 10 and 20 attendees in the panel and the toolbar popup, then choose: show the first few and "+N more", keep one line that cuts off, or leave it wrapping
+  - The opened meeting can still show everyone
 
 - [ ] Error logging and reporting for when captions are not coming through
   - A "Something's wrong?" action in the popup builds a diagnostic report (versions, channel names, message counts, errors) and opens a pre-filled GitHub issue, with a copy button as fallback

@@ -8,14 +8,23 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
   w.__meetInterceptorLoaded = true;
 
   const LOG_PREFIX = '[MeetTranscript]';
-  const DEBUG = true;
 
-  function log(...args: unknown[]): void {
-    console.log(LOG_PREFIX, ...args);
+  // Diagnostics go to the console's "Verbose" level, which Chrome hides until
+  // it is ticked in the console's levels menu; failures are warnings.
+  function debug(...args: unknown[]): void {
+    console.debug(LOG_PREFIX, ...args);
   }
 
-  function debug(...args: unknown[]): void {
-    if (DEBUG) console.log(LOG_PREFIX, '[DEBUG]', ...args);
+  // For lines that repeat every time Meet polls: the first of each kind says enough.
+  const debuggedOnce = new Set<string>();
+  function debugOnce(key: string, ...args: unknown[]): void {
+    if (debuggedOnce.has(key)) return;
+    debuggedOnce.add(key);
+    debug(...args);
+  }
+
+  function warn(...args: unknown[]): void {
+    console.warn(LOG_PREFIX, ...args);
   }
 
   function postToContentScript(data: unknown): void {
@@ -74,8 +83,6 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
   let capturedSyncUrl: string | null = null;
   let lastDeviceRefreshTime = 0;
   const DEVICE_REFRESH_COOLDOWN_MS = 10_000; // Don't re-fetch more often than every 10s
-  // Saved early — the actual monkey-patch happens later in the RTC section
-  const origDCSend = RTCDataChannel.prototype.send as (this: RTCDataChannel, data: string | ArrayBuffer | Blob | ArrayBufferView) => void;
 
   // Fetch intercept — capture request headers + extract device names from API responses
   const originalFetch = window.fetch;
@@ -113,11 +120,12 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
               capturedSyncBody = new TextEncoder().encode(init.body).buffer as ArrayBuffer;
             }
             capturedSyncUrl = url;
-            debug('Captured SyncMeetingSpaceCollections request body for replay');
+            debugOnce('sync-body', 'Captured SyncMeetingSpaceCollections request body for replay');
           } catch { /* silent */ }
         }
 
-        debug('Captured API context from', url.split('/').pop());
+        const rpcName = url.split('/').pop();
+        debugOnce(`api:${rpcName}`, 'Captured API context from', rpcName);
       }
     } catch { /* silent */ }
 
@@ -142,7 +150,7 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
                   });
                 }
               } else {
-                debug('API: SyncMeetingSpaceCollections response but no devices parsed, length:', data.length);
+                debugOnce('sync-empty', 'API: SyncMeetingSpaceCollections response but no devices parsed, length:', data.length);
                 // Dump strings for debugging
                 const strings = dumpAllStrings(data);
                 if (strings.length > 0) {
@@ -165,7 +173,7 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
               const device = parseDeviceInfo(data);
               if (device) {
                 // This browser registering itself in the call: the device is the user's own.
-                console.log(LOG_PREFIX, 'Own device from CreateMeetingDevice:', device.deviceId, '→', device.deviceName);
+                debug('Own device from CreateMeetingDevice:', device.deviceId, '→', device.deviceName);
                 postToContentScript({
                   type: MSG.RTC_DEVICE_INFO,
                   deviceId: device.deviceId,
@@ -256,7 +264,7 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
   // ========================================
 
   try {
-  log('RTC: initializing DataChannel interception...');
+  debug('RTC: initializing DataChannel interception...');
 
   async function decompressIfGzipped(data: ArrayBuffer): Promise<Uint8Array> {
     const bytes = new Uint8Array(data);
@@ -305,7 +313,7 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
     const captions = Array.from(captionQueue.values());
     captionQueue.clear();
 
-    debug('RTC: flushing caption queue', captions.length, 'messages');
+    debugOnce('caption-flush', 'RTC: first captions passed on:', captions.length, 'messages');
     postToContentScript({
       type: MSG.RTC_CAPTION_DATA,
       captions,
@@ -421,10 +429,11 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
 
   function watchUnknownChannel(channel: RTCDataChannel): void {
     const label = channel.label;
+    // Once per channel: a line per message would push everything else out of the console.
     channel.addEventListener('message', (event: MessageEvent) => {
       const size = event.data?.byteLength ?? event.data?.size ?? event.data?.length ?? '?';
-      debug(`RTC: message on unrecognized channel "${label}" (id=${channel.id}), type=${typeof event.data}, size=${size}`);
-    });
+      debug(`RTC: first message on unrecognized channel "${label}" (id=${channel.id}), type=${typeof event.data}, size=${size}`);
+    }, { once: true });
   }
 
   function listenToChannel(channel: RTCDataChannel): void {
@@ -537,25 +546,6 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
     ensureChannels(pc);
   }
 
-  // Intercept DataChannel.send() to log outgoing messages at debug level
-  RTCDataChannel.prototype.send = function (data: string | ArrayBuffer | Blob | ArrayBufferView) {
-    const label = this.label;
-    try {
-      let bytes: Uint8Array | null = null;
-      if (data instanceof ArrayBuffer) bytes = new Uint8Array(data);
-      else if (data instanceof Uint8Array) bytes = data;
-      else if (ArrayBuffer.isView(data)) bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-
-      if (bytes) {
-        const hex = Array.from(bytes.slice(0, 80), b => b.toString(16).padStart(2, '0')).join(' ');
-        debug(`RTC SEND "${label}" (${bytes.length} bytes): ${hex}`);
-      } else {
-        debug(`RTC SEND "${label}" (non-binary):`, typeof data, String(data).substring(0, 200));
-      }
-    } catch { /* silent */ }
-    return origDCSend.call(this, data);
-  };
-
   function patchCreateDataChannel(OrigProto: RTCPeerConnection): void {
     OrigProto.createDataChannel = function (
       label: string,
@@ -591,7 +581,7 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
         const state = connection.connectionState ?? connection.iceConnectionState;
         if (state === 'connected') {
           // ensureChannels is safe to call repeatedly — it skips healthy channels
-          log('RTC: peer connection ready, ensuring channels');
+          debug('RTC: peer connection ready, ensuring channels');
           ensureChannels(connection);
         } else if (state === 'failed' || state === 'closed') {
           debug('RTC: peer connection', state);
@@ -607,13 +597,13 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
     (window as unknown as Record<string, unknown>).RTCPeerConnection =
       InterceptedRTCPeerConnection as unknown as typeof RTCPeerConnection;
 
-    log('RTC DataChannel interception installed');
+    debug('RTC DataChannel interception installed');
   }
 
   } catch (rtcError) {
-    log('RTC: FAILED to initialize DataChannel interception:', rtcError);
+    warn('RTC: FAILED to initialize DataChannel interception:', rtcError);
   }
 
-  log('Interceptor installed — monitoring RTC DataChannels');
+  debug('Interceptor installed — monitoring RTC DataChannels');
   postToContentScript({ type: MSG.INTERCEPTOR_READY });
 })();

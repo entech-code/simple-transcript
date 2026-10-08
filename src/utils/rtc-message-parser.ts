@@ -69,13 +69,11 @@ export function parseCaptionMessage(data: Uint8Array): RtcCaption | null {
     const wrapper = getNestedFields(fields, 1);
     if (!wrapper) return null;
 
-    // Debug: dump all fields from first few caption messages
+    // Debug: the shape of the first caption message, without what was said
     if (!captionFieldsDumped) {
       captionFieldsDumped = true;
-      const allStrings = extractAllStrings(wrapper);
-      const fieldSummary = wrapper.map(f => `f${f.fieldNumber}(${typeof f.value === 'string' ? `str:"${f.value.substring(0, 50)}"` : Array.isArray(f.value) ? 'nested' : f.value})`);
+      const fieldSummary = wrapper.map(f => `f${f.fieldNumber}(${typeof f.value === 'string' ? `str:${f.value.length} chars` : Array.isArray(f.value) ? 'nested' : f.value})`);
       console.debug(LOG_PREFIX, 'RTC caption fields:', fieldSummary);
-      console.debug(LOG_PREFIX, 'RTC caption all strings:', allStrings);
     }
 
     const deviceId = getString(wrapper, 1);
@@ -217,6 +215,15 @@ function looksLikeDeviceId(s: string): boolean {
 }
 
 /**
+ * A participant's device, "spaces/<room>/devices/<n>". Meet's participant list
+ * also has an entry for the room itself, "spaces/<room>", whose name is the
+ * meeting code; that one is not a participant.
+ */
+function isDevicePath(s: string): boolean {
+  return s.includes('/devices/');
+}
+
+/**
  * Heuristic: a string looks like a real display name (not a protocol artifact).
  * Rejects short all-caps tokens like "FID", numeric strings, paths, etc.
  */
@@ -236,7 +243,7 @@ function walkForDeviceInfo(fields: ProtoField[], depth: number): RtcDeviceInfo |
   const f2str = getString(fields, 2);
 
   // Match: field 1 = device path, field 2 = display name
-  if (f1str && f2str && looksLikeDeviceId(f1str) && !looksLikeDeviceId(f2str) && looksLikeDisplayName(f2str)) {
+  if (f1str && f2str && isDevicePath(f1str) && !looksLikeDeviceId(f2str) && looksLikeDisplayName(f2str)) {
     return { deviceId: `@${f1str}`, deviceName: f2str };
   }
 
@@ -268,7 +275,7 @@ export function parseDeviceCollection(data: Uint8Array): RtcDeviceInfo[] {
       for (let i = 0; i < allStrings.length - 1; i++) {
         const a = allStrings[i].value;
         const b = allStrings[i + 1].value;
-        if (looksLikeDeviceId(a) && !looksLikeDeviceId(b) && looksLikeDisplayName(b)) {
+        if (isDevicePath(a) && !looksLikeDeviceId(b) && looksLikeDisplayName(b)) {
           devices.push({ deviceId: `@${a}`, deviceName: b });
           console.debug(LOG_PREFIX, 'RTC: fallback device match:', a, '→', b);
           i++; // skip the name we just consumed
@@ -290,7 +297,7 @@ function collectDevices(fields: ProtoField[], result: RtcDeviceInfo[], depth: nu
   const f2str = getString(fields, 2);
 
   // Match: field 1 = device path, field 2 = display name
-  if (f1str && f2str && looksLikeDeviceId(f1str) && !looksLikeDeviceId(f2str) && looksLikeDisplayName(f2str)) {
+  if (f1str && f2str && isDevicePath(f1str) && !looksLikeDeviceId(f2str) && looksLikeDisplayName(f2str)) {
     result.push({ deviceId: `@${f1str}`, deviceName: f2str });
     return; // Don't recurse further into this device node
   }
