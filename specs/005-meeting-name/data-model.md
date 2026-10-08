@@ -24,8 +24,8 @@ Meetings saved before this feature keep the titles they have, including hand-typ
 
 | Tab title | Meeting code | Name |
 | --- | --- | --- |
-| `Meet - Entech Daily Meeting` | any | `Entech Daily Meeting` |
-| `Meet - eoq-yhou-uyp` | `eoq-yhou-uyp` | none |
+| `Meet - Team Daily Meeting` | any | `Team Daily Meeting` |
+| `Meet - kxp-mwrd-tzb` | `kxp-mwrd-tzb` | none |
 | `Meet –  Budget review  ` (dash, extra spaces) | any | `Budget review` |
 | `Meet - Q3 - Planning` | any | `Q3 - Planning` |
 | `Meet` | any | none |

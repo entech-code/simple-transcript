@@ -63,7 +63,7 @@ export const malformedMessages: Array<{ name: string; data: Uint8Array }> = [
 
 // --- Sample transcript for the export tests (all times are UTC) ---
 
-export const MEETING_TITLE = 'Entech Daily Meeting 1';
+export const MEETING_TITLE = 'Team Daily Meeting 1';
 export const MEETING_START = Date.UTC(2026, 2, 9, 14, 5, 0);
 
 export const sampleTranscript: TranscriptEntry[] = [

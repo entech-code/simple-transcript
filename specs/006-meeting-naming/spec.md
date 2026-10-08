@@ -11,7 +11,7 @@
 ## User Scenarios & Testing *(mandatory)*
 
 A meeting created from a calendar event has a title from Google Meet. An instant meeting has
-none, and the extension currently shows its Meet code, such as `eoq-yhou-uyp`, in its place.
+none, and the extension currently shows its Meet code, such as `kxp-mwrd-tzb`, in its place.
 Downloaded transcripts are named "<title> <YYYYMMDDHHmm>.md" today, and a title in a non-Latin
 script is removed from the file name entirely.
 
@@ -29,11 +29,11 @@ never shows the Meet code as its name.
 
 **Acceptance Scenarios**:
 
-1. **Given** an instant meeting with Alexey Kornakov, **When** the user views it in the list, the
-   opened meeting or the live view, **Then** it is called "Untitled meeting", with Alexey
-   Kornakov among the attendees shown under it.
+1. **Given** an instant meeting with Marcus Oyelaran, **When** the user views it in the list, the
+   opened meeting or the live view, **Then** it is called "Untitled meeting", with Marcus
+   Oyelaran among the attendees shown under it.
 2. **Given** that meeting, **When** its transcript is downloaded, **Then** the file name starts
-   with "Meeting with Alexey Kornakov".
+   with "Meeting with Marcus Oyelaran".
 3. **Given** an instant meeting with four other people, **When** its transcript is downloaded,
    **Then** the file name starts with "Meeting with <first>, <second> and 2 others", naming the
    first two who joined.
@@ -59,9 +59,9 @@ both file names.
 
 **Acceptance Scenarios**:
 
-1. **Given** a meeting titled "Entech Monthly Check-in with Formula" that started at 12:07 on
+1. **Given** a meeting titled "Monthly Check-in with Harbor Supply" that started at 12:07 on
    2026-10-06, **When** its transcript is downloaded, **Then** the file is named
-   `Entech Monthly Check-in with Formula - 2026-10-06 12-07 - Transcript.md`.
+   `Monthly Check-in with Harbor Supply - 2026-10-06 12-07 - Transcript.md`.
 2. **Given** an untitled meeting, **When** its transcript is downloaded, **Then** the file name
    uses the same readable name as in User Story 1, followed by the date and time and
    " - Transcript".

@@ -24,10 +24,10 @@ exported transcripts.
 | Other attendees | Name |
 | --- | --- |
 | none | `Untitled meeting` |
-| 1 | `Meeting with Alexey Kornakov` |
-| 2 | `Meeting with Alexey Kornakov and Niraj Shah` |
-| 3 | `Meeting with Alexey Kornakov, Niraj Shah and 1 other` |
-| 6 | `Meeting with Alexey Kornakov, Niraj Shah and 4 others` |
+| 1 | `Meeting with Marcus Oyelaran` |
+| 2 | `Meeting with Marcus Oyelaran and Priya Raman` |
+| 3 | `Meeting with Marcus Oyelaran, Priya Raman and 1 other` |
+| 6 | `Meeting with Marcus Oyelaran, Priya Raman and 4 others` |
 
 "Other attendees" are the meeting's participant names without duplicates, without unnamed devices,
 without anything shaped like a Meet code, and without the user's own name. When the user's name is not known and only one name remains, the
@@ -37,8 +37,8 @@ name is `Untitled meeting`.
 
 | Meeting name | Start | File name |
 | --- | --- | --- |
-| `Entech Monthly Check-in with Formula` | 2026-10-06 12:07 | `Entech Monthly Check-in with Formula - 2026-10-06 12-07 - Transcript.md` |
-| `Meeting with Alexey Kornakov` | 2026-10-05 15:01 | `Meeting with Alexey Kornakov - 2026-10-05 15-01 - Transcript.md` |
+| `Monthly Check-in with Harbor Supply` | 2026-10-06 12:07 | `Monthly Check-in with Harbor Supply - 2026-10-06 12-07 - Transcript.md` |
+| `Meeting with Marcus Oyelaran` | 2026-10-05 15:01 | `Meeting with Marcus Oyelaran - 2026-10-05 15-01 - Transcript.md` |
 | `Планёрка команды` | 2026-03-09 14:05 | `Планёрка команды - 2026-03-09 14-05 - Transcript.md` |
 | `Q3: Budget/Plan` | 2026-03-09 14:05 | `Q3 Budget Plan - 2026-03-09 14-05 - Transcript.md` |
 

@@ -13,7 +13,7 @@
   - Submit for review; depends on the website, privacy policy and store listing item above
 
 - [ ] Always leave the user's own name out of an untitled meeting's file name
-  - Seen 2026-10-07: a two-person call was saved as "Meeting with Alex Netrebskiy and Eric Popivker"; the meeting had no `selfName`, so the user was not recognised
+  - Seen 2026-10-07: a two-person call was saved as "Meeting with <colleague> and <the user>"; the meeting had no `selfName`, so the user was not recognised
   - The name comes from Meet's `CreateMeetingDevice` response on joining, which was missed or not parsed on that join; the page console had already dropped the lines that would say which
   - Try Meet's `GetUser` request first: the page makes it on the home page and on every call page before joining, so it should name the user without depending on the join
   - Remember the name once it is found and use it in later meetings when a participant has it; keep it with the session across service-worker restarts; log the join response once in the service worker console
@@ -59,7 +59,7 @@
 - [x] Save the transcript as plain text instead of Markdown: Copy and Download give plain text with the meeting's name, date and attendees at the top, and downloads end in `.txt` (2026-10-06)
 - [x] Name saved transcript files `<title> - <YYYY>-<MM>-<DD> <HH>-<mm> - Transcript.md`, with "Transcript" last so the date reads as the meeting's (2026-10-06)
 - [x] Call a meeting without a title "Untitled meeting", and name its files after the other attendees (2026-10-06)
-- [x] Show the name of the meeting instead of the unique id like `gim-mxzg-xdx` (2026-10-06)
+- [x] Show the name of the meeting instead of the unique id like `fdo-yjcn-pqk` (2026-10-06)
   - A meeting is titled with its title from Google Meet, read from the browser tab ("Meet - <title>"); a call without one keeps its code
   - Renaming by hand removed; the Meet code is stored but no longer shown
   - Meetings lists show titles on up to two lines with Copy, Export and Delete on the date line; an opened meeting and the live view start with the same block under "← Meetings"
