@@ -2,10 +2,16 @@
 
 ## Planned
 
+### First: get published
+
 - [ ] Publish to the Chrome Web Store
-  - Upload the release zip in the Chrome Web Store developer dashboard, with the title, summary and description from `WEBSTORE_LISTING.md`, the three screenshots and the promo tile from `store/`, and the privacy policy link
-  - Fill in the privacy practices tab from the answers in `WEBSTORE_LISTING.md`
-  - Test the release zip in a clean profile first, then submit for review
+  - Submitted for review on 2026-10-08 (version 2.49.0, non-trader); waiting for Google's decision
+  - After approval: point the website's install button, the README's install section and `WEBSTORE_LISTING.md` at the store page
+  - Decide how updates reach the store: upload each release zip in the dashboard by hand, or publish from the release workflow
+
+### Once the listing is live
+
+Nothing below is started until the store has approved the extension.
 
 - [ ] Always leave the user's own name out of an untitled meeting's file name
   - Seen 2026-10-07: a two-person call was saved as "Meeting with <colleague> and <the user>"; the meeting had no `selfName`, so the user was not recognised
@@ -13,10 +19,28 @@
   - Try Meet's `GetUser` request first: the page makes it on the home page and on every call page before joining, so it should name the user without depending on the join
   - Remember the name once it is found and use it in later meetings when a participant has it; keep it with the session across service-worker restarts; log the join response once in the service worker console
 
-- [ ] Error logging and reporting for when captions are not coming through
-  - A "Something's wrong?" action in the popup builds a diagnostic report (versions, channel names, message counts, errors) and opens a pre-filled GitHub issue, with a copy button as fallback
-  - Issues is on; add an issue template that asks for the version, what happened and how the call was joined, and says not to paste transcripts or logs there but to email them
+- [ ] Be ready for the first bug reports
+  - Add a GitHub issue template that asks for the version, what happened and how the call was joined, and says not to paste transcripts or logs there but to email them
   - On the support page, give the log steps their own link (`support.html#log`) and add how to get the service worker's log from `chrome://extensions`
+
+- [ ] Fix doubled words at the end of some transcript entries
+  - Seen in a real export: "worst. worst.", "really. really.", "police police", "learns learns"
+  - Likely from merging caption revisions in `transcript-store.ts`; reproduce before fixing
+
+- [ ] Capture real `captions_v2`, participant and chat messages for tests
+  - Messages built from the structures documented in the code are not read by these parsers, so their content is untested
+  - Record a few raw messages in a live call, rebuild their shape in `tests/helpers/samples.ts` with invented content, and add content tests
+  - Done for the participant list (`tests/device-parser.test.ts` uses the shape seen in a call on 2026-10-08); captions and chat are still to do
+  - A suspected bug (v2 captions dropped at message number 128 or for long text) was not confirmed: a 43-minute call with 429 entries transcribed to the end. Re-check it against the real message shape
+
+- [ ] Revisit the trader declaration
+  - The store account is declared non-trader, to avoid publishing a phone number; a company's product fits "trader" better
+  - Once there is a business number that can be shown publicly (a dedicated line that goes to voicemail would do), switch the declaration in the developer account
+
+### After some real use
+
+- [ ] A "Something's wrong?" report for when captions are not coming through
+  - An action in the popup builds a diagnostic report (versions, channel names, message counts, errors) and opens a pre-filled GitHub issue, with a copy button as fallback
   - The report must not contain transcript text, participant names or meeting codes, and nothing is sent automatically
 
 - [ ] Search across saved meetings
@@ -25,24 +49,18 @@
 
 - [ ] Let the user choose the format for Copy to clipboard and Download
   - Options: plain text (`.txt`, the default), Markdown (`.md`) and JSON (`.json`), with the choice remembered
-  - Today both buttons always produce Markdown, although text, JSON, SRT and VTT formatters already exist; decide whether SRT and VTT are offered or removed
-
-- [ ] Capture real `captions_v2`, participant and chat messages for tests
-  - Messages built from the structures documented in the code are not read by these parsers, so their content is untested
-  - Record a few raw messages in a live call, rebuild their shape in `tests/helpers/samples.ts` with invented content, and add content tests
-  - A suspected bug (v2 captions dropped at message number 128 or for long text) was not confirmed: a 43-minute call with 429 entries transcribed to the end. Re-check it against the real message shape
-
-- [ ] Fix doubled words at the end of some transcript entries
-  - Seen in a real export: "worst. worst.", "really. really.", "police police", "learns learns"
-  - Likely from merging caption revisions in `transcript-store.ts`; reproduce before fixing
-
-- [ ] Stop an extra empty meeting appearing when a call starts from the Meet home page
-  - Seen 2026-10-06: an instant call showed two "Untitled meeting" cards, the live one and an empty one that was neither live nor ended; the empty one was deleted later, as empty meetings are
-  - Probably a meeting started from participant data before the code arrived; add logs for when a meeting is created, resumed and ended to find out
+  - Today both buttons always produce plain text; the Markdown, JSON, SRT and VTT formatters still exist but nothing offers them. Decide whether SRT and VTT are offered or removed
 
 - [ ] Separate meetings by Google account (to think about)
   - Meetings are stored per Chrome profile, so meetings recorded under different Google accounts in the same profile appear in one list
   - Decide whether to record the account a meeting was held under, and whether to filter, group or label meetings by it; separate Chrome profiles already keep lists apart
+
+### Keep an eye on
+
+- [ ] Watch for an extra empty meeting when a call starts from the Meet home page
+  - Seen 2026-10-06: an instant call showed two "Untitled meeting" cards, the live one and an empty one that was neither live nor ended; the empty one was deleted later, as empty meetings are
+  - Not seen in the instant calls of 2026-10-08. Those logs showed that starting a call from the home page loads a new page with the code already in its address, so the earlier guess (a meeting started before the code arrived) does not fit
+  - If it comes back, add logs for when a meeting is created, resumed and ended
 
 ## Completed
 
