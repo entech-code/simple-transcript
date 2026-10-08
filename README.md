@@ -56,10 +56,8 @@ The transcript is in whatever language Google Meet's captions are set to. To cha
 | Permission | Why |
 |---|---|
 | `storage` | Save meetings, transcripts, and settings locally |
-| `activeTab` | Detect when you're on Google Meet |
-| `tabs` | Track tab changes for popup routing |
 | `alarms` | End a meeting a short while after its tab has closed |
-| `host_permissions: meet.google.com` | Only runs on Google Meet |
+| `host_permissions: meet.google.com` | Runs only on Google Meet, and tells a Meet tab from any other |
 
 All data stays in your browser. Nothing is sent to an external server: transcription is Google Meet's own caption system, no audio is recorded and no bot joins the call.
 
@@ -82,3 +80,11 @@ npm run icons
 ```
 
 It renders each SVG at its exact size with the Chrome installed on your machine (set `CHROME_PATH` if Chrome is somewhere unusual) and writes `icons/icon16.png`, `icon32.png`, `icon48.png` and `icon128.png`.
+
+## License
+
+Simple Transcript is licensed under the [Functional Source License, Version 1.1, MIT Future License](LICENSE.md) (FSL-1.1-MIT).
+
+In short: you may use, change and share it for any purpose, including at work, except to offer a commercial product or service that competes with it. Each version becomes available under the MIT license two years after its release. The license file is the authoritative text.
+
+The Simple Transcript name and icon are not covered by the license.
