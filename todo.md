@@ -2,10 +2,10 @@
 
 ## Planned
 
-- [ ] Rewrite the website pages, privacy policy and store listing for Simple Transcript
-  - The rebrand deleted the old website pages (redirects to notula.org) and the screenshot tooling, and only trimmed `WEBSTORE_LISTING.md`
-  - Write a home page and a privacy policy, publish them with GitHub Pages, finish the listing text and make new screenshots and tiles
-  - Needed before the first Chrome Web Store release, once the UI is in its final shape
+- [ ] Finish the Chrome Web Store listing
+  - Bring `WEBSTORE_LISTING.md` up to date with what the extension does now, and write the answers for the privacy practices form: the single purpose, a justification for each permission, and the data-use declarations
+  - Make the screenshots (1280x800) and the small promo tile (440x280)
+  - Needed before publishing
 
 - [ ] Publish to the Chrome Web Store
   - Upload the release zip in the Chrome Web Store developer dashboard, with the listing text from `WEBSTORE_LISTING.md`, screenshots, the small promo tile (440x280) and the privacy policy link
@@ -25,7 +25,8 @@
 
 - [ ] Error logging and reporting for when captions are not coming through
   - A "Something's wrong?" action in the popup builds a diagnostic report (versions, channel names, message counts, errors) and opens a pre-filled GitHub issue, with a copy button as fallback
-  - Enable Issues on the repo and add an issue template that tells users what to include
+  - Issues is on; add an issue template that asks for the version, what happened and how the call was joined, and says not to paste transcripts or logs there but to email them
+  - On the support page, give the log steps their own link (`support.html#log`) and add how to get the service worker's log from `chrome://extensions`
   - The report must not contain transcript text, participant names or meeting codes, and nothing is sent automatically
 
 - [ ] Search across saved meetings
@@ -55,6 +56,7 @@
 
 ## Completed
 
+- [x] Website: a home page, the privacy policy and a support page, published with GitHub Pages at https://entech-code.github.io/simple-transcript/ (2026-10-08)
 - [x] Clean up the Copy, Export and Delete icons: drawn icons instead of text characters, slightly larger, the same in the panel and the toolbar popup, with a tick after copying (2026-10-07)
 - [x] Don't offer Delete for a meeting that is in progress: its card and opened view show only Copy and Export, in the panel and the toolbar popup (2026-10-07)
 - [x] New icon and colours: a white speech bubble with a periwinkle outline and coloured speaker dots, and an indigo accent in the panel and popup instead of Notula's terracotta (2026-10-06)
