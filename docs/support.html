@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Support – Simple Transcript</title>
+  <meta name="description" content="Get help with the Simple Transcript extension, report a problem, and find answers to common questions.">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./"><img src="icon.svg" alt=""> Simple Transcript</a>
+      <nav>
+        <a href="./">Home</a>
+        <a href="support.html" aria-current="page">Support</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="https://github.com/entech-code/simple-transcript">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <article class="doc">
+      <h1>Support</h1>
+      <p class="date">Help with Simple Transcript – Copy &amp; Save for Google Meet</p>
+
+      <h2>Get help or report a problem</h2>
+      <ul>
+        <li><strong>Report a bug or ask for a feature:</strong> <a href="https://github.com/entech-code/simple-transcript/issues">open an issue on GitHub</a>. Issues are public, so others can see known problems and their answers.</li>
+        <li><strong>No GitHub account, or something private:</strong> email <a href="mailto:support@entechsolutions.com">support@entechsolutions.com</a>.</li>
+      </ul>
+      <div class="callout">
+        <p><strong>Please do not post transcript text, names or meeting details in a public issue.</strong> Describe what happened in your own words, or use email.</p>
+      </div>
+
+      <h2>What to include</h2>
+      <ul>
+        <li>The extension's version, shown on its card at <code>chrome://extensions</code>.</li>
+        <li>What you did, what you expected, and what happened instead.</li>
+        <li>How you joined the call: from a calendar event, a link, or "New meeting" on the Meet home page.</li>
+      </ul>
+
+      <h2>Common questions</h2>
+
+      <h3>No transcript appears</h3>
+      <p>The transcript comes from Google Meet's captions. The extension turns them on when you join; if it could not, turn captions on yourself with the <strong>CC</strong> button in Meet. If you installed or updated the extension while a Meet tab was open, reload that tab.</p>
+
+      <h3>Where are my past meetings?</h3>
+      <p>Click the extension's icon in Chrome's toolbar on any tab other than Google Meet. On a Meet tab, the icon shows or hides the panel, and the panel's <strong>Meetings</strong> link lists them.</p>
+
+      <h3>The transcript is in the wrong language</h3>
+      <p>It follows the caption language set in Google Meet. Change it in Meet's caption settings.</p>
+
+      <h3>A meeting is called "Untitled meeting"</h3>
+      <p>The call had no title in Google Meet, as with an instant meeting. Its downloaded file is named after the other attendees instead.</p>
+
+      <h3>Can I see my meetings on another computer?</h3>
+      <p>No. Meetings are stored only in the browser where the call took place; nothing is uploaded. Download the transcripts you want to keep or move.</p>
+
+      <h3>How do I delete a meeting, or everything?</h3>
+      <p>Hover over a meeting in the list and click the trash icon. Removing the extension from Chrome deletes everything it stored.</p>
+
+      <h3>Does it record audio or add a bot to the call?</h3>
+      <p>No. It reads the captions Google Meet already produces in your browser. See the <a href="privacy.html">privacy policy</a>.</p>
+
+      <h2>Sending a log</h2>
+      <p>If we ask for a log, this is how to get one:</p>
+      <ol>
+        <li>On the Google Meet tab, press <code>F12</code> and open the <strong>Console</strong> tab.</li>
+        <li>In the levels menu at the top ("Default levels"), tick <strong>Verbose</strong>.</li>
+        <li>Type <code>MeetTranscript</code> in the filter box, then reload the tab and repeat what went wrong.</li>
+        <li>Copy the lines shown and send them by email. They can contain participants' names, so do not post them publicly.</li>
+      </ol>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 Entech Solutions. Google Meet is a trademark of Google LLC.</span>
+      <a href="support.html">Support</a>
+      <a href="privacy.html">Privacy policy</a>
+      <a href="https://github.com/entech-code/simple-transcript">Source code</a>
+    </div>
+  </footer>
+</body>
+</html>

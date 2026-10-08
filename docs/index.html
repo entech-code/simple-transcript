@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simple Transcript – Copy &amp; Save for Google Meet</title>
+  <meta name="description" content="A Chrome extension that turns Google Meet's captions into a transcript with speaker names. Copy it or save it as a text file. Everything stays in your browser.">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./"><img src="icon.svg" alt=""> Simple Transcript</a>
+      <nav>
+        <a href="./" aria-current="page">Home</a>
+        <a href="support.html">Support</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="https://github.com/entech-code/simple-transcript">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <h1>A transcript of your Google Meet call, with names</h1>
+        <p class="lead">Simple Transcript turns Google Meet's own captions into a transcript, with each line under the name of the person who said it. Copy it or save it as a text file. Nothing leaves your browser.</p>
+        <a class="button" href="https://github.com/entech-code/simple-transcript/releases/latest">Get the latest release</a>
+        <a class="button quiet" href="#how">How it works</a>
+        <p class="small">A Chrome extension. Free to use. No account, no bot in your call.</p>
+      </div>
+
+      <!-- A drawing of the panel as it looks in a call, with invented names and words -->
+      <div class="panel" aria-label="Illustration of the transcript panel">
+        <div class="panel-bar"><span>Simple Transcript</span><span>×</span></div>
+        <div class="panel-back">← Meetings</div>
+        <div class="panel-head">
+          <b>Weekly planning</b>
+          <div class="panel-line"><small>10/8/2026 10:02 AM · 12 min (live)</small><span class="panel-actions"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 3.5V2.5C10.5 1.95 10.05 1.5 9.5 1.5H2.5C1.95 1.5 1.5 1.95 1.5 2.5V9.5C1.5 10.05 1.95 10.5 2.5 10.5H3.5"/></svg><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5V10M8 10L5.5 7.5M8 10L10.5 7.5"/><path d="M2.5 11.5V12.5C2.5 13.05 2.95 13.5 3.5 13.5H12.5C13.05 13.5 13.5 13.05 13.5 12.5V11.5"/></svg></span></div>
+          <div class="tags"><span>Dana Whitfield</span><span>Marcus Oyelaran</span></div>
+        </div>
+        <div class="entries">
+          <div class="entry"><b>Dana Whitfield</b><small>10:03 AM</small><p>Thanks for joining. Let's start with the release.</p></div>
+          <div class="entry"><b>Marcus Oyelaran</b><small>10:03 AM</small><p>The build went out yesterday, and the checks passed.</p></div>
+          <div class="entry"><b>Dana Whitfield</b><small>10:04 AM</small><p>Good. Can we move the review to Thursday?</p></div>
+        </div>
+        <div class="panel-foot"><span>3 lines</span><span>2 participants · 12:07</span></div>
+      </div>
+    </section>
+
+    <h2 id="how">How it works</h2>
+    <ol class="steps">
+      <li><strong>Join a Google Meet call</strong><span>The extension turns on Meet's captions for you and starts the transcript.</span></li>
+      <li><strong>Watch it fill in</strong><span>A small panel on the Meet page shows each line as it is spoken, with the speaker's name and the time.</span></li>
+      <li><strong>Copy or save</strong><span>During the call or afterwards, copy the transcript or download it as a text file.</span></li>
+    </ol>
+
+    <h2>What you get</h2>
+    <div class="grid">
+      <div class="card"><h3>Speaker names</h3><p>Every line is under the name of the person who said it, as Google Meet shows it.</p></div>
+      <div class="card"><h3>Plain text you can use anywhere</h3><p>The meeting's name, date and attendees at the top, then the conversation. It pastes cleanly into email, chat and documents.</p></div>
+      <div class="card"><h3>Your past meetings</h3><p>Each call is kept with its title, date, length and attendees. Open one from the toolbar icon to read, copy, save or delete it.</p></div>
+      <div class="card"><h3>Sensible file names</h3><p>Files are named after the meeting and its date, such as <code>Weekly planning - 2026-10-08 10-02 - Transcript.txt</code>.</p></div>
+      <div class="card"><h3>Any language Meet captions</h3><p>The transcript follows the caption language you choose in Google Meet.</p></div>
+      <div class="card"><h3>Chat included</h3><p>Messages typed in the meeting's chat are saved in the transcript, marked as chat.</p></div>
+      <div class="card"><h3>Picks up where it left off</h3><p>Rejoin a call within ten minutes and the transcript continues in the same meeting.</p></div>
+      <div class="card"><h3>Stays out of the way</h3><p>Move and resize the panel, or hide it with the toolbar icon. It keeps transcribing while hidden.</p></div>
+    </div>
+
+    <h2>Private by design</h2>
+    <div class="callout">
+      <p><strong>Your transcripts stay in your browser.</strong> They are stored on your computer, in Chrome's storage for the extension. There is no account, and no server of ours to send anything to.</p>
+      <p>No audio or video is recorded, and no bot joins your call: the text comes from Google Meet's own captions. The extension talks to no site other than Google Meet.</p>
+      <p>Read the full <a href="privacy.html">privacy policy</a>.</p>
+    </div>
+
+    <h2>Good to know</h2>
+    <div class="callout">
+      <p><strong>Tell the people you meet with.</strong> A transcript includes what other people say. Rules about recording and transcribing conversations differ from place to place; make sure you have the consent you need.</p>
+      <p>The transcript is as accurate as Google Meet's captions. Simple Transcript is not made by or affiliated with Google.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 Entech Solutions. Google Meet is a trademark of Google LLC.</span>
+      <a href="support.html">Support</a>
+      <a href="privacy.html">Privacy policy</a>
+      <a href="https://github.com/entech-code/simple-transcript">Source code</a>
+    </div>
+  </footer>
+</body>
+</html>

@@ -9,6 +9,7 @@ on:
       - '.specify/**'
       - '.claude/**'
       - 'assets/**'
+      - 'docs/**'
   workflow_dispatch:
 
 jobs:
