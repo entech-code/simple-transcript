@@ -10,7 +10,7 @@ Observed by the maintainer in live calls on 2026-10-05, in an English-language C
 | Call | Browser tab title |
 | --- | --- |
 | Created from a calendar event with a name | `Meet - <the event's name>` |
-| Instant call with no name | `Meet - <the call's code>`, for example `Meet - eoq-yhou-uyp` |
+| Instant call with no name | `Meet - <the call's code>`, for example `Meet - kxp-mwrd-tzb` |
 
 Not observed: the title on the "Ready to join?" screen, after leaving a call, and in other
 browser languages.

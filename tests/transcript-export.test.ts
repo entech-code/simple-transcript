@@ -38,7 +38,7 @@ describe('exportAsText', () => {
   it('writes the heading, then each entry under its speaker and time', () => {
     expect(plain(exportAsText(sampleTranscript, heading))).toBe(
       [
-        'Entech Daily Meeting 1',
+        'Team Daily Meeting 1',
         'March 9, 2026 at 2:05 PM',
         'Attendees: Dana Whitfield, Marcus Oyelaran',
         '',
@@ -61,12 +61,12 @@ describe('exportAsText', () => {
   });
 
   it('leaves out the attendees line when no attendee is known', () => {
-    expect(plain(exportAsText([], { ...heading, attendees: [] }))).toBe('Entech Daily Meeting 1\nMarch 9, 2026 at 2:05 PM\n');
+    expect(plain(exportAsText([], { ...heading, attendees: [] }))).toBe('Team Daily Meeting 1\nMarch 9, 2026 at 2:05 PM\n');
   });
 
   it('writes only the heading for a transcript with no entries', () => {
     expect(plain(exportAsText([], heading))).toBe(
-      'Entech Daily Meeting 1\nMarch 9, 2026 at 2:05 PM\nAttendees: Dana Whitfield, Marcus Oyelaran\n',
+      'Team Daily Meeting 1\nMarch 9, 2026 at 2:05 PM\nAttendees: Dana Whitfield, Marcus Oyelaran\n',
     );
   });
 
@@ -85,7 +85,7 @@ describe('exportAsMarkdown', () => {
   it('writes the title, the date and each entry under its speaker', () => {
     expect(plain(exportAsMarkdown(sampleTranscript, MEETING_TITLE))).toBe(
       [
-        '# Entech Daily Meeting 1',
+        '# Team Daily Meeting 1',
         '**Date:** 3/9/2026',
         '',
         '**Dana Whitfield** _(02:05 PM)_',
@@ -109,7 +109,7 @@ describe('exportAsMarkdown', () => {
   });
 
   it('writes the heading and the current date for a transcript with no entries', () => {
-    expect(exportAsMarkdown([], MEETING_TITLE)).toBe('# Entech Daily Meeting 1\n**Date:** 3/9/2026\n');
+    expect(exportAsMarkdown([], MEETING_TITLE)).toBe('# Team Daily Meeting 1\n**Date:** 3/9/2026\n');
   });
 });
 

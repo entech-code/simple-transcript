@@ -29,8 +29,8 @@ Markdown marks appear and every block is readable.
 
 **Acceptance Scenarios**:
 
-1. **Given** a meeting titled "Entech Daily Meeting", **When** its transcript is copied,
-   **Then** the copied text starts with "Entech Daily Meeting" on the first line, the
+1. **Given** a meeting titled "Team Daily Meeting", **When** its transcript is copied,
+   **Then** the copied text starts with "Team Daily Meeting" on the first line, the
    meeting's date and start time on the second, and "Attendees: " followed by the attendees'
    names on the third.
 2. **Given** Dana Whitfield spoke at 2:05 PM, **When** the transcript is copied, **Then** her
@@ -56,9 +56,9 @@ a copy of the same transcript.
 
 **Acceptance Scenarios**:
 
-1. **Given** a meeting titled "Entech Daily Meeting" that started at 12:07 on 2026-10-06,
+1. **Given** a meeting titled "Team Daily Meeting" that started at 12:07 on 2026-10-06,
    **When** its transcript is downloaded, **Then** the file is named
-   `Entech Daily Meeting - 2026-10-06 12-07 - Transcript.txt`.
+   `Team Daily Meeting - 2026-10-06 12-07 - Transcript.txt`.
 2. **Given** that download, **When** the file is opened, **Then** its contents are the same as
    copying the same transcript.
 3. **Given** a transcript with letters in any script, **When** the file is opened in a common

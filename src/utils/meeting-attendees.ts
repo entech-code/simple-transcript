@@ -1,4 +1,4 @@
-/** A Google Meet code, such as "eoq-yhou-uyp". */
+/** A Google Meet code, such as "kxp-mwrd-tzb". */
 export const MEET_CODE = /^[a-z]{3}-[a-z]{4}-[a-z]{3}$/i;
 
 /** A name compared without spacing, letter case or a "(You)" that Meet may add. */

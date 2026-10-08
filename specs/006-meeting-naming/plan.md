@@ -8,7 +8,7 @@
 
 Two naming changes. First, a meeting without a title from Google Meet is shown as "Untitled
 meeting" instead of its Meet code, and its downloaded file is named after its other attendees
-("Meeting with Alexey Kornakov"), or "Untitled meeting" when there is no one else. Second, downloaded transcripts are named in Google Meet's order:
+("Meeting with Marcus Oyelaran"), or "Untitled meeting" when there is no one else. Second, downloaded transcripts are named in Google Meet's order:
 "<name> - <YYYY>-<MM>-<DD> <HH>-<mm> - Transcript.md", keeping titles in any script.
 
 The name is worked out when a meeting is shown or exported, from what is already stored, plus the

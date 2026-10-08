@@ -6,25 +6,25 @@ const people = (...names: string[]): Record<string, string> =>
 
 describe('meetingAttendees', () => {
   it('lists everyone in the order they joined, the user included', () => {
-    expect(meetingAttendees({ participants: people('Eric Popivker', 'Alexey Kornakov', 'Niraj Shah') }))
-      .toEqual(['Eric Popivker', 'Alexey Kornakov', 'Niraj Shah']);
+    expect(meetingAttendees({ participants: people('Dana Whitfield', 'Marcus Oyelaran', 'Priya Raman') }))
+      .toEqual(['Dana Whitfield', 'Marcus Oyelaran', 'Priya Raman']);
   });
 
   it('lists a name once, regardless of spacing, letter case or "(You)"', () => {
-    expect(meetingAttendees({ participants: people('Eric Popivker', 'eric  popivker', 'Eric Popivker (You)', 'Alexey Kornakov') }))
-      .toEqual(['Eric Popivker', 'Alexey Kornakov']);
+    expect(meetingAttendees({ participants: people('Dana Whitfield', 'dana  whitfield', 'Dana Whitfield (You)', 'Marcus Oyelaran') }))
+      .toEqual(['Dana Whitfield', 'Marcus Oyelaran']);
   });
 
   it('leaves out devices whose name was never learned', () => {
-    expect(meetingAttendees({ participants: people('@spaces/x/devices/9', 'Alexey Kornakov') })).toEqual(['Alexey Kornakov']);
+    expect(meetingAttendees({ participants: people('@spaces/x/devices/9', 'Marcus Oyelaran') })).toEqual(['Marcus Oyelaran']);
   });
 
   it('leaves out a Meet code picked up as a name', () => {
-    expect(meetingAttendees({ participants: people('Eric Popivker', 'brd-nnro-hdj') })).toEqual(['Eric Popivker']);
+    expect(meetingAttendees({ participants: people('Dana Whitfield', 'hsu-vbke-cmn') })).toEqual(['Dana Whitfield']);
   });
 
   it('trims spaces around names', () => {
-    expect(meetingAttendees({ participants: people('  Alexey Kornakov ') })).toEqual(['Alexey Kornakov']);
+    expect(meetingAttendees({ participants: people('  Marcus Oyelaran ') })).toEqual(['Marcus Oyelaran']);
   });
 
   it('is empty without participants', () => {

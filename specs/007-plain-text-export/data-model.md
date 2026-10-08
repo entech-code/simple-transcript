@@ -30,9 +30,9 @@ Lines end with `\n`.
 ## Example (US English)
 
 ```text
-Entech Daily Meeting
+Team Daily Meeting
 October 6, 2026 at 12:07 PM
-Attendees: Alexey Kornakov, Dana Whitfield, Eric Popivker
+Attendees: Marcus Oyelaran, Dana Whitfield, Priya Raman
 
 Dana Whitfield (12:08 PM)
 Good morning everyone.
@@ -40,8 +40,8 @@ Good morning everyone.
 Dana Whitfield (12:08 PM)
 Let's start with the release.
 
-Alexey Kornakov (12:09 PM)
+Marcus Oyelaran (12:09 PM)
 The build went out yesterday.
 ```
 
-Downloaded as `Entech Daily Meeting - 2026-10-06 12-07 - Transcript.txt`.
+Downloaded as `Team Daily Meeting - 2026-10-06 12-07 - Transcript.txt`.

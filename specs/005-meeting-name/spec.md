@@ -6,14 +6,14 @@
 
 **Status**: Draft
 
-**Input**: User description: "Show the name of the meeting instead of the unique id like gim-mxzg-xdx. In the meetings list a call is titled with its Meet code unless it was renamed by hand, which makes meetings hard to tell apart." Amended by the maintainer on 2026-10-05: "Remove the ability to rename a meeting. I don't see a user wanting to rename a meeting for any reason."
+**Input**: User description: "Show the name of the meeting instead of the unique id like fdo-yjcn-pqk. In the meetings list a call is titled with its Meet code unless it was renamed by hand, which makes meetings hard to tell apart." Amended by the maintainer on 2026-10-05: "Remove the ability to rename a meeting. I don't see a user wanting to rename a meeting for any reason."
 
 ## User Scenarios & Testing *(mandatory)*
 
-Every Google Meet call has a code such as `gim-mxzg-xdx`. A call created from a calendar event
-also has a name, such as "Entech Daily Meeting". Google Meet shows that name in the browser tab's
-title, as "Meet - Entech Daily Meeting". A call with no name shows its code there instead, as
-"Meet - eoq-yhou-uyp". Both forms were observed in live calls on 2026-10-05.
+Every Google Meet call has a code such as `fdo-yjcn-pqk`. A call created from a calendar event
+also has a name, such as "Team Daily Meeting". Google Meet shows that name in the browser tab's
+title, as "Meet - Team Daily Meeting". A call with no name shows its code there instead, as
+"Meet - kxp-mwrd-tzb". Both forms were observed in live calls on 2026-10-05.
 
 Today the extension titles every meeting with its code unless the user renames it by hand.
 
@@ -30,8 +30,8 @@ floating panel's title and the meeting's entry in the list show that name.
 
 **Acceptance Scenarios**:
 
-1. **Given** a call named "Entech Daily Meeting", **When** the user joins it, **Then** the
-   meeting's title in the floating panel and in the meetings list is "Entech Daily Meeting".
+1. **Given** a call named "Team Daily Meeting", **When** the user joins it, **Then** the
+   meeting's title in the floating panel and in the meetings list is "Team Daily Meeting".
 2. **Given** a call whose name is not known at the moment the meeting starts being recorded,
    **When** the name becomes known during the call, **Then** the title changes from the code to
    the name.
