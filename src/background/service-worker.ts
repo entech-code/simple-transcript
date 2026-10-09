@@ -665,8 +665,15 @@ async function handleMessage(
       }
       if (devMsg.deviceId && devMsg.deviceName) {
         const oldName = resolveDeviceName(devMsg.deviceId);
-        console.debug('[MeetTranscript] Device info received:', devMsg.deviceId, '→', devMsg.deviceName, '| previous:', oldName ?? '(none)', '| deviceMap size:', deviceMap.size);
         deviceMap.set(devMsg.deviceId, { name: devMsg.deviceName, ts: Date.now() });
+
+        // Meet reports every device again with each sync; one that repeats what
+        // is already known, and already on the meeting, changes nothing.
+        const meeting = session?.meetingId ? getMeeting(session.meetingId) : null;
+        const onMeeting = !meeting || meeting.participants[devMsg.deviceId] === devMsg.deviceName;
+        if (oldName === devMsg.deviceName && onMeeting) break;
+
+        console.debug('[MeetTranscript] Device info received:', devMsg.deviceId, '→', devMsg.deviceName, '| previous:', oldName ?? '(none)', '| deviceMap size:', deviceMap.size);
         scheduleDeviceMapPersist();
 
         // Retroactively fix entries that used a placeholder or raw deviceId as speaker

@@ -7,6 +7,7 @@
 - [ ] Publish to the Chrome Web Store
   - Submitted for review on 2026-10-08 (version 2.49.0, non-trader); waiting for Google's decision
   - After approval: point the website's install button, the README's install section and `WEBSTORE_LISTING.md` at the store page
+  - After approval, upload the latest release as the first update: it has the fix for a speaker being renamed to "en-US" (2.50.0)
   - Decide how updates reach the store: upload each release zip in the dashboard by hand, or publish from the release workflow
 
 ### Once the listing is live
@@ -64,6 +65,7 @@ Nothing below is started until the store has approved the extension.
 
 ## Completed
 
+- [x] A participant's caption language is no longer taken for their name: Meet's language messages renamed a speaker to a mangled "en-US" and added a phantom attendee (2026-10-09)
 - [x] Chrome Web Store listing: the text, the answers for the privacy practices form, three screenshots and the promo tile (2026-10-08)
 - [x] Meetings with many attendees in the lists: up to four are named; from five, the first three and a "+N more" button that names the rest in place (2026-10-08)
 - [x] Website: a home page, the privacy policy and a support page, published with GitHub Pages at https://entech-code.github.io/simple-transcript/ (2026-10-08)

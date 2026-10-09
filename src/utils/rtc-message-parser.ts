@@ -215,13 +215,23 @@ function looksLikeDeviceId(s: string): boolean {
 }
 
 /**
- * A participant's device, "spaces/<room>/devices/<n>". Meet's participant list
- * also has an entry for the room itself, "spaces/<room>", whose name is the
- * meeting code; that one is not a participant.
+ * A participant's device: exactly "spaces/<room>/devices/<n>". Meet's
+ * participant list also has an entry for the room itself, "spaces/<room>",
+ * whose name is the meeting code; that one is not a participant. Nor is a list
+ * of several device paths, which the decoder can hand over as one string when
+ * a message says something about a group of devices.
  */
+const DEVICE_PATH = /^spaces\/[\w-]+\/devices\/\d+$/;
 function isDevicePath(s: string): boolean {
-  return s.includes('/devices/');
+  return DEVICE_PATH.test(s);
 }
+
+// A nested message that holds only short text reads as text with its framing
+// bytes in front, which are control characters; no display name contains one.
+const CONTROL_CHARACTER = /\p{Cc}/u;
+// A language setting with its region or script, such as "en-US", "es-419" or
+// "zh-Hans", which Meet sends about a device in the place where its name would be.
+const LANGUAGE_TAG = /^[a-z]{2,3}-([A-Z]{2}|[0-9]{3}|[A-Z][a-z]{3})$/;
 
 /**
  * Heuristic: a string looks like a real display name (not a protocol artifact).
@@ -229,6 +239,7 @@ function isDevicePath(s: string): boolean {
  */
 function looksLikeDisplayName(s: string): boolean {
   if (s.length < 2 || s.length > 80) return false;
+  if (CONTROL_CHARACTER.test(s) || LANGUAGE_TAG.test(s)) return false;
   if (/^[0-9]+$/.test(s)) return false;
   if (s.includes('/')) return false;
   // Reject short all-uppercase tokens (protocol labels like "FID", "SID", "GID")
