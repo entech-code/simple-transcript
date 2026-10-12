@@ -85,3 +85,29 @@ jobs:
           name: Simple Transcript ${{ needs.version.outputs.version }}
           generate_release_notes: true
           files: release/simple-transcript-${{ needs.version.outputs.version }}.zip
+
+  # The released version goes back into manifest.json on main, so a local build
+  # shows the same number. Only once the release exists; a push made with
+  # GITHUB_TOKEN does not start this workflow again.
+  manifest-version:
+    needs: [version, release]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Commit version to manifest
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          sed -i -E "s/(\"version\": *\")[^\"]*\"/\1${VERSION}\"/" manifest.json
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -am "Set manifest version to ${VERSION}"
+          git push
