@@ -23,3 +23,22 @@ export function captionsOnFromIcon(iconName: string | null | undefined): boolean
   if (name === 'closed_caption_off') return false;
   return null;
 }
+
+/**
+ * The event the captions check sends the panel in the same tab, every few
+ * seconds during a call: its detail is whether captions are on, or null when
+ * the captions button cannot tell.
+ */
+export const CAPTIONS_STATE_EVENT = 'simple-transcript-captions-state';
+
+/** How long caption text counts as proof that captions are on, whatever the button shows. */
+export const RECENT_CAPTIONS_MS = 10_000;
+
+/**
+ * Captions are off when the button shows them off and no caption text came in
+ * the last 10 seconds: text coming in means they are on, even if the button
+ * is misread.
+ */
+export function captionsAreOff(buttonSaysOn: boolean | null, lastCaptionAt: number, now: number): boolean {
+  return buttonSaysOn === false && now - lastCaptionAt > RECENT_CAPTIONS_MS;
+}

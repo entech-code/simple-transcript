@@ -4,16 +4,9 @@
 
 ### Now
 
-- [ ] Say in the panel when captions are really off
-  - Captions are now turned on in any language (see Completed, 2026-10-13), but the panel's "No captions yet" message still counts only time without caption text: the service worker starts a 30-second timer when the meeting page loads, retries captions once, and after about a minute says captions may be off
-  - Start that timer on joining the call, not on page load, so the pre-join screen and waiting to be let in do not count
-  - Warn only when the captions button shows captions off; `captionsOnFromIcon` in `captions-button.ts` tells it in any language
-  - When CC is turned off during a call, say the transcript is paused instead of going quiet
-  - Not yet: turning CC back on when Meet switched it off by itself. It needs evidence that this happens, and must leave CC off when the user turned it off
-
 - [ ] Follow up on the store listing
-  - Upload the latest release as the first update: the store has 2.49.0, and later releases have the fix for a speaker being renamed to "en-US" (2.50.0)
-  - Paste the updated description from `WEBSTORE_LISTING.md` (more than 80 caption languages, and where to change the language) into the dashboard
+  - In the store: 2.49.0; 2.51.0 and the updated description submitted 2026-10-13, in review
+  - Next upload: the release with the captions fixes of 2026-10-13
   - Updates are uploaded by hand: download the release zip and upload it in the dashboard (decided 2026-10-13). `.github/CWS_SETUP.md` has the setup for automating it later
 
 ### Next
@@ -65,6 +58,16 @@
   - Meetings are stored per Chrome profile, so meetings recorded under different Google accounts in the same profile appear in one list
   - Decide whether to record the account a meeting was held under, and whether to filter, group or label meetings by it; separate Chrome profiles already keep lists apart
 
+- [ ] Clean up the old ways of turning captions on
+  - Captions are now turned on through the captions button's `jslog` and `jsname`; the English labels, the `closed_caption` icon search and ⋮ → Settings → Captions remain as fallbacks
+  - After a few weeks of use, if the Verbose log only ever shows "Found captions button, clicking", remove the label search and the Settings path
+  - The Settings path opens the first `more_vert` on the page, which can be the "More options" of the user's own video tile rather than Meet's ⋮ menu (seen 2026-10-13)
+  - The service worker's caption retry still starts on page load, so it fires on the pre-join screen; it is harmless there, as nothing is clicked before joining
+
+- [ ] Turn CC back on when Meet switches it off by itself
+  - Only if it is seen to happen: a call on 2026-10-12 stopped transcribing partway, cause unknown. Next time, check the CC button first
+  - Must leave CC off when the user turned it off
+
 ### Keep an eye on
 
 - [ ] Watch for an extra empty meeting when a call starts from the Meet home page
@@ -73,6 +76,14 @@
   - If it comes back, add logs for when a meeting is created, resumed and ended
 
 ## Completed
+
+- [x] Turn captions on within seconds of joining, and say in the panel when they are off (2026-10-13)
+  - Meet did not keep CC on from one call to the next, even without the extension, so captions are turned on in every call
+  - Checked every 2 seconds for the first 3 minutes on the page, every 10 seconds after, until CC is on: CC comes on 2–3 seconds after joining instead of up to 15
+  - Joining is told by the captions button, the leave-call button (`call_end`) or a participant tile, which only exist in the call; the microphone and camera are on the pre-join screen too, where the Settings fallback could open Meet's menus
+  - The panel hears whether CC is on from the captions button every 3 seconds, once turning it on has been tried: "Captions are off in Meet. Turn on CC to start the transcript." before any line, "Transcript paused: captions are off in Meet." above the footer during a call. Caption text in the last 10 seconds counts as CC on, whatever the button shows
+  - The "Extension updated" banner never appeared: in current Chrome a reloaded or updated extension leaves its scripts' `chrome.runtime.id` empty rather than throwing, so they never noticed. It now shows above the footer, in the panel's colours, and the scripts stop
+  - Checked in English and Spanish; turning captions on also in Russian and Arabic
 
 - [x] Turn captions on when Meet is in another language (2026-10-13)
   - Meet's icons had moved to the `google-symbols` font, so every icon check had stopped matching; outside English, the captions button, found by its English label, was not found either, and captions stayed off

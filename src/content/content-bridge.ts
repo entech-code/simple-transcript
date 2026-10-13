@@ -12,8 +12,10 @@ import { MSG, KEEPALIVE_PORT_NAME } from '../utils/types';
   function isContextInvalidated(): boolean {
     if (contextInvalidated) return true;
     try {
-      void chrome.runtime.id;
-      return false;
+      // Once the extension is reloaded or updated, its id is gone, or reading it throws
+      if (chrome.runtime?.id) return false;
+      contextInvalidated = true;
+      return true;
     } catch {
       contextInvalidated = true;
       return true;

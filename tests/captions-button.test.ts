@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAPTIONS_BUTTON, ICON, captionsOnFromIcon } from '../src/utils/captions-button';
+import { CAPTIONS_BUTTON, ICON, RECENT_CAPTIONS_MS, captionsAreOff, captionsOnFromIcon } from '../src/utils/captions-button';
 
 // The captions button as Meet drew it on 2026-10-13, cut down to the parts the
 // extension reads. Only the label and the icon differ between languages and states.
@@ -41,5 +41,24 @@ describe('the captions button', () => {
 
   it('ignores space around the icon name', () => {
     expect(captionsOnFromIcon(' closed_caption\n')).toBe(true);
+  });
+});
+
+describe('captions being off', () => {
+  const NOW = 1_000_000;
+
+  it('is so when the button shows them off and no caption came lately', () => {
+    expect(captionsAreOff(false, 0, NOW)).toBe(true);
+    expect(captionsAreOff(false, NOW - RECENT_CAPTIONS_MS - 1, NOW)).toBe(true);
+  });
+
+  it('is not so while captions are coming in, whatever the button shows', () => {
+    expect(captionsAreOff(false, NOW - 1_000, NOW)).toBe(false);
+    expect(captionsAreOff(false, NOW - RECENT_CAPTIONS_MS, NOW)).toBe(false);
+  });
+
+  it('is not so when the button shows them on, or cannot tell', () => {
+    expect(captionsAreOff(true, 0, NOW)).toBe(false);
+    expect(captionsAreOff(null, 0, NOW)).toBe(false);
   });
 });
