@@ -11,10 +11,10 @@
   - Then: start the timer on joining the call, not on page load; and show the warning only when CC is really off, once that can be told in any language (next item)
 
 - [ ] Turn captions on when Meet is in another language
-  - Not yet confirmed: in the Spanish call of 2026-10-13 it is not known whether CC was on because Meet remembered it, the user pressed it, or the extension turned it on
-  - `caption-observer.ts` relies on English text in three places: the join check ("microphone", "camera", "mute"), the captions button ("turn on captions", "captions", "subtitles") and the "Turn on captions" menu item. The fallback through ⋮ → Settings → Captions goes by icons, so it may still work
-  - First test: in a Spanish call, turn CC off and leave, rejoin, and get the page console's `MeetTranscript:Captions` lines (Verbose). No "Meeting joined detected" means the join check fails; attempts without success mean the button and the fallback do; "Enabling captions via settings toggle" means the fallback worked
-  - If it fails, find the join and the CC button by what is the same in every language (the button's icon, such as `closed_caption_off`, or Meet's page structure) instead of label text; Meet's "c" shortcut for captions may be another way
+  - Seen 2026-10-13: with Meet in Spanish, the extension did not turn captions on; the user pressed CC, and from then on the transcript worked
+  - `caption-observer.ts` relies on English text in three places: the join check ("microphone", "camera", "mute"), the captions button ("turn on captions", "captions", "subtitles") and the "Turn on captions" menu item. The fallback through ⋮ → Settings → Captions goes by icons, but did not help either
+  - First get the page console's `MeetTranscript:Captions` lines (Verbose) from a Spanish call joined with CC off, to see which step fails: no "Meeting joined detected" means the join check; attempts without success mean the button and the fallback
+  - Then find the join and the CC button by what is the same in every language (the button's icon, such as `closed_caption_off`, or Meet's page structure) instead of label text; Meet's "c" shortcut for captions may be another way
   - Check that captions are really on afterwards; the Settings fallback switches the first toggle in the Captions tab and reports success without checking
   - Adding `?hl=es` to a call link shows Meet in Spanish for testing
 
