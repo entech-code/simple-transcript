@@ -4,15 +4,12 @@
 
 ### Now
 
-- [ ] Captions in other languages, and the false "Turn on captions" message
-  - Seen 2026-10-13 with Meet in Spanish: the extension did not turn captions on, and the panel said "Turn on captions in Meet - that is what the transcript reads." even after the user pressed CC; once people spoke, the transcript filled in and the message went away
-  - Not turned on: `caption-observer.ts` relies on English text in three places: the join check ("microphone", "camera", "mute"), the captions button ("turn on captions", "captions", "subtitles") and the "Turn on captions" menu item. The fallback through ⋮ → Settings → Captions goes by icons, but did not help either
-  - The message: it never checks CC. The service worker starts a 30-second timer when the meeting page loads, even on the pre-join screen, retries captions once, and after about a minute without any caption text says captions are missing. Waiting to be let in, or a quiet first minute, is enough, in English too
-  - First, reword the message so it is true either way, such as "Listening… If nothing appears once people speak, check that captions (CC) are on in Meet"
-  - Get the page console's `MeetTranscript:Captions` lines (Verbose) from a Spanish call joined with CC off, to see which step fails: no "Meeting joined detected" means the join check; attempts without success mean the button and the fallback
-  - Find the join and the CC button by what is the same in every language (the button's icon, such as `closed_caption_off`, or Meet's page structure) instead of label text; Meet's "c" shortcut for captions may be another way
-  - With that, tell whether CC is on in any language: check it after turning captions on (the Settings fallback switches the first toggle in the Captions tab and reports success without checking), and warn only when CC is really off, timed from joining the call rather than from page load
-  - Adding `?hl=es` to a call link shows Meet in Spanish for testing
+- [ ] Say in the panel when captions are really off
+  - Captions are now turned on in any language (see Completed, 2026-10-13), but the panel's "No captions yet" message still counts only time without caption text: the service worker starts a 30-second timer when the meeting page loads, retries captions once, and after about a minute says captions may be off
+  - Start that timer on joining the call, not on page load, so the pre-join screen and waiting to be let in do not count
+  - Warn only when the captions button shows captions off; `captionsOnFromIcon` in `captions-button.ts` tells it in any language
+  - When CC is turned off during a call, say the transcript is paused instead of going quiet
+  - Not yet: turning CC back on when Meet switched it off by itself. It needs evidence that this happens, and must leave CC off when the user turned it off
 
 - [ ] Follow up on the store listing
   - Upload the latest release as the first update: the store has 2.49.0, and later releases have the fix for a speaker being renamed to "en-US" (2.50.0)
@@ -26,6 +23,7 @@
   - The name comes from Meet's `CreateMeetingDevice` response on joining, which was missed or not parsed on that join; the page console had already dropped the lines that would say which
   - Try Meet's `GetUser` request first: the page makes it on the home page and on every call page before joining, so it should name the user without depending on the join
   - Remember the name once it is found and use it in later meetings when a participant has it; keep it with the session across service-worker restarts; log the join response once in the service worker console
+  - Seen 2026-10-13: in a call the user started, `CreateMeetingDevice` came and named them; in a call they joined, it never came, and Meet already listed two devices of theirs before they joined
 
 - [ ] Be ready for the first bug reports
   - Add a GitHub issue template that asks for the version, what happened and how the call was joined, and says not to paste transcripts or logs there but to email them
@@ -75,6 +73,12 @@
   - If it comes back, add logs for when a meeting is created, resumed and ended
 
 ## Completed
+
+- [x] Turn captions on when Meet is in another language (2026-10-13)
+  - Meet's icons had moved to the `google-symbols` font, so every icon check had stopped matching; outside English, the captions button, found by its English label, was not found either, and captions stayed off
+  - The captions button is now found by `jslog` 211197 or `jsname` "RrG0hf", the same in every language, and its icon tells on (`closed_caption`) from off (`closed_caption_off`); it is clicked only while off, and checked afterwards
+  - The panel's message reads "No captions yet. If people are speaking, turn on captions (CC) in Meet", and the auto-enable warning is a Verbose console line, no longer listed on the Extensions page
+  - Checked in English, Spanish, Russian and Arabic
 
 - [x] Published on the Chrome Web Store: submitted 2026-10-08 as version 2.49.0 (non-trader), live by 2026-10-13
 

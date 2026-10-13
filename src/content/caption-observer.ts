@@ -1,4 +1,5 @@
 import { undoubledName } from '../utils/meeting-attendees';
+import { CAPTIONS_BUTTON, ICON, captionsOnFromIcon } from '../utils/captions-button';
 
 (function () {
   const LOG_PREFIX = "[MeetTranscript:Captions]";
@@ -144,7 +145,7 @@ import { undoubledName } from '../utils/meeting-attendees';
   }
 
   function findIconButton(iconText: string, container: Element = document.body): HTMLElement | null {
-    const icons = container.querySelectorAll("i.google-material-icons, span.google-material-icons");
+    const icons = container.querySelectorAll(ICON);
     for (const icon of icons) {
       if (icon.textContent?.trim() === iconText) {
         const btn = icon.closest('button, [role="button"], [role="menuitem"], [jsaction]');
@@ -154,8 +155,22 @@ import { undoubledName } from '../utils/meeting-attendees';
     return null;
   }
 
+  /** Meet's captions button, found the same way in every language. */
+  function findCaptionsButton(): HTMLElement | null {
+    return document.querySelector<HTMLElement>(CAPTIONS_BUTTON);
+  }
+
+  /** Whether the captions button shows captions on; null without the button or a known icon. */
+  function captionsButtonState(): boolean | null {
+    return captionsOnFromIcon(findCaptionsButton()?.querySelector(ICON)?.textContent);
+  }
+
   /** Check if captions are visibly active in the DOM. */
   function areCaptionsActive(): boolean {
+    // The captions button says so in any language
+    const state = captionsButtonState();
+    if (state !== null) return state;
+
     // Check for the native caption overlay container with content
     const overlay = document.querySelector(".a4cQT");
     if (overlay && overlay.textContent && overlay.textContent.trim().length > 0) return true;
@@ -177,6 +192,23 @@ import { undoubledName } from '../utils/meeting-attendees';
     if (areCaptionsActive()) {
       log("Captions already enabled (verified)");
       return true;
+    }
+
+    // Clicked only while it shows captions off, so a click never turns them off
+    const ccBtn = findCaptionsButton();
+    if (ccBtn && captionsButtonState() === false) {
+      log("Found captions button, clicking");
+      await clickAndWait(ccBtn, 1000);
+      if (areCaptionsActive()) {
+        log("Captions verified active after click");
+        return true;
+      }
+      await delay(2000);
+      if (areCaptionsActive()) {
+        log("Captions verified active after extended wait");
+        return true;
+      }
+      log("Clicked captions button but captions did not activate, continuing");
     }
 
     const labels = ["turn on captions", "captions", "closed caption", "subtitles"];
@@ -251,7 +283,7 @@ import { undoubledName } from '../utils/meeting-attendees';
 
         const tabs = document.querySelectorAll('[role="tab"]');
         for (const tab of tabs) {
-          const tabIcon = tab.querySelector("i.google-material-icons, span.google-material-icons");
+          const tabIcon = tab.querySelector(ICON);
           if (tabIcon?.textContent?.trim() === "closed_caption") {
             await clickAndWait(tab, 400);
             break;
@@ -316,7 +348,7 @@ import { undoubledName } from '../utils/meeting-attendees';
       await delay(3000);
     }
 
-    console.warn(LOG_PREFIX, "Could not auto-enable captions after", retries, "attempts");
+    log("Could not auto-enable captions after", retries, "attempts");
   }
 
   function isMeetingJoined(): boolean {

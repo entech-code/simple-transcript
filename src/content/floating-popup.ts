@@ -401,7 +401,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
     const empty = entries.length === 0 && currentMeeting !== null;
     placeholderEl.hidden = !empty;
     placeholderEl.textContent = captionsMissing
-      ? 'Turn on captions in Meet - that is what the transcript reads.'
+      ? 'No captions yet. If people are speaking, turn on captions (CC) in Meet - that is what the transcript reads.'
       : 'Listening…';
   }
 
