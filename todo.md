@@ -16,9 +16,8 @@
 
 - [ ] Follow up on the store listing
   - Upload the latest release as the first update: the store has 2.49.0, and later releases have the fix for a speaker being renamed to "en-US" (2.50.0)
-  - Point the website's install button, the README's install section and `WEBSTORE_LISTING.md` at the store page
   - Paste the updated description from `WEBSTORE_LISTING.md` (more than 80 caption languages, and where to change the language) into the dashboard
-  - Decide how updates reach the store: upload each release zip in the dashboard by hand, or publish from the release workflow
+  - Updates are uploaded by hand: download the release zip and upload it in the dashboard (decided 2026-10-13). `.github/CWS_SETUP.md` has the setup for automating it later
 
 ### Next
 

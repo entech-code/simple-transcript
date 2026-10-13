@@ -2,6 +2,8 @@
 
 Chrome extension for live Google Meet transcription with meeting history.
 
+**[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/simple-transcript-%E2%80%93-copy/ebgdpmbocfhellbgjmjagmldjhiapbcg)**
+
 ![Chrome](https://img.shields.io/badge/Chrome-Extension-blue)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)
 
@@ -18,7 +20,13 @@ Chrome extension for live Google Meet transcription with meeting history.
 
 ## Install
 
+### From the Chrome Web Store
+
+Install [Simple Transcript from the Chrome Web Store](https://chromewebstore.google.com/detail/simple-transcript-%E2%80%93-copy/ebgdpmbocfhellbgjmjagmldjhiapbcg). Chrome keeps it up to date.
+
 ### From Release
+
+For testing a release before it reaches the store:
 
 1. Download the latest `.zip` from [Releases](../../releases)
 2. Unzip to a folder
