@@ -23,7 +23,7 @@ WHAT YOU GET
 - Your past meetings, each kept with its title, date, length and attendees: open one from the toolbar icon to read, copy, save or delete it
 - Sensible file names, such as "Weekly planning - 2026-10-08 10-02 - Transcript.txt"
 - Meetings titled with their calendar event's name; a call without a title is saved under the names of the people you met with
-- Any language Google Meet can caption: the transcript follows the caption language you choose in Meet
+- Any of the more than 80 languages Google Meet can caption: the transcript follows the caption language you choose in Meet, under Settings > Captions or with the gear icon at the top right of the captions
 - Chat messages from the meeting, saved in the transcript and marked as chat
 - Rejoin a call within ten minutes and the transcript continues in the same meeting
 - A panel you can move and resize, or hide with the toolbar icon; it keeps transcribing while hidden
