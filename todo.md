@@ -52,6 +52,14 @@ Nothing below is started until the store has approved the extension.
   - Options: plain text (`.txt`, the default), Markdown (`.md`) and JSON (`.json`), with the choice remembered
   - Today both buttons always produce plain text; the Markdown, JSON, SRT and VTT formatters still exist but nothing offers them. Decide whether SRT and VTT are offered or removed
 
+- [ ] Show the extension in the same language as Google Meet
+  - About 50 texts to translate: the floating panel, the toolbar popup, and the words in copied text, exports and file names ("Untitled meeting", "Meeting with … and …", "Transcript"); dates and times already follow the browser's locale
+  - By default, follow Meet's interface language, which comes from the Google Account and otherwise from Chrome. Chrome's own `chrome.i18n` follows only Chrome's language, so it can differ; the Meet page's language could be read there and remembered for the toolbar popup (to check)
+  - A language choice in settings, if easy: `chrome.i18n` cannot be switched while running, so a choice means loading the chosen language's texts directly
+  - "and 2 others" and "Meeting with A and B" need each language's plural and word-order rules (`Intl.PluralRules`), not word-for-word translation
+  - Start with 4–5 languages picked from the store's installs by country, each checked by a native speaker; translated store listings optional
+  - Meet in another language already works (seen in Spanish, 2026-10-13): when the English captions button is not found, captions are turned on through Meet's Settings by its icons. Adding `?hl=es` to a call link shows Meet in Spanish for testing
+
 - [ ] Separate meetings by Google account (to think about)
   - Meetings are stored per Chrome profile, so meetings recorded under different Google accounts in the same profile appear in one list
   - Decide whether to record the account a meeting was held under, and whether to filter, group or label meetings by it; separate Chrome profiles already keep lists apart
