@@ -14,6 +14,14 @@
 
 Nothing below is started until the store has approved the extension.
 
+- [ ] Turn captions on when Meet is in another language
+  - Seen 2026-10-13: with Meet in Spanish, captions were not turned on when joining, so nothing was transcribed until CC was pressed by hand
+  - `caption-observer.ts` relies on English text in three places: the join check ("microphone", "camera", "mute"), the captions button ("turn on captions", "captions", "subtitles") and the "Turn on captions" menu item. The fallback through ⋮ → Settings → Captions goes by icons, but did not help either
+  - First get the page console's `MeetTranscript:Captions` lines (Verbose) from a Spanish call with captions off, to see which step fails: no "Meeting joined detected" means the join check; attempts without success mean the button and the fallback
+  - Then find the join and the CC button by what is the same in every language (the button's icon, such as `closed_caption_off`, or Meet's page structure) instead of label text; Meet's "c" shortcut for captions may be another way
+  - Check that captions are really on afterwards; the Settings fallback switches the first toggle in the Captions tab and reports success without checking
+  - Adding `?hl=es` to a call link shows Meet in Spanish for testing
+
 - [ ] Always leave the user's own name out of an untitled meeting's file name
   - Seen 2026-10-07: a two-person call was saved as "Meeting with <colleague> and <the user>"; the meeting had no `selfName`, so the user was not recognised
   - The name comes from Meet's `CreateMeetingDevice` response on joining, which was missed or not parsed on that join; the page console had already dropped the lines that would say which
@@ -58,7 +66,7 @@ Nothing below is started until the store has approved the extension.
   - A language choice in settings, if easy: `chrome.i18n` cannot be switched while running, so a choice means loading the chosen language's texts directly
   - "and 2 others" and "Meeting with A and B" need each language's plural and word-order rules (`Intl.PluralRules`), not word-for-word translation
   - Start with 4–5 languages picked from the store's installs by country, each checked by a native speaker; translated store listings optional
-  - Meet in another language already works (seen in Spanish, 2026-10-13): when the English captions button is not found, captions are turned on through Meet's Settings by its icons. Adding `?hl=es` to a call link shows Meet in Spanish for testing
+  - Captions being turned on with Meet in another language is a separate item above, and comes first
 
 - [ ] Separate meetings by Google account (to think about)
   - Meetings are stored per Chrome profile, so meetings recorded under different Google accounts in the same profile appear in one list
