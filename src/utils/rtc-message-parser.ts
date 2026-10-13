@@ -124,26 +124,20 @@ function getRawString(fields: RawField[], fieldNumber: number): string | null {
   return bytes ? rawTextDecoder.decode(bytes) : null;
 }
 
-/** Recovers the original bytes behind a field that decodeProtobuf already coerced to string or bytes. */
-function fieldValueAsBytes(field: ProtoField | undefined): Uint8Array | null {
-  if (!field) return null;
-  if (field.value instanceof Uint8Array) return field.value;
-  if (typeof field.value === 'string') return new TextEncoder().encode(field.value);
-  return null;
-}
-
 /**
  * Parse a caption message from the "captions_v2" DataChannel (used instead of
  * "captions" by some Meet client cohorts). The real caption content is
  * nested one level deeper than in "captions", and because that nested
  * content is almost entirely printable text, decodeProtobuf's string-vs-
- * nested heuristic flattens it into one garbled string instead of recursing.
- * decodeProtobufRaw walks the same bytes without guessing, letting each
- * field be read explicitly instead.
+ * nested heuristic cannot be trusted with it: it took the update for text
+ * while its numbers were small, and for nested fields, which lost it, from
+ * the 128th message or revision on, whose numbers take bytes that are not
+ * valid text. decodeProtobufRaw walks every level without guessing, letting
+ * each field be read explicitly instead.
  *
  * Observed structure (byte-decoded from real traffic):
  *   field 1 (nested) = wrapper
- *     field 1 (bytes, misparsed as string by decodeProtobuf) = update
+ *     field 1 (bytes) = update
  *       field 1 (varint) = messageId (increments per new utterance)
  *       field 2 (varint) = messageVersion (increments per revision)
  *       field 3 (bytes) = captionData
@@ -155,11 +149,10 @@ function fieldValueAsBytes(field: ProtoField | undefined): Uint8Array | null {
  */
 export function parseCaptionMessageV2(data: Uint8Array): RtcCaption | null {
   try {
-    const fields = decodeProtobuf(data);
-    const wrapper = getNestedFields(fields, 1);
-    if (!wrapper) return null;
+    const wrapperBytes = getRawBytes(decodeProtobufRaw(data), 1);
+    if (!wrapperBytes) return null;
 
-    const updateBytes = fieldValueAsBytes(findField(wrapper, 1));
+    const updateBytes = getRawBytes(decodeProtobufRaw(wrapperBytes), 1);
     if (!updateBytes) return null;
 
     const update = decodeProtobufRaw(updateBytes);
