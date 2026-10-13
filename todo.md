@@ -4,6 +4,13 @@
 
 ### Now
 
+- [ ] Bug: rejoining a call after more than 10 minutes starts a new meeting
+  - Seen 2026-10-13: the Meet tab was reloaded during a call and the call rejoined; the transcript went on in a new meeting, so the call is split in two in the meetings list
+  - `findRecentMeeting` in `meeting-store.ts` measures a meeting still in progress from its start: after 10 minutes it no longer counts as recent. A reloaded tab's meeting is still in progress, since it ends only 2 minutes after the tab disconnects
+  - Fix: measure a meeting in progress from its last transcript line (or its start, without lines), an ended one from its end as now; add tests for both, and for a meeting left in progress by mistake
+  - Not simply "in progress always counts as recent": a recurring meeting keeps its Meet code from week to week, so a meeting left in progress by mistake would take in next week's call
+  - With the same call open in two tabs, both write to one meeting, as they already do in the first 10 minutes
+
 - [ ] Follow up on the store listing
   - In the store: 2.49.0; 2.51.0 and the updated description submitted 2026-10-13, in review
   - Next upload: the release with the captions fixes of 2026-10-13
@@ -30,7 +37,7 @@
   - Messages built from the structures documented in the code are not read by these parsers, so their content is untested
   - Record a few raw messages in a live call, rebuild their shape in `tests/helpers/samples.ts` with invented content, and add content tests
   - Done for the participant list (`tests/device-parser.test.ts` uses the shape seen in a call on 2026-10-08); captions and chat are still to do
-  - A suspected bug (v2 captions dropped at message number 128 or for long text) was not confirmed: a 43-minute call with 429 entries transcribed to the end. Re-check it against the real message shape
+  - `captions_v2` messages built to the documented structure are now read (see Completed, 2026-10-13); a real message's shape would still confirm that structure
 
 ### After some real use
 
@@ -76,6 +83,13 @@
   - If it comes back, add logs for when a meeting is created, resumed and ended
 
 ## Completed
+
+- [x] Bug: the transcript stopped a few minutes into a call (2026-10-13)
+  - Seen 2026-10-12 and 2026-10-13: Meet's captions went on, but no more lines came, at 37 lines in one call; reloading the tab brought them back, for a while
+  - From a call's 128th `captions_v2` message on, or a caption's 128th revision, the message's numbers take bytes that are not valid text. `decodeProtobuf` then took the update for nested fields instead of text, and `parseCaptionMessageV2` dropped every caption from there on. Calls on the older `captions` channel were not affected, which is likely why a 43-minute call once transcribed to the end
+  - `parseCaptionMessageV2` now reads every level with `decodeProtobufRaw`, without guessing. Tests read message numbers 1 to 20,000, revisions 127 to 1,000, and a short caption, which also failed before
+  - Checked in calls with a podcast playing: with the old parser, segment 126 was the last read and every message failed after it, and about 1 in 8 failed before it (long corrections taken for text); with the fix, segments went on past 137 with 3 messages not read, all of them not captions
+  - The Verbose log now names the channel the first caption came on, and counts captions_v2 segments, once each, and messages not read. It does not explain why a 37-minute captions_v2 call on 2026-10-09 transcribed to the end; the channel line will tell for future calls
 
 - [x] Turn captions on within seconds of joining, and say in the panel when they are off (2026-10-13)
   - Meet did not keep CC on from one call to the next, even without the extension, so captions are turned on in every call

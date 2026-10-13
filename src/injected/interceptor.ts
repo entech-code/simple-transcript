@@ -331,6 +331,7 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
   function handleCaptionsMessage(data: Uint8Array): void {
     const caption = parseCaptionMessage(data);
     if (!caption || !caption.text) return;
+    debugOnce('caption-channel-captions', 'RTC: first caption read on channel "captions"');
 
     const existing = captionQueue.get(caption.messageId);
     if (!existing || existing.messageVersion <= caption.messageVersion) {
@@ -338,9 +339,47 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
     }
   }
 
+  // For the Verbose log, so that captions Meet sent but that were not read show:
+  // each speaker's segments by number and revisions, once each and never their
+  // text, and messages that could not be read. A few of those, small ones, come
+  // at the start of every call and are not captions.
+  const v2SegmentByDevice = new Map<string, { number: number; revisions: number }>();
+  let v2NotRead = 0;
+
+  /**
+   * A segment is logged when the speaker's next one starts. Meet still sends
+   * corrections to earlier segments after that; they count for the transcript,
+   * but not again for the log.
+   */
+  function logCaptionsV2Segment(caption: { deviceId: string; messageId: string; messageVersion: number }): void {
+    const number = parseInt(caption.messageId, 10);
+    const segment = v2SegmentByDevice.get(caption.deviceId);
+    if (segment && number < segment.number) return;
+    if (segment?.number === number) {
+      segment.revisions = Math.max(segment.revisions, caption.messageVersion);
+      return;
+    }
+    if (segment) {
+      const device = caption.deviceId.slice(caption.deviceId.lastIndexOf('/devices/') + 1);
+      debug('RTC: captions_v2 segment', segment.number, 'from', device, 'had', segment.revisions, 'revisions');
+    }
+    v2SegmentByDevice.set(caption.deviceId, { number, revisions: caption.messageVersion });
+  }
+
   function handleCaptionsV2Message(data: Uint8Array): void {
     const caption = parseCaptionMessageV2(data);
-    if (!caption || !caption.text) return;
+    if (!caption) {
+      v2NotRead++;
+      if (v2NotRead <= 3 || v2NotRead % 50 === 0) {
+        debug('RTC: captions_v2 message not read, size', data.length, '| not read so far:', v2NotRead);
+      }
+      return;
+    }
+
+    logCaptionsV2Segment(caption);
+
+    if (!caption.text) return;
+    debugOnce('caption-channel-captions_v2', 'RTC: first caption read on channel "captions_v2"');
 
     const existing = captionQueue.get(caption.messageId);
     if (!existing || existing.messageVersion <= caption.messageVersion) {

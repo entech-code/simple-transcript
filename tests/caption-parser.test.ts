@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { parseCaptionMessage } from '../src/utils/rtc-message-parser';
+import { parseCaptionMessage, parseCaptionMessageV2 } from '../src/utils/rtc-message-parser';
+import { bytes, fixed64, message, nested, text, varint } from './helpers/proto-builder';
 import {
   captionMessage,
   CYRILLIC_TEXT,
@@ -75,5 +76,37 @@ describe('parseCaptionMessage ("captions" channel)', () => {
 
   it('returns nothing for a message from another channel', () => {
     expect(parseCaptionMessage(unrelatedMessage)).toBeNull();
+  });
+});
+
+// Built to the structure documented on parseCaptionMessageV2. Seen 2026-10-13:
+// every caption from a call's 128th message on was dropped, as its number takes
+// bytes that are not valid text and the update was then mistaken for nested fields.
+describe('parseCaptionMessageV2 ("captions_v2" channel)', () => {
+  const v2Message = (messageId: number, messageVersion: number, captionText = 'Shall we start?', withTimestamp = true): Uint8Array => {
+    const captionData = message(
+      text(3, captionText), text(4, 'en-US'), text(5, 'en-US'), text(6, DEVICE_PATH), varint(9, 1),
+    );
+    const update = message(varint(1, messageId), varint(2, messageVersion), bytes(3, captionData));
+    return withTimestamp ? nested(1, bytes(1, update), fixed64(2, 1791901743267000n)) : nested(1, bytes(1, update));
+  };
+
+  it.each([1, 127, 128, 300, 20_000])('reads caption message number %i', (messageId) => {
+    expect(parseCaptionMessageV2(v2Message(messageId, 1))).toEqual({
+      deviceId: `@${DEVICE_PATH}`,
+      messageId: `${messageId}/@${DEVICE_PATH}`,
+      messageVersion: 1,
+      langId: 0,
+      text: 'Shall we start?',
+    });
+  });
+
+  it.each([127, 128, 1_000])('reads revision %i of a caption', (messageVersion) => {
+    expect(parseCaptionMessageV2(v2Message(5, messageVersion))?.messageVersion).toBe(messageVersion);
+  });
+
+  it('reads a message whatever its text makes it look like', () => {
+    expect(parseCaptionMessageV2(v2Message(5, 1, 'Yes.', false))?.text).toBe('Yes.');
+    expect(parseCaptionMessageV2(v2Message(5, 1, CYRILLIC_TEXT))?.text).toBe(CYRILLIC_TEXT);
   });
 });
