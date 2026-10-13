@@ -1,4 +1,5 @@
 import { undoubledName } from '../utils/meeting-attendees';
+import { CAPTIONS_BUTTON, CAPTIONS_STATE_EVENT, ICON, captionsOnFromIcon } from '../utils/captions-button';
 
 (function () {
   const LOG_PREFIX = "[MeetTranscript:Captions]";
@@ -11,8 +12,10 @@ import { undoubledName } from '../utils/meeting-attendees';
   function isContextInvalidated(): boolean {
     if (contextInvalidated) return true;
     try {
-      void chrome.runtime.id;
-      return false;
+      // Once the extension is reloaded or updated, its id is gone, or reading it throws
+      if (chrome.runtime?.id) return false;
+      contextInvalidated = true;
+      return true;
     } catch {
       contextInvalidated = true;
       return true;
@@ -144,7 +147,7 @@ import { undoubledName } from '../utils/meeting-attendees';
   }
 
   function findIconButton(iconText: string, container: Element = document.body): HTMLElement | null {
-    const icons = container.querySelectorAll("i.google-material-icons, span.google-material-icons");
+    const icons = container.querySelectorAll(ICON);
     for (const icon of icons) {
       if (icon.textContent?.trim() === iconText) {
         const btn = icon.closest('button, [role="button"], [role="menuitem"], [jsaction]');
@@ -154,8 +157,22 @@ import { undoubledName } from '../utils/meeting-attendees';
     return null;
   }
 
+  /** Meet's captions button, found the same way in every language. */
+  function findCaptionsButton(): HTMLElement | null {
+    return document.querySelector<HTMLElement>(CAPTIONS_BUTTON);
+  }
+
+  /** Whether the captions button shows captions on; null without the button or a known icon. */
+  function captionsButtonState(): boolean | null {
+    return captionsOnFromIcon(findCaptionsButton()?.querySelector(ICON)?.textContent);
+  }
+
   /** Check if captions are visibly active in the DOM. */
   function areCaptionsActive(): boolean {
+    // The captions button says so in any language
+    const state = captionsButtonState();
+    if (state !== null) return state;
+
     // Check for the native caption overlay container with content
     const overlay = document.querySelector(".a4cQT");
     if (overlay && overlay.textContent && overlay.textContent.trim().length > 0) return true;
@@ -177,6 +194,23 @@ import { undoubledName } from '../utils/meeting-attendees';
     if (areCaptionsActive()) {
       log("Captions already enabled (verified)");
       return true;
+    }
+
+    // Clicked only while it shows captions off, so a click never turns them off
+    const ccBtn = findCaptionsButton();
+    if (ccBtn && captionsButtonState() === false) {
+      log("Found captions button, clicking");
+      await clickAndWait(ccBtn, 1000);
+      if (areCaptionsActive()) {
+        log("Captions verified active after click");
+        return true;
+      }
+      await delay(2000);
+      if (areCaptionsActive()) {
+        log("Captions verified active after extended wait");
+        return true;
+      }
+      log("Clicked captions button but captions did not activate, continuing");
     }
 
     const labels = ["turn on captions", "captions", "closed caption", "subtitles"];
@@ -251,7 +285,7 @@ import { undoubledName } from '../utils/meeting-attendees';
 
         const tabs = document.querySelectorAll('[role="tab"]');
         for (const tab of tabs) {
-          const tabIcon = tab.querySelector("i.google-material-icons, span.google-material-icons");
+          const tabIcon = tab.querySelector(ICON);
           if (tabIcon?.textContent?.trim() === "closed_caption") {
             await clickAndWait(tab, 400);
             break;
@@ -289,6 +323,27 @@ import { undoubledName } from '../utils/meeting-attendees';
   function onCaptionsConfirmed(): void {
     captionAutoEnabled = true;
     startParticipantScanner();
+    startCaptionsStateReport();
+  }
+
+  // ========================================
+  // Tell the panel whether captions are on, once turning them on has been tried
+  // ========================================
+
+  let captionsStateTimer: ReturnType<typeof setInterval> | null = null;
+
+  function startCaptionsStateReport(): void {
+    if (captionsStateTimer) return;
+    const report = (): void => {
+      if (isContextInvalidated()) {
+        if (captionsStateTimer) clearInterval(captionsStateTimer);
+        return;
+      }
+      // Sent every time, not only on a change, so a panel that missed one catches up
+      document.dispatchEvent(new CustomEvent(CAPTIONS_STATE_EVENT, { detail: captionsButtonState() }));
+    };
+    captionsStateTimer = setInterval(report, 3000);
+    report();
   }
 
   async function autoEnableCaptions(retries = 3): Promise<void> {
@@ -316,72 +371,68 @@ import { undoubledName } from '../utils/meeting-attendees';
       await delay(3000);
     }
 
-    console.warn(LOG_PREFIX, "Could not auto-enable captions after", retries, "attempts");
+    log("Could not auto-enable captions after", retries, "attempts");
+    // Only now does the panel hear that captions are off, once there is nothing left to try
+    startCaptionsStateReport();
   }
 
+  /**
+   * In the call, not on the pre-join screen, which has the microphone and
+   * camera buttons too: the captions button and the leave-call button are only
+   * there once in the call.
+   */
   function isMeetingJoined(): boolean {
     // Check for call-ended screen — if present, we're not in a meeting
     if (document.querySelector("[data-call-ended]")) return false;
 
-    // Strategy 1: standard button labels
-    if (findButtonByLabel("microphone") || findButtonByLabel("camera") || findIconButton("mic")) {
-      return true;
-    }
+    if (findCaptionsButton() || findIconButton("call_end")) return true;
 
-    // Strategy 2: icon-based buttons (mic, videocam)
-    if (findIconButton("mic") || findIconButton("mic_off") || findIconButton("videocam") || findIconButton("videocam_off")) {
-      return true;
-    }
+    // Meeting-specific DOM markers
+    if (document.querySelector("[data-participant-id]")) return true;
 
-    // Strategy 3: meeting-specific DOM markers
-    if (document.querySelector("[data-self-name]") || document.querySelector("[data-participant-id]")) {
-      return true;
-    }
-
-    // Strategy 4: button labels in other languages (mute/unmute patterns)
-    if (findButtonByLabel("mute") || findButtonByLabel("unmute")) {
-      return true;
-    }
+    // In English, when the buttons above cannot be found
+    if (findButtonByLabel("leave call")) return true;
 
     return false;
   }
 
   // Auto-enable captions once meeting is joined.
-  // Keep the interval running until captions are confirmed active so that
+  // Keep checking until captions are confirmed active so that
   // transient UI-timing failures don't permanently prevent auto-enable.
-  let autoEnableCheckInterval: ReturnType<typeof setInterval> | null = null;
+  // Every 2 seconds for the first 3 minutes on the page, which covers the
+  // pre-join screen and waiting to be let in for most calls; every 10 seconds after.
+  const FAST_CHECK_MS = 2000;
+  const FAST_CHECKS_FOR_MS = 3 * 60_000;
+  const SLOW_CHECK_MS = 10_000;
+  const pageLoadedAt = Date.now();
+  let autoEnableCheckTimer: ReturnType<typeof setTimeout> | null = null;
   let autoEnableInProgress = false;
 
+  function scheduleAutoEnableCheck(delayMs?: number): void {
+    if (autoEnableCheckTimer) clearTimeout(autoEnableCheckTimer);
+    const fast = Date.now() - pageLoadedAt < FAST_CHECKS_FOR_MS;
+    autoEnableCheckTimer = setTimeout(() => {
+      autoEnableCheckTimer = null;
+      checkAndAutoEnable();
+      if (!captionAutoEnabled && !isContextInvalidated()) scheduleAutoEnableCheck();
+    }, delayMs ?? (fast ? FAST_CHECK_MS : SLOW_CHECK_MS));
+  }
+
   function checkAndAutoEnable(): void {
-    if (isContextInvalidated()) {
-      if (autoEnableCheckInterval) {
-        clearInterval(autoEnableCheckInterval);
-        autoEnableCheckInterval = null;
-      }
-      return;
-    }
-    if (captionAutoEnabled) {
-      if (autoEnableCheckInterval) {
-        clearInterval(autoEnableCheckInterval);
-        autoEnableCheckInterval = null;
-      }
-      return;
-    }
+    if (isContextInvalidated() || captionAutoEnabled) return;
     if (isMeetingJoined() && !autoEnableInProgress) {
       autoEnableInProgress = true;
       log("Meeting joined detected, will auto-enable captions");
+      // The captions button needs no time to settle; anything else gets two seconds
       setTimeout(() => {
         autoEnableCaptions(3).finally(() => {
           autoEnableInProgress = false;
         });
-      }, 2000);
+      }, findCaptionsButton() ? 0 : 2000);
     }
   }
 
-  autoEnableCheckInterval = setInterval(checkAndAutoEnable, 10000);
-  // Run fast initial checks
-  setTimeout(checkAndAutoEnable, 2000);
-  setTimeout(checkAndAutoEnable, 5000);
+  scheduleAutoEnableCheck();
 
   // Listen for retry requests from the service worker (sent when no caption
   // data arrives for a while despite having an active meeting).
@@ -390,12 +441,8 @@ import { undoubledName } from '../utils/meeting-attendees';
       log("Service worker requested caption retry");
       captionAutoEnabled = false;
       autoEnableInProgress = false;
-      // Re-start the check interval if it was cleared
-      if (!autoEnableCheckInterval) {
-        autoEnableCheckInterval = setInterval(checkAndAutoEnable, 10000);
-      }
-      // Trigger immediately
-      setTimeout(checkAndAutoEnable, 500);
+      // Check again shortly, and keep checking until captions are on
+      scheduleAutoEnableCheck(500);
     }
   });
 })();

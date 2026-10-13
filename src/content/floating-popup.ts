@@ -5,6 +5,7 @@ import { exportFileName } from '../utils/export-filename';
 import { renderAttendeeTags } from '../utils/attendee-tags';
 import { meetingAttendees } from '../utils/meeting-attendees';
 import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../utils/meeting-title';
+import { CAPTIONS_STATE_EVENT, captionsAreOff } from '../utils/captions-button';
 
 (function () {
   const STORAGE_POS_KEY = 'popup_position';
@@ -25,25 +26,27 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
   function isContextInvalidated(): boolean {
     if (contextInvalidated) return true;
     try {
-      // Accessing chrome.runtime.id throws if context is invalidated
-      void chrome.runtime.id;
-      return false;
+      // Once the extension is reloaded or updated, its id is gone, or reading it throws
+      if (chrome.runtime?.id) return false;
+      contextInvalidated = true;
+      return true;
     } catch {
       contextInvalidated = true;
       return true;
     }
   }
 
-  /** Show a banner in the popup telling the user to refresh. */
+  /** Show a banner at the bottom of the popup, above the footer, telling the user to reload. */
   function showRefreshBanner(): void {
     const existing = container?.querySelector('.refresh-banner');
     if (existing) return;
     const banner = document.createElement('div');
     banner.className = 'refresh-banner';
-    banner.textContent = 'Extension updated — refresh the page to resume transcription';
-    banner.style.cssText = 'background:#b71c1c;color:#fff;padding:8px 12px;font-size:12px;text-align:center;cursor:pointer;';
+    banner.textContent = 'Extension updated. Reload the page to continue the transcript.';
     banner.addEventListener('click', () => location.reload());
-    container?.prepend(banner);
+    // It says more than the paused line, which can no longer be updated
+    pausedEl.hidden = true;
+    footerEl.before(banner);
   }
 
 
@@ -69,6 +72,9 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
   let popupHeight = DEFAULT_HEIGHT;
 
   let captionsMissing = false;
+  // From the captions button during a call; null before joining or when it cannot be told
+  let captionsOn: boolean | null = null;
+  let lastCaptionAt = 0;
 
   // --- Shadow DOM setup ---
 
@@ -106,6 +112,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
             <div class="section-body" id="section-transcript-body">
               <div class="placeholder" id="transcript-placeholder" hidden>Listening…</div>
               <div class="transcript" id="transcript"></div>
+              <div class="paused" id="transcript-paused" hidden>Transcript paused: captions are off in Meet.</div>
             </div>
           </div>
         </div>
@@ -144,6 +151,7 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
   const btnBackLive = shadow.getElementById('btn-back-live')!;
   const liveSections = shadow.getElementById('live-sections')!;
   const placeholderEl = shadow.getElementById('transcript-placeholder')!;
+  const pausedEl = shadow.getElementById('transcript-paused')!;
 
   btnBackLive.addEventListener('click', () => {
     switchView('meetings');
@@ -399,11 +407,22 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
 
   function renderPlaceholder(): void {
     const empty = entries.length === 0 && currentMeeting !== null;
+    const off = currentMeeting !== null && captionsAreOff(captionsOn, lastCaptionAt, Date.now());
     placeholderEl.hidden = !empty;
-    placeholderEl.textContent = captionsMissing
-      ? 'Turn on captions in Meet - that is what the transcript reads.'
-      : 'Listening…';
+    // Without the captions button's word, the service worker's timer is all there is to go on
+    const text = off
+      ? 'Captions are off in Meet. Turn on CC to start the transcript.'
+      : captionsMissing && captionsOn === null
+        ? 'No captions yet. If people are speaking, turn on captions (CC) in Meet - that is what the transcript reads.'
+        : 'Listening…';
+    if (placeholderEl.textContent !== text) placeholderEl.textContent = text;
+    pausedEl.hidden = !(off && !empty);
   }
+
+  document.addEventListener(CAPTIONS_STATE_EVENT, (event) => {
+    captionsOn = (event as CustomEvent<boolean | null>).detail;
+    renderPlaceholder();
+  });
 
   function appendEntry(entry: TranscriptEntry): void {
     // Only append if viewing live
@@ -748,11 +767,13 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
             break;
 
           case 'new_entry':
+            lastCaptionAt = Date.now();
             entries.push(message.entry);
             appendEntry(message.entry);
             break;
 
           case 'entry_updated':
+            lastCaptionAt = Date.now();
             updateEntryInPlace(message.entry);
             {
               const idx = entries.findIndex(e => e.id === message.entry.id);
@@ -1134,6 +1155,29 @@ import { meetingDisplayTitle, meetingFileTitle, UNTITLED_MEETING } from '../util
         font-size: 11px;
         text-align: center;
         color: var(--text-faint);
+      }
+
+      .paused {
+        margin: 0 6px 6px;
+        padding: 6px 10px;
+        font-size: 11px;
+        text-align: center;
+        color: var(--warning-text);
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-border);
+        border-radius: var(--radius);
+      }
+
+      .refresh-banner {
+        margin: 0 16px 8px;
+        padding: 6px 10px;
+        font-size: 11px;
+        text-align: center;
+        color: var(--danger);
+        background: var(--danger-bg);
+        border: 1px solid var(--danger);
+        border-radius: var(--radius);
+        cursor: pointer;
       }
 
       .meetings-view,
