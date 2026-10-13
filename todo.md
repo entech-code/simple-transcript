@@ -4,6 +4,20 @@
 
 ### First: get published
 
+- [ ] Stop telling the user to turn on captions when they are on
+  - Seen 2026-10-13: with Meet in Spanish, the panel said "Turn on captions in Meet - that is what the transcript reads." while CC was on; once people spoke, the transcript filled in and the message went away
+  - The message does not check CC at all: the service worker starts a 30-second timer when the meeting page loads, even on the pre-join screen, retries captions once, and after about a minute without any caption text tells the panel captions are missing. Waiting to be let in, or a quiet first minute, is enough, in any language
+  - Now: reword it so it is true either way, such as "Listening… If nothing appears once people speak, check that captions (CC) are on in Meet"
+  - Then: start the timer on joining the call, not on page load; and show the warning only when CC is really off, once that can be told in any language (next item)
+
+- [ ] Turn captions on when Meet is in another language
+  - Not yet confirmed: in the Spanish call of 2026-10-13 it is not known whether CC was on because Meet remembered it, the user pressed it, or the extension turned it on
+  - `caption-observer.ts` relies on English text in three places: the join check ("microphone", "camera", "mute"), the captions button ("turn on captions", "captions", "subtitles") and the "Turn on captions" menu item. The fallback through ⋮ → Settings → Captions goes by icons, so it may still work
+  - First test: in a Spanish call, turn CC off and leave, rejoin, and get the page console's `MeetTranscript:Captions` lines (Verbose). No "Meeting joined detected" means the join check fails; attempts without success mean the button and the fallback do; "Enabling captions via settings toggle" means the fallback worked
+  - If it fails, find the join and the CC button by what is the same in every language (the button's icon, such as `closed_caption_off`, or Meet's page structure) instead of label text; Meet's "c" shortcut for captions may be another way
+  - Check that captions are really on afterwards; the Settings fallback switches the first toggle in the Captions tab and reports success without checking
+  - Adding `?hl=es` to a call link shows Meet in Spanish for testing
+
 - [ ] Publish to the Chrome Web Store
   - Submitted for review on 2026-10-08 (version 2.49.0, non-trader); waiting for Google's decision
   - After approval: point the website's install button, the README's install section and `WEBSTORE_LISTING.md` at the store page
@@ -13,14 +27,6 @@
 ### Once the listing is live
 
 Nothing below is started until the store has approved the extension.
-
-- [ ] Turn captions on when Meet is in another language
-  - Seen 2026-10-13: with Meet in Spanish, captions were not turned on when joining, so nothing was transcribed until CC was pressed by hand
-  - `caption-observer.ts` relies on English text in three places: the join check ("microphone", "camera", "mute"), the captions button ("turn on captions", "captions", "subtitles") and the "Turn on captions" menu item. The fallback through ⋮ → Settings → Captions goes by icons, but did not help either
-  - First get the page console's `MeetTranscript:Captions` lines (Verbose) from a Spanish call with captions off, to see which step fails: no "Meeting joined detected" means the join check; attempts without success mean the button and the fallback
-  - Then find the join and the CC button by what is the same in every language (the button's icon, such as `closed_caption_off`, or Meet's page structure) instead of label text; Meet's "c" shortcut for captions may be another way
-  - Check that captions are really on afterwards; the Settings fallback switches the first toggle in the Captions tab and reports success without checking
-  - Adding `?hl=es` to a call link shows Meet in Spanish for testing
 
 - [ ] Always leave the user's own name out of an untitled meeting's file name
   - Seen 2026-10-07: a two-person call was saved as "Meeting with <colleague> and <the user>"; the meeting had no `selfName`, so the user was not recognised
