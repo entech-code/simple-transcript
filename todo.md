@@ -2,31 +2,25 @@
 
 ## Planned
 
-### First: get published
+### Now
 
-- [ ] Stop telling the user to turn on captions when they are on
-  - Seen 2026-10-13: with Meet in Spanish, the panel said "Turn on captions in Meet - that is what the transcript reads." while CC was on; once people spoke, the transcript filled in and the message went away
-  - The message does not check CC at all: the service worker starts a 30-second timer when the meeting page loads, even on the pre-join screen, retries captions once, and after about a minute without any caption text tells the panel captions are missing. Waiting to be let in, or a quiet first minute, is enough, in any language
-  - Now: reword it so it is true either way, such as "Listening… If nothing appears once people speak, check that captions (CC) are on in Meet"
-  - Then: start the timer on joining the call, not on page load; and show the warning only when CC is really off, once that can be told in any language (next item)
-
-- [ ] Turn captions on when Meet is in another language
-  - Seen 2026-10-13: with Meet in Spanish, the extension did not turn captions on; the user pressed CC, and from then on the transcript worked
-  - `caption-observer.ts` relies on English text in three places: the join check ("microphone", "camera", "mute"), the captions button ("turn on captions", "captions", "subtitles") and the "Turn on captions" menu item. The fallback through ⋮ → Settings → Captions goes by icons, but did not help either
-  - First get the page console's `MeetTranscript:Captions` lines (Verbose) from a Spanish call joined with CC off, to see which step fails: no "Meeting joined detected" means the join check; attempts without success mean the button and the fallback
-  - Then find the join and the CC button by what is the same in every language (the button's icon, such as `closed_caption_off`, or Meet's page structure) instead of label text; Meet's "c" shortcut for captions may be another way
-  - Check that captions are really on afterwards; the Settings fallback switches the first toggle in the Captions tab and reports success without checking
+- [ ] Captions in other languages, and the false "Turn on captions" message
+  - Seen 2026-10-13 with Meet in Spanish: the extension did not turn captions on, and the panel said "Turn on captions in Meet - that is what the transcript reads." even after the user pressed CC; once people spoke, the transcript filled in and the message went away
+  - Not turned on: `caption-observer.ts` relies on English text in three places: the join check ("microphone", "camera", "mute"), the captions button ("turn on captions", "captions", "subtitles") and the "Turn on captions" menu item. The fallback through ⋮ → Settings → Captions goes by icons, but did not help either
+  - The message: it never checks CC. The service worker starts a 30-second timer when the meeting page loads, even on the pre-join screen, retries captions once, and after about a minute without any caption text says captions are missing. Waiting to be let in, or a quiet first minute, is enough, in English too
+  - First, reword the message so it is true either way, such as "Listening… If nothing appears once people speak, check that captions (CC) are on in Meet"
+  - Get the page console's `MeetTranscript:Captions` lines (Verbose) from a Spanish call joined with CC off, to see which step fails: no "Meeting joined detected" means the join check; attempts without success mean the button and the fallback
+  - Find the join and the CC button by what is the same in every language (the button's icon, such as `closed_caption_off`, or Meet's page structure) instead of label text; Meet's "c" shortcut for captions may be another way
+  - With that, tell whether CC is on in any language: check it after turning captions on (the Settings fallback switches the first toggle in the Captions tab and reports success without checking), and warn only when CC is really off, timed from joining the call rather than from page load
   - Adding `?hl=es` to a call link shows Meet in Spanish for testing
 
-- [ ] Publish to the Chrome Web Store
-  - Submitted for review on 2026-10-08 (version 2.49.0, non-trader); waiting for Google's decision
-  - After approval: point the website's install button, the README's install section and `WEBSTORE_LISTING.md` at the store page
-  - After approval, upload the latest release as the first update: it has the fix for a speaker being renamed to "en-US" (2.50.0)
+- [ ] Follow up on the store listing
+  - Upload the latest release as the first update: the store has 2.49.0, and later releases have the fix for a speaker being renamed to "en-US" (2.50.0)
+  - Point the website's install button, the README's install section and `WEBSTORE_LISTING.md` at the store page
+  - Paste the updated description from `WEBSTORE_LISTING.md` (more than 80 caption languages, and where to change the language) into the dashboard
   - Decide how updates reach the store: upload each release zip in the dashboard by hand, or publish from the release workflow
 
-### Once the listing is live
-
-Nothing below is started until the store has approved the extension.
+### Next
 
 - [ ] Always leave the user's own name out of an untitled meeting's file name
   - Seen 2026-10-07: a two-person call was saved as "Meeting with <colleague> and <the user>"; the meeting had no `selfName`, so the user was not recognised
@@ -47,10 +41,6 @@ Nothing below is started until the store has approved the extension.
   - Record a few raw messages in a live call, rebuild their shape in `tests/helpers/samples.ts` with invented content, and add content tests
   - Done for the participant list (`tests/device-parser.test.ts` uses the shape seen in a call on 2026-10-08); captions and chat are still to do
   - A suspected bug (v2 captions dropped at message number 128 or for long text) was not confirmed: a 43-minute call with 429 entries transcribed to the end. Re-check it against the real message shape
-
-- [ ] Revisit the trader declaration
-  - The store account is declared non-trader, to avoid publishing a phone number; a company's product fits "trader" better
-  - Once there is a business number that can be shown publicly (a dedicated line that goes to voicemail would do), switch the declaration in the developer account
 
 ### After some real use
 
@@ -86,6 +76,8 @@ Nothing below is started until the store has approved the extension.
   - If it comes back, add logs for when a meeting is created, resumed and ended
 
 ## Completed
+
+- [x] Published on the Chrome Web Store: submitted 2026-10-08 as version 2.49.0 (non-trader), live by 2026-10-13
 
 - [x] A participant's caption language is no longer taken for their name: Meet's language messages renamed a speaker to a mangled "en-US" and added a phantom attendee (2026-10-09)
 - [x] Chrome Web Store listing: the text, the answers for the privacy practices form, three screenshots and the promo tile (2026-10-08)
