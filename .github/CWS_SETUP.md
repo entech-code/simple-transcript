@@ -1,6 +1,6 @@
 # Chrome Web Store Publish — Setup
 
-The CD workflow automatically publishes to the Chrome Web Store on every push to `main`.
+Setup for publishing to the Chrome Web Store from the release workflow. That step does not exist yet: the workflow only creates a GitHub release, and each release zip is uploaded in the developer dashboard by hand. The secrets below are what the step would need.
 
 ## Required Secrets
 
