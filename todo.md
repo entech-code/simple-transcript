@@ -11,19 +11,20 @@
   - Not simply "in progress always counts as recent": a recurring meeting keeps its Meet code from week to week, so a meeting left in progress by mistake would take in next week's call
   - With the same call open in two tabs, both write to one meeting, as they already do in the first 10 minutes
 
-- [ ] Follow up on the store listing
-  - In the store: 2.49.0; 2.51.0 and the updated description submitted 2026-10-13, in review
-  - Next upload: the release with the captions fixes of 2026-10-13
-  - Updates are uploaded by hand: download the release zip and upload it in the dashboard (decided 2026-10-13). `.github/CWS_SETUP.md` has the setup for automating it later
-
-### Next
-
 - [ ] Always leave the user's own name out of an untitled meeting's file name
   - Seen 2026-10-07: a two-person call was saved as "Meeting with <colleague> and <the user>"; the meeting had no `selfName`, so the user was not recognised
   - The name comes from Meet's `CreateMeetingDevice` response on joining, which was missed or not parsed on that join; the page console had already dropped the lines that would say which
   - Try Meet's `GetUser` request first: the page makes it on the home page and on every call page before joining, so it should name the user without depending on the join
   - Remember the name once it is found and use it in later meetings when a participant has it; keep it with the session across service-worker restarts; log the join response once in the service worker console
   - Seen 2026-10-13: in a call the user started, `CreateMeetingDevice` came and named them; in a call they joined, it never came, and Meet already listed two devices of theirs before they joined
+  - Seen 2026-10-14 in a joined call: again no `CreateMeetingDevice`, so no `selfName`; `GetUser` was captured before joining, and the premeeting devices already included the user's own
+
+- [ ] Follow up on the store listing
+  - In the store: 2.49.0; 2.51.0 and the updated description submitted 2026-10-13, in review
+  - Next upload: the release with the captions fixes of 2026-10-13
+  - Updates are uploaded by hand: download the release zip and upload it in the dashboard (decided 2026-10-13). `.github/CWS_SETUP.md` has the setup for automating it later
+
+### Next
 
 - [ ] Be ready for the first bug reports
   - Add a GitHub issue template that asks for the version, what happened and how the call was joined, and says not to paste transcripts or logs there but to email them
