@@ -4,6 +4,17 @@
 
 ### Now
 
+- [ ] Bug: captions not turned on after Meet's update of 2026-10-28
+  - Seen 2026-10-28 in a work account: no transcript, as Meet's captions never came on by themselves; the personal account still had the old Meet the same day, so the update reaches accounts at different times
+  - Meet's toolbar now has a "Captions and translation" button (`jslog` 317717, icon `translate_cc`) that opens a bar with "Live captions" and "Translate speech". "Live captions" is the old captions button, same `jslog` 211197 and `jsname` "RrG0hf", now only on the page while the bar is open; its icon is `check` while on
+  - The toolbar button's `aria-pressed` is "true" while captions are on and "false" while off, whether the bar is open or not
+  - The extension found neither button, so the English label search clicked "Captions and translation" instead, which only opened and closed the bar; captions came on late, by the Settings path or by hand
+  - Fixed on `fix/meet-update-oct-28`: captions are read from `aria-pressed` and turned on by opening the bar and clicking "Live captions"; the old layout still works as before; the label search is removed
+  - Meet's call address is now `meet.google.com/meet/<code>` instead of `meet.google.com/<code>`; meetings were saved with code "unknown". Both are read now
+  - Not the cause, checked with a diagnostic build: Meet does not hand its data channels to a worker; once captions are on, `captions_v2` carries them as before
+  - Checked 2026-10-28: captions came on by themselves at the first attempt in the new layout (work account, "Found "Live captions" in the bar, clicking") and the old one (personal account, "Found captions button, clicking"); both also in Spanish. In the new layout the extension closes the bar again after turning captions on
+  - The first time the bar opens in a call, Meet loads it before drawing it: "Live captions" was not there after 500 ms, so the extension now waits up to 3 seconds for it
+
 - [ ] Bug: rejoining a call after more than 10 minutes starts a new meeting
   - Seen 2026-10-13: the Meet tab was reloaded during a call and the call rejoined; the transcript went on in a new meeting, so the call is split in two in the meetings list
   - `findRecentMeeting` in `meeting-store.ts` measures a meeting still in progress from its start: after 10 minutes it no longer counts as recent. A reloaded tab's meeting is still in progress, since it ends only 2 minutes after the tab disconnects
@@ -67,8 +78,9 @@
   - Decide whether to record the account a meeting was held under, and whether to filter, group or label meetings by it; separate Chrome profiles already keep lists apart
 
 - [ ] Clean up the old ways of turning captions on
-  - Captions are now turned on through the captions button's `jslog` and `jsname`; the English labels, the `closed_caption` icon search and ⋮ → Settings → Captions remain as fallbacks
-  - After a few weeks of use, if the Verbose log only ever shows "Found captions button, clicking", remove the label search and the Settings path
+  - Captions are now turned on through the captions buttons' `jslog` and `jsname`, in Meet's layout since 2026-10-28 and the one before; ⋮ → Settings → Captions remains as a fallback when neither button is found. The English label search and the `closed_caption` icon search were removed on 2026-10-28, as the label search clicked the new "Captions and translation" button
+  - Once every account has the 2026-10-28 layout, remove the old layout's path (the icon reading in `captionsOnFromIcon`)
+  - After a few weeks of use, if the Verbose log only ever shows "Found captions button, clicking" or "Found "Live captions" in the bar, clicking", remove the Settings path
   - The Settings path opens the first `more_vert` on the page, which can be the "More options" of the user's own video tile rather than Meet's ⋮ menu (seen 2026-10-13)
   - The service worker's caption retry still starts on page load, so it fires on the pre-join screen; it is harmless there, as nothing is clicked before joining
 

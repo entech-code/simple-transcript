@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAPTIONS_BUTTON, ICON, RECENT_CAPTIONS_MS, captionsAreOff, captionsOnFromIcon } from '../src/utils/captions-button';
+import { CAPTIONS_BAR_BUTTON, CAPTIONS_BUTTON, ICON, RECENT_CAPTIONS_MS, captionsAreOff, captionsOnFromIcon, captionsOnFromPressed } from '../src/utils/captions-button';
 
 // The captions button as Meet drew it on 2026-10-13, cut down to the parts the
 // extension reads. Only the label and the icon differ between languages and states.
@@ -16,7 +16,7 @@ const SEEN = [
 /** The icon's name as the extension reads it, the text of the icon font's element. */
 const iconName = (html: string): string | undefined => html.match(/class="[^"]*google-symbols[^"]*"[^>]*>([^<]*)</)?.[1];
 
-describe('the captions button', () => {
+describe('the captions button before 2026-10-28', () => {
   it.each(SEEN)('tells whether captions are on: $language', ({ html, on }) => {
     expect(captionsOnFromIcon(iconName(html))).toBe(on);
   });
@@ -41,6 +41,46 @@ describe('the captions button', () => {
 
   it('ignores space around the icon name', () => {
     expect(captionsOnFromIcon(' closed_caption\n')).toBe(true);
+  });
+});
+
+// The two buttons as Meet drew them on 2026-10-28 with Meet in English, cut
+// down to the parts the extension reads.
+const barButton = (pressed: string): string =>
+  `<button aria-label="Captions and translation" role="button" aria-haspopup="dialog" aria-expanded="false" ` +
+  `jslog="317717;track:JIbuQc;" aria-pressed="${pressed}"><span aria-hidden="true">` +
+  `<i class="quRWN-Bz112c google-symbols notranslate" aria-hidden="true">translate_cc</i></span></button>`;
+const LIVE_CAPTIONS_ON =
+  `<button jsname="RrG0hf" aria-label="Turn off live captions" jslog="211197;track:JIbuQc;">` +
+  `<span jsname="Xr1QTb"><i class="quRWN-Bz112c google-symbols notranslate" aria-hidden="true">check</i></span>` +
+  `<span jsname="V67aGc" aria-hidden="true">Live captions</span></button>`;
+
+/** The `aria-pressed` value as the extension reads it. */
+const pressedOf = (html: string): string | undefined => html.match(/aria-pressed="([^"]*)"/)?.[1];
+
+describe('the captions buttons since 2026-10-28', () => {
+  it('tells whether captions are on from the toolbar button, with captions on and off', () => {
+    expect(captionsOnFromPressed(pressedOf(barButton('true')))).toBe(true);
+    expect(captionsOnFromPressed(pressedOf(barButton('false')))).toBe(false);
+  });
+
+  it.each([undefined, null, '', 'mixed'])('cannot tell from aria-pressed %s', (pressed) => {
+    expect(captionsOnFromPressed(pressed)).toBeNull();
+  });
+
+  it('finds the toolbar button by its jslog', () => {
+    expect(barButton('true')).toContain('jslog="317717;');
+    expect(CAPTIONS_BAR_BUTTON).toBe('button[jslog^="317717;"]');
+  });
+
+  it('finds "Live captions" in the bar by the same markers as the old captions button', () => {
+    expect(LIVE_CAPTIONS_ON).toContain('jslog="211197;');
+    expect(LIVE_CAPTIONS_ON).toContain('jsname="RrG0hf"');
+  });
+
+  it('does not take the toolbar button or Live captions icons for the old icons', () => {
+    expect(captionsOnFromIcon(iconName(barButton('true')))).toBeNull();
+    expect(captionsOnFromIcon(iconName(LIVE_CAPTIONS_ON))).toBeNull();
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attendeesForList, meetingAttendees } from '../src/utils/meeting-attendees';
+import { attendeesForList, meetingAttendees, meetingCodeFromPath } from '../src/utils/meeting-attendees';
 
 const people = (...names: string[]): Record<string, string> =>
   Object.fromEntries(names.map((name, i) => [`@spaces/x/devices/${i}`, name]));
@@ -52,5 +52,27 @@ describe('attendeesForList', () => {
     expect(shown).toEqual(['Person 1', 'Person 2', 'Person 3']);
     expect(hidden).toHaveLength(9);
     expect(hidden[0]).toBe('Person 4');
+  });
+});
+
+describe('meetingCodeFromPath', () => {
+  it('reads the code from a call address before 2026-10-28', () => {
+    expect(meetingCodeFromPath('/kxp-mwrd-tzb')).toBe('kxp-mwrd-tzb');
+  });
+
+  // Seen 2026-10-28: meet.google.com/meet/cef-yusg-muq
+  it('reads the code from a call address since 2026-10-28', () => {
+    expect(meetingCodeFromPath('/meet/kxp-mwrd-tzb')).toBe('kxp-mwrd-tzb');
+  });
+
+  it('allows a slash at the end', () => {
+    expect(meetingCodeFromPath('/meet/kxp-mwrd-tzb/')).toBe('kxp-mwrd-tzb');
+  });
+
+  it('finds no code on other Meet pages', () => {
+    expect(meetingCodeFromPath('/')).toBeNull();
+    expect(meetingCodeFromPath('/landing')).toBeNull();
+    expect(meetingCodeFromPath('/meet/')).toBeNull();
+    expect(meetingCodeFromPath('/other/kxp-mwrd-tzb')).toBeNull();
   });
 });

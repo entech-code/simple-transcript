@@ -1,6 +1,7 @@
 import { MESSAGE_SOURCE, RTC_CHANNEL_NAMES, RTC_CAPTION_BATCH_MS } from '../utils/constants';
 import { parseCaptionMessage, parseCaptionMessageV2, parseDeviceInfo, parseDeviceCollection, parseChatMessage, dumpAllStrings } from '../utils/rtc-message-parser';
 import { MSG, type RtcCaptionMessage } from '../utils/types';
+import { meetingCodeFromPath } from '../utils/meeting-attendees';
 
 (function () {
   const w = window as unknown as Record<string, unknown>;
@@ -38,8 +39,7 @@ import { MSG, type RtcCaptionMessage } from '../utils/types';
   // ========================================
 
   function extractMeetingCode(): string | null {
-    const match = window.location.pathname.match(/^\/([a-z]{3}-[a-z]{4}-[a-z]{3})$/);
-    return match ? match[1] : null;
+    return meetingCodeFromPath(window.location.pathname);
   }
 
   let lastMeetingCode = extractMeetingCode();

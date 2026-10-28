@@ -1,8 +1,27 @@
 /**
- * Google Meet's captions button, as seen on 2026-10-13 with Meet in English,
- * Spanish and Russian: its `jslog` starts with 211197 and its `jsname` is
- * "RrG0hf" in every language, while its label is in the page's language
- * ("Turn off captions", "Activar subtítulos", "Включить субтитры").
+ * Meet has drawn its captions controls two ways. The extension handles both,
+ * as users get Meet's updates days or weeks apart:
+ *
+ * - Since 2026-10-28: a "Captions and translation" button in the toolbar
+ *   (`CAPTIONS_BAR_BUTTON`) opens a bar holding "Live captions"
+ *   (`CAPTIONS_BUTTON`) and "Translate speech". The toolbar button's
+ *   `aria-pressed` says whether captions are on, with the bar open or closed.
+ * - Before: "Live captions" (`CAPTIONS_BUTTON`) sat in the toolbar itself, and
+ *   its icon said whether captions were on.
+ */
+
+/**
+ * The toolbar's "Captions and translation" button, as seen on 2026-10-28 with
+ * Meet in English: its `jslog` starts with 317717, its icon is "translate_cc".
+ */
+export const CAPTIONS_BAR_BUTTON = 'button[jslog^="317717;"]';
+
+/**
+ * Google Meet's captions button, "Live captions" since 2026-10-28, as seen on
+ * 2026-10-13 with Meet in English, Spanish and Russian and on 2026-10-28 in
+ * English: its `jslog` starts with 211197 and its `jsname` is "RrG0hf" in every
+ * language, while its label is in the page's language ("Turn off captions",
+ * "Activar subtítulos", "Turn off live captions").
  */
 export const CAPTIONS_BUTTON = 'button[jslog^="211197;"], button[jsname="RrG0hf"]';
 
@@ -13,9 +32,20 @@ export const CAPTIONS_BUTTON = 'button[jslog^="211197;"], button[jsname="RrG0hf"
 export const ICON = 'i.google-symbols, span.google-symbols, i.google-material-icons, span.google-material-icons';
 
 /**
- * Whether captions are on, from the captions button's icon: "closed_caption"
- * while they are on, "closed_caption_off" while they are off. Null for any
- * other icon, when the state cannot be told.
+ * Whether captions are on, from the "Captions and translation" button's
+ * `aria-pressed`: "true" while they are on, "false" while they are off. Null
+ * for anything else, when the state cannot be told.
+ */
+export function captionsOnFromPressed(pressed: string | null | undefined): boolean | null {
+  if (pressed === 'true') return true;
+  if (pressed === 'false') return false;
+  return null;
+}
+
+/**
+ * Whether captions are on, from the captions button's icon in the toolbar
+ * before 2026-10-28: "closed_caption" while they are on, "closed_caption_off"
+ * while they are off. Null for any other icon, when the state cannot be told.
  */
 export function captionsOnFromIcon(iconName: string | null | undefined): boolean | null {
   const name = iconName?.trim();
