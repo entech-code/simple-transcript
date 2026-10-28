@@ -1,5 +1,5 @@
 import { undoubledName } from '../utils/meeting-attendees';
-import { CAPTIONS_BUTTON, CAPTIONS_STATE_EVENT, ICON, captionsOnFromIcon } from '../utils/captions-button';
+import { CAPTIONS_BAR_BUTTON, CAPTIONS_BUTTON, CAPTIONS_STATE_EVENT, ICON, captionsOnFromIcon, captionsOnFromPressed } from '../utils/captions-button';
 
 (function () {
   const LOG_PREFIX = "[MeetTranscript:Captions]";
@@ -157,105 +157,115 @@ import { CAPTIONS_BUTTON, CAPTIONS_STATE_EVENT, ICON, captionsOnFromIcon } from 
     return null;
   }
 
-  /** Meet's captions button, found the same way in every language. */
+  // ========================================
+  // Captions controls: Meet has drawn them two ways (see captions-button.ts)
+  // ========================================
+  //
+  // Whether captions are on, and how they are turned on, in this order:
+  // 1. Since 2026-10-28: the "Captions and translation" toolbar button says
+  //    with aria-pressed; it opens a bar, where "Live captions" is clicked.
+  // 2. Before: "Live captions" in the toolbar says with its icon, and is clicked.
+  // 3. Neither found: ⋮ → Settings → Captions (tryMenuCaptionEnable).
+
+  /** The "Captions and translation" toolbar button, since 2026-10-28. */
+  function findCaptionsBarButton(): HTMLElement | null {
+    return document.querySelector<HTMLElement>(CAPTIONS_BAR_BUTTON);
+  }
+
+  /** "Live captions": in the bar since 2026-10-28, while it is open; in the toolbar before. */
   function findCaptionsButton(): HTMLElement | null {
     return document.querySelector<HTMLElement>(CAPTIONS_BUTTON);
   }
 
-  /** Whether the captions button shows captions on; null without the button or a known icon. */
+  /** Whether Meet's captions controls show captions on; null when they cannot tell. */
   function captionsButtonState(): boolean | null {
+    const barButton = findCaptionsBarButton();
+    if (barButton) return captionsOnFromPressed(barButton.getAttribute("aria-pressed"));
     return captionsOnFromIcon(findCaptionsButton()?.querySelector(ICON)?.textContent);
   }
 
   /** Check if captions are visibly active in the DOM. */
   function areCaptionsActive(): boolean {
-    // The captions button says so in any language
+    // The captions controls say so in any language
     const state = captionsButtonState();
     if (state !== null) return state;
 
     // Check for the native caption overlay container with content
     const overlay = document.querySelector(".a4cQT");
-    if (overlay && overlay.textContent && overlay.textContent.trim().length > 0) return true;
-
-    // Check for a "turn off captions" button (indicates captions are on)
-    const buttons = document.querySelectorAll("button[aria-label]");
-    for (const btn of buttons) {
-      const label = (btn.getAttribute("aria-label") ?? "").toLowerCase();
-      if ((label.includes("caption") || label.includes("subtitle")) && (label.includes("turn off") || label.includes("hide") || label.includes("disable"))) {
-        return true;
-      }
-    }
-
-    return false;
+    return !!overlay?.textContent?.trim();
   }
 
-  async function tryDirectCaptionButton(): Promise<boolean> {
-    // First check if captions are already active
-    if (areCaptionsActive()) {
-      log("Captions already enabled (verified)");
-      return true;
+  /** Waits up to `ms` for the captions controls to show captions on. */
+  async function waitForCaptionsOn(ms: number): Promise<boolean> {
+    for (let waited = 0; waited < ms; waited += 250) {
+      if (captionsButtonState() === true) return true;
+      await delay(250);
+    }
+    return captionsButtonState() === true;
+  }
+
+  /** Waits up to `ms` for "Live captions" to be on the page. */
+  async function waitForCaptionsButton(ms: number): Promise<HTMLElement | null> {
+    for (let waited = 0; waited < ms; waited += 250) {
+      const button = findCaptionsButton();
+      if (button) return button;
+      await delay(250);
+    }
+    return findCaptionsButton();
+  }
+
+  /** 1. Since 2026-10-28: open the bar if needed, click "Live captions", close the bar again. */
+  async function turnOnFromCaptionsBar(barButton: HTMLElement): Promise<boolean> {
+    // Clicked only while the toolbar button shows captions off, so a click never turns them off
+    if (captionsOnFromPressed(barButton.getAttribute("aria-pressed")) !== false) return false;
+
+    const openedBar = !findCaptionsButton();
+    if (openedBar) {
+      log('Opening the "Captions and translation" bar');
+      await clickAndWait(barButton, 0);
     }
 
+    // The first time, Meet loads the bar before drawing it: 500 ms was too short in a call on 2026-10-28
+    const liveCaptions = await waitForCaptionsButton(3000);
+    let on = false;
+    if (liveCaptions) {
+      log('Found "Live captions" in the bar, clicking');
+      await clickAndWait(liveCaptions, 0);
+      on = await waitForCaptionsOn(3000);
+      log(on ? "Captions verified active after click" : "Clicked Live captions but captions did not activate");
+    } else {
+      log('"Live captions" not found in the bar');
+    }
+
+    // Leave the bar as it was
+    if (openedBar && barButton.getAttribute("aria-expanded") === "true") {
+      await clickAndWait(barButton, 0);
+    }
+    return on;
+  }
+
+  /** 2. Before 2026-10-28: click "Live captions" in the toolbar. */
+  async function turnOnFromCaptionsButton(button: HTMLElement): Promise<boolean> {
     // Clicked only while it shows captions off, so a click never turns them off
-    const ccBtn = findCaptionsButton();
-    if (ccBtn && captionsButtonState() === false) {
-      log("Found captions button, clicking");
-      await clickAndWait(ccBtn, 1000);
-      if (areCaptionsActive()) {
-        log("Captions verified active after click");
-        return true;
-      }
-      await delay(2000);
-      if (areCaptionsActive()) {
-        log("Captions verified active after extended wait");
-        return true;
-      }
-      log("Clicked captions button but captions did not activate, continuing");
-    }
+    if (captionsButtonState() !== false) return false;
 
-    const labels = ["turn on captions", "captions", "closed caption", "subtitles"];
-    for (const label of labels) {
-      const btn = findButtonByLabel(label);
-      if (btn) {
-        const ariaLabel = (btn.getAttribute("aria-label") ?? "").toLowerCase();
-        if (ariaLabel.includes("turn off") || ariaLabel.includes("hide")) {
-          log("Captions already enabled");
-          return true;
-        }
-        log("Found caption button, clicking:", ariaLabel);
-        await clickAndWait(btn, 1000);
+    log("Found captions button, clicking");
+    await clickAndWait(button, 0);
+    const on = await waitForCaptionsOn(3000);
+    log(on ? "Captions verified active after click" : "Clicked captions button but captions did not activate");
+    return on;
+  }
 
-        // Verify captions actually activated after clicking
-        if (areCaptionsActive()) {
-          log("Captions verified active after click");
-          return true;
-        }
+  /** Turns captions on the first way this page's Meet offers. */
+  async function turnOnCaptions(): Promise<boolean> {
+    const barButton = findCaptionsBarButton();
+    if (barButton) return turnOnFromCaptionsBar(barButton);
 
-        // Wait a bit more and check again — Meet UI can be slow
-        await delay(2000);
-        if (areCaptionsActive()) {
-          log("Captions verified active after extended wait");
-          return true;
-        }
+    const button = findCaptionsButton();
+    if (button) return turnOnFromCaptionsButton(button);
 
-        log("Clicked caption button but captions did not activate, continuing");
-        // Don't return true — the click may have opened a dropdown instead
-      }
-    }
-
-    // Also try clicking icon-based caption buttons (closed_caption icon)
-    const ccIconBtn = findIconButton("closed_caption");
-    if (ccIconBtn) {
-      log("Found closed_caption icon button, clicking");
-      await clickAndWait(ccIconBtn, 1000);
-      await delay(2000);
-      if (areCaptionsActive()) {
-        log("Captions verified active after icon button click");
-        return true;
-      }
-    }
-
-    return false;
+    log("No captions button found, trying Settings");
+    return tryMenuCaptionEnable();
   }
 
   async function tryMenuCaptionEnable(): Promise<boolean> {
@@ -358,12 +368,7 @@ import { CAPTIONS_BUTTON, CAPTIONS_STATE_EVENT, ICON, captionsOnFromIcon } from 
         return;
       }
 
-      if (await tryDirectCaptionButton()) {
-        onCaptionsConfirmed();
-        return;
-      }
-
-      if (await tryMenuCaptionEnable()) {
+      if (await turnOnCaptions()) {
         onCaptionsConfirmed();
         return;
       }
@@ -378,14 +383,14 @@ import { CAPTIONS_BUTTON, CAPTIONS_STATE_EVENT, ICON, captionsOnFromIcon } from 
 
   /**
    * In the call, not on the pre-join screen, which has the microphone and
-   * camera buttons too: the captions button and the leave-call button are only
+   * camera buttons too: the captions buttons and the leave-call button are only
    * there once in the call.
    */
   function isMeetingJoined(): boolean {
     // Check for call-ended screen — if present, we're not in a meeting
     if (document.querySelector("[data-call-ended]")) return false;
 
-    if (findCaptionsButton() || findIconButton("call_end")) return true;
+    if (findCaptionsBarButton() || findCaptionsButton() || findIconButton("call_end")) return true;
 
     // Meeting-specific DOM markers
     if (document.querySelector("[data-participant-id]")) return true;
@@ -423,12 +428,12 @@ import { CAPTIONS_BUTTON, CAPTIONS_STATE_EVENT, ICON, captionsOnFromIcon } from 
     if (isMeetingJoined() && !autoEnableInProgress) {
       autoEnableInProgress = true;
       log("Meeting joined detected, will auto-enable captions");
-      // The captions button needs no time to settle; anything else gets two seconds
+      // The captions buttons need no time to settle; anything else gets two seconds
       setTimeout(() => {
         autoEnableCaptions(3).finally(() => {
           autoEnableInProgress = false;
         });
-      }, findCaptionsButton() ? 0 : 2000);
+      }, findCaptionsBarButton() || findCaptionsButton() ? 0 : 2000);
     }
   }
 

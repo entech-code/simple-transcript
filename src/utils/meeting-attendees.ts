@@ -1,6 +1,17 @@
 /** A Google Meet code, such as "kxp-mwrd-tzb". */
 export const MEET_CODE = /^[a-z]{3}-[a-z]{4}-[a-z]{3}$/i;
 
+/**
+ * A call's address: `/<code>` until 2026-10-28, `/meet/<code>` since. Either
+ * may end in a slash.
+ */
+const CALL_PATH = /^\/(?:meet\/)?([a-z]{3}-[a-z]{4}-[a-z]{3})\/?$/;
+
+/** The Meet code in a call page's path, or null on any other Meet page. */
+export function meetingCodeFromPath(pathname: string): string | null {
+  return pathname.match(CALL_PATH)?.[1] ?? null;
+}
+
 /** A name compared without spacing, letter case or a "(You)" that Meet may add. */
 export function nameKey(name: string): string {
   return name.replace(/\s*\(you\)\s*$/i, '').replace(/\s+/g, ' ').trim().toLowerCase();
